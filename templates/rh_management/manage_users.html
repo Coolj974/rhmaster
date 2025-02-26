@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>👥 Gestion des Utilisateurs</h2>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Employé</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                    {% if user.is_superuser %}
+                        <span class="badge bg-danger">Admin</span>
+                    {% elif user.is_staff %}
+                        <span class="badge bg-warning">RH</span>
+                    {% else %}
+                        <span class="badge bg-primary">Employé</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'edit_user' user.id %}" class="btn btn-sm btn-info">✏️ Modifier</a>
+                    <a href="{% url 'delete_user' user.id %}" class="btn btn-sm btn-danger">🗑 Supprimer</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

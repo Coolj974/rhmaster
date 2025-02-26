@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0 text-center">💰 Nouvelle Note de Frais</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                {{ form|crispy }}
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-success btn-lg">✅ Soumettre</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

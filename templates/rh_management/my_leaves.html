@@ -1,0 +1,24 @@
+{% for leave in leave_requests %}
+<tr>
+    <!-- Affiche la date de début du congé -->
+    <td>{{ leave.start_date }}</td>
+    <!-- Affiche la date de fin du congé -->
+    <td>{{ leave.end_date }}</td>
+    <!-- Affiche le type de congé -->
+    <td>{{ leave.get_leave_type_display }}</td>
+    <td>
+        <!-- Affiche le statut du congé avec une couleur différente selon qu'il est approuvé ou en attente -->
+        <span class="badge bg-{% if leave.status == 'approved' %}success{% else %}warning{% endif %}">
+            {{ leave.get_status_display }}
+        </span>
+    </td>
+    <td>
+        <!-- Affiche un bouton pour annuler le congé si le statut est en attente -->
+        {% if leave.status == "pending" %}
+        <a href="{% url 'cancel_leave' leave.id %}" class="btn btn-danger btn-sm">
+            ❌ Annuler
+        </a>
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}

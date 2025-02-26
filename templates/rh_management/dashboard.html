@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">📊 Tableau de Bord</h2>
+
+    {% if is_hr or is_admin %}
+        <!-- Dashboard complet pour RH / Admin -->
+        <div class="text-center mt-4">
+            <div class="btn-group" role="group" aria-label="Actions RH/Admin">
+                <a href="{% url 'manage_leaves' %}" class="btn btn-warning btn-lg">
+                    📋 Gérer les Congés
+                </a>
+                <a href="{% url 'manage_expenses' %}" class="btn btn-warning btn-lg">
+                    📊 Gérer les Notes de Frais
+                </a>
+                <a href="{% url 'manage_kilometric_expenses' %}" class="btn btn-warning btn-lg">
+                    🚗 Gérer les Frais Kilométriques
+                </a>
+            </div>
+        </div>
+    {% else %}
+        <!-- Dashboard simplifié pour les employés -->
+        <div class="text-center mt-5">
+            <div class="btn-group" role="group" aria-label="Actions Employé">
+                <a href="{% url 'leave_request' %}" class="btn btn-primary btn-lg">
+                    ➕ Nouvelle Demande de Congé
+                </a>
+                <a href="{% url 'submit_expense' %}" class="btn btn-success btn-lg">
+                    ➕ Nouvelle Note de Frais
+                </a>
+                <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-secondary btn-lg">
+                    🚗 Ajouter un Frais Kilométrique
+                </a>
+                <a href="{% url 'my_kilometric_expenses' %}" class="btn btn-info btn-lg">
+                    📊 Voir mes Frais Kilométriques
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if is_hr or is_admin %}
+    <!-- Section Les Congés -->
+    <div class="card shadow-lg mt-4">
+        <div class="card-body">
+            <h4>🗓️ Les demandes de Congés</h4>
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Employés</th>
+                        <th>Date Début</th>
+                        <th>Date Fin</th>
+                        <th>Type</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if leave_requests %}
+                        {% for leave in leave_requests %}
+                            <tr>
+                                <td>{{ leave.user.username }}</td>
+                                <td>{{ leave.start_date }}</td>
+                                <td>{{ leave.end_date }}</td>
+                                <td>{{ leave.get_leave_type_display }}</td>
+                                <td>
+                                    <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                        {{ leave.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="5" class="text-center">Aucune demande de congé</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Section Les Notes de Frais -->
+    <div class="card shadow-lg mt-4">
+        <div class="card-body">
+            <h4>💸 Les Notes de Frais</h4>
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Employé</th>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if expense_reports %}
+                        {% for expense in expense_reports %}
+                            <tr>
+                                <td>{{ expense.user.username }}</td>
+                                <td>{{ expense.date }}</td>
+                                <td>{{ expense.description }}</td>
+                                <td>{{ expense.amount }} €</td>
+                                <td>
+                                    <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                        {{ expense.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="5" class="text-center">Aucune note de frais enregistrée</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <!-- Section Mes Notes de Frais -->
+    <div class="card shadow-lg mt-4">
+        <div class="card-body">
+            <h4>💸 Mes Notes de Frais</h4>
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if expense_reports %}
+                        {% for expense in expense_reports %}
+                            <tr>
+                                <td>{{ expense.date }}</td>
+                                <td>{{ expense.description }}</td>
+                                <td>{{ expense.amount }} €</td>
+                                <td>
+                                    <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                        {{ expense.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="5" class="text-center">Aucune note de frais enregistrée</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Section Mes Congés -->
+    <div class="card shadow-lg mt-4">
+        <div class="card-body">
+            <h4>🗓️ Mes Congés</h4>
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date Début</th>
+                        <th>Date Fin</th>
+                        <th>Type</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if leave_requests %}
+                        {% for leave in leave_requests %}
+                            <tr>
+                                <td>{{ leave.start_date }}</td>
+                                <td>{{ leave.end_date }}</td>
+                                <td>{{ leave.get_leave_type_display }}</td>
+                                <td>
+                                    <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                        {{ leave.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="5" class="text-center">Aucune demande de congé</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

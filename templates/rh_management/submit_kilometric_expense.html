@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">🚗 Déclaration d'un Frais Kilométrique</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="id_date" class="form-label">Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                            {{ form.date }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="project" class="form-label">Projet associé :</label>
+                        <input type="text" id="project" name="project" class="form-control" placeholder="Ex: Audit Sécurité 2025" required>
+                        <div class="invalid-feedback">
+                            Veuillez entrer un projet associé.
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ form.vehicle_type.label_tag }} {{ form.vehicle_type }}
+                        <div class="form-text" id="basic-addon4">Ex: Voiture, vélo</div>
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.fiscal_power.label_tag }} {{ form.fiscal_power }}
+                        <div class="form-text" id="basic-addon4">Ex: 6 CV </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="departure" class="form-label">Départ :</label>
+                        <input type="text" id="departure" name="departure" class="form-control" required>
+                        <div class="invalid-feedback">
+                            Veuillez entrer un lieu de départ.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="arrival" class="form-label">Arrivée :</label>
+                        <input type="text" id="arrival" name="arrival" class="form-control" required>
+                        <div class="invalid-feedback">
+                            Veuillez entrer un lieu d'arrivée.
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="departure_lat" name="departure_lat">
+                <input type="hidden" id="departure_lng" name="departure_lng">
+                <input type="hidden" id="arrival_lat" name="arrival_lat">
+                <input type="hidden" id="arrival_lng" name="arrival_lng">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" value="" id="aller_retour">
+                            <label class="form-check-label" for="aller_retour">
+                                🏁Aller-retour
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="distance" class="form-label">Distance (km) :</label>
+                        <input type="text" id="distance" name="distance" class="form-control" readonly>
+                    </div>
+                </div>
+                <div id="map" style="height: 400px;" class="mb-3"></div>
+                <button type="submit" class="btn btn-primary mt-3">✅ Soumettre</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 5 CSS -->
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Leaflet.js -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>   
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const allerRetourCheckbox = document.getElementById("aller_retour");
+        const distanceField = document.getElementById("distance");
+    
+        // Stocker la distance initiale pour éviter qu'elle ne soit réinitialisée
+        let distanceInitiale = parseFloat(distanceField.value) || 0;
+    
+        allerRetourCheckbox.addEventListener("change", function() {
+            if (distanceInitiale === 0) {
+                distanceInitiale = parseFloat(distanceField.value) || 0; // Sauvegarde la distance de départ
+            }
+            
+            if (this.checked) {
+                distanceField.value = (distanceInitiale * 2).toFixed(2); // Double la distance
+            } else {
+                distanceField.value = distanceInitiale.toFixed(2); // Remet la distance normale
+            }
+        });
+    
+        // Mise à jour de la distance initiale quand l'utilisateur change manuellement la distance
+        distanceField.addEventListener("input", function() {
+            if (!allerRetourCheckbox.checked) {
+                distanceInitiale = parseFloat(this.value) || 0;
+            }
+        });
+    });
+</script>     
+<script>
+    // Bootstrap 5 form validation
+    (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })()
+
+    let map = L.map('map').setView([-21.1151, 55.5364], 10); // Centré sur l'île de la Réunion
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let departureMarker, arrivalMarker;
+    let routeLayer = null;
+    const openRouteServiceApiKey = "5b3ce3597851110001cf6248b85e99a3c95448b8a83d306fd7b84056"; // Remplace par ta clé API
+
+    function updateMarker(lat, lng, type) {
+        if (type === 'departure') {
+            if (departureMarker) map.removeLayer(departureMarker);
+            departureMarker = L.marker([lat, lng]).addTo(map).bindPopup("Départ").openPopup();
+            document.getElementById("departure_lat").value = lat;
+            document.getElementById("departure_lng").value = lng;
+            reverseGeocode(lat, lng, "departure");
+        } else {
+            if (arrivalMarker) map.removeLayer(arrivalMarker);
+            arrivalMarker = L.marker([lat, lng]).addTo(map).bindPopup("Arrivée").openPopup();
+            document.getElementById("arrival_lat").value = lat;
+            document.getElementById("arrival_lng").value = lng;
+            reverseGeocode(lat, lng, "arrival");
+        }
+        calculateRoute();
+    }
+
+    function reverseGeocode(lat, lng, type) {
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+                let address = data.display_name;
+                if (type === "departure") {
+                    document.getElementById("departure").value = address;
+                } else {
+                    document.getElementById("arrival").value = address;
+                }
+            })
+            .catch(error => console.error("Erreur de géocodage :", error));
+    }
+
+    map.on('click', function(e) {
+        if (!departureMarker) {
+            updateMarker(e.latlng.lat, e.latlng.lng, 'departure');
+        } else if (!arrivalMarker) {
+            updateMarker(e.latlng.lat, e.latlng.lng, 'arrival');
+        }
+    });
+
+    function calculateRoute() {
+        if (departureMarker && arrivalMarker) {
+            let lat1 = departureMarker.getLatLng().lat;
+            let lng1 = departureMarker.getLatLng().lng;
+            let lat2 = arrivalMarker.getLatLng().lat;
+            let lng2 = arrivalMarker.getLatLng().lng;
+
+            let url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${openRouteServiceApiKey}&start=${lng1},${lat1}&end=${lng2},${lat2}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Réponse OpenRouteService :", data);
+
+                    if (data.features && data.features.length > 0) {
+                        let route = data.features[0];
+                        if (route.properties && route.properties.segments && route.properties.segments.length > 0) {
+                            let distance = route.properties.segments[0].distance / 1000; // Convertir en km
+                            document.getElementById("distance").value = distance.toFixed(2);
+
+                            if (routeLayer) {
+                                map.removeLayer(routeLayer);
+                            }
+
+                            let routeCoordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                            routeLayer = L.polyline(routeCoordinates, {color: 'blue'}).addTo(map);
+                            map.fitBounds(routeLayer.getBounds());
+                        } else {
+                            console.error("Erreur : Aucune route trouvée.");
+                            alert("Erreur : Aucune route trouvée. Essayez un autre itinéraire.");
+                        }
+                    } else {
+                        console.error("Erreur : Réponse API mal formatée ou route non trouvée.");
+                        alert("Erreur : Aucune route trouvée. Vérifiez les coordonnées.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Erreur lors du calcul de l'itinéraire :", error);
+                    alert("Erreur : Impossible de récupérer l'itinéraire. Vérifiez votre connexion et l'API Key.");
+                });
+        }
+    }
+</script>
+
+{% endblock %}

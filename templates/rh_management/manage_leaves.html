@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">📋 Validation des Demandes de Congé</h2>
+        </div>
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Employé</th>
+                        <th>Type</th>
+                        <th>Dates</th>
+                        <th>Motif</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in pending_leaves %}
+                    <tr>
+                        <td>{{ leave.user.username }}</td>
+                        <td>{{ leave.get_leave_type_display }}</td>
+                        <td>{{ leave.start_date }} → {{ leave.end_date }}</td>
+                        <td>{{ leave.reason }}</td>
+                        <td>
+                            <a href="{% url 'approve_leave' leave.id %}" class="btn btn-success btn-sm">✅ Approuver</a>
+                            <a href="{% url 'reject_leave' leave.id %}" class="btn btn-danger btn-sm">❌ Refuser</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">Aucune demande en attente</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="text-center mt-4">
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">Retour au tableau de bord</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

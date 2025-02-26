@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">📊 Gestion des Notes de Frais</h2>
+        </div>
+        <div class="card-body">
+            {% if pending_expenses %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Employé</th>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Montant</th>
+                            <th>Statut</th>
+                            <th>Pièce justificative</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in pending_expenses %}
+                        <tr>
+                            <td>{{ expense.user.username }}</td>
+                            <td>{{ expense.date }}</td>
+                            <td>{{ expense.description }}</td>
+                            <td>{{ expense.amount }} {{ expense.currency }}</td>
+                            <td>
+                                <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                    {{ expense.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if expense.receipt %}
+                                    <a href="{{ expense.receipt.url }}" target="_blank" class="btn btn-outline-primary btn-sm">📄 Voir</a>
+                                {% else %}
+                                    <span class="text-danger">❌ Aucun</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'approve_expense' expense.id %}" class="btn btn-success btn-sm">✅ Approuver</a>
+                                <a href="{% url 'reject_expense' expense.id %}" class="btn btn-danger btn-sm">❌ Rejeter</a>
+                                {% if expense.status == "approved" %}
+                                    <a href="{% url 'export_expense' expense.id %}" class="btn btn-primary btn-sm">
+                                        📥 Exporter en Excel
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="text-center mt-4">Aucune note de frais en attente.</p>
+            {% endif %}
+            <div class="text-center mt-4">
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">Retour au tableau de bord</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
