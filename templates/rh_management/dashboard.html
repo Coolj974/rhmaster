@@ -10,12 +10,21 @@
             <div class="btn-group" role="group" aria-label="Actions RH/Admin">
                 <a href="{% url 'manage_leaves' %}" class="btn btn-warning btn-lg">
                     📋 Gérer les Congés
+                    {% if new_leave_requests_count > 0 %}
+                        <span class="badge bg-danger">{{ new_leave_requests_count }}</span>
+                    {% endif %}
                 </a>
                 <a href="{% url 'manage_expenses' %}" class="btn btn-warning btn-lg">
                     📊 Gérer les Notes de Frais
+                    {% if new_expense_reports_count > 0 %}
+                        <span class="badge bg-danger">{{ new_expense_reports_count }}</span>
+                    {% endif %}
                 </a>
                 <a href="{% url 'manage_kilometric_expenses' %}" class="btn btn-warning btn-lg">
                     🚗 Gérer les Frais Kilométriques
+                    {% if new_kilometric_expenses_count > 0 %}
+                        <span class="badge bg-danger">{{ new_kilometric_expenses_count }}</span>
+                    {% endif %}
                 </a>
             </div>
         </div>
@@ -46,7 +55,7 @@
             <h4>🗓️ Les demandes de Congés</h4>
 
             <!-- Formulaire de filtrage pour les demandes de congés -->
-            <form method="get" class="mb-3" id="leave_filter_form">
+            <form method="get" class="mb-4" id="leave_filter_form">
                 <div class="row">
                     <div class="col-md-4">
                         <label for="status_filter_leave">Filtrer par statut:</label>
@@ -109,7 +118,7 @@
             <h4>💸 Les Notes de Frais</h4>
 
             <!-- Formulaire de filtrage pour les notes de frais -->
-            <form method="get" class="mb-3" id="expense_filter_form">
+            <form method="get" class="mb-4" id="expense_filter_form">
                 <div class="row">
                     <div class="col-md-4">
                         <label for="status_filter_expense">Filtrer par statut:</label>
@@ -252,7 +261,9 @@
                     sort_leave: sortBy
                 },
                 success: function(data) {
-                    $('#leave_requests_body').html(data.leave_requests);
+                    $('#leave_requests_body').fadeOut(300, function() {
+                        $(this).html(data.leave_requests).fadeIn(300);
+                    });
                 }
             });
         });
@@ -268,7 +279,9 @@
                     sort_expense: sortBy
                 },
                 success: function(data) {
-                    $('#expense_reports_body').html(data.expense_reports);
+                    $('#expense_reports_body').fadeOut(300, function() {
+                        $(this).html(data.expense_reports).fadeIn(300);
+                    });
                 }
             });
         });

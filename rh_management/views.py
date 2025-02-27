@@ -72,41 +72,20 @@ def logout_view(request):
 ### 🌟 TABLEAU DE BORD ###
 @login_required
 def dashboard_view(request):
-    """Affiche le tableau de bord avec les informations de l'utilisateur."""
-    is_admin = request.user.is_superuser
-    is_hr = request.user.groups.filter(name="HR").exists()
-    is_employee = not is_admin and not is_hr
-
-    leave_requests = LeaveRequest.objects.filter(user=request.user)
-    expense_reports = ExpenseReport.objects.filter(user=request.user)
-    kilometric_expenses = KilometricExpense.objects.filter(user=request.user)
-
-    leave_stats = {
-        'total': leave_requests.count(),
-        'approved': leave_requests.filter(status='approved').count(),
-        'pending': leave_requests.filter(status='pending').count(),
-        'rejected': leave_requests.filter(status='rejected').count(),
-    }
-
-    expense_stats = {
-        'total': expense_reports.count(),
-        'approved': expense_reports.filter(status='approved').count(),
-        'pending': expense_reports.filter(status='pending').count(),
-        'rejected': expense_reports.filter(status='rejected').count(),
-    }
-
-    # Si RH ou Admin -> Afficher toutes les demandes
-    if is_hr or is_admin:
-        leave_requests = LeaveRequest.objects.all()
-        expense_reports = ExpenseReport.objects.all()
+    new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+    new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+    new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
 
     context = {
-        "is_admin": is_admin,
-        "is_hr": is_hr,
-        "is_employee": is_employee,
-        "leave_requests": leave_requests,
-        "expense_reports": expense_reports,
-        "kilometric_expenses": kilometric_expenses,
+        "is_admin": request.user.is_superuser,
+        "is_hr": request.user.groups.filter(name='HR').exists(),
+        "is_employee": request.user.groups.filter(name='Employé').exists(),
+        "leave_requests": LeaveRequest.objects.all(),
+        "expense_reports": ExpenseReport.objects.all(),
+        "kilometric_expenses": KilometricExpense.objects.all(),
+        "new_leave_requests_count": new_leave_requests_count,
+        "new_expense_reports_count": new_expense_reports_count,
+        "new_kilometric_expenses_count": new_kilometric_expenses_count,
     }
     return render(request, 'rh_management/dashboard.html', context)
 
