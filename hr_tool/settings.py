@@ -31,11 +31,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'ton.email@gmail.com'
-EMAIL_HOST_PASSWORD = 'ton_mot_de_passe'
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'mail.cyberun.info')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 465))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'False') == 'false'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'cyberh@cyberun.info')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'ByEpOP3dIh*v')
 
 
 # Quick-start development settings - unsuitable for production
@@ -127,7 +128,7 @@ ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 
 # Activation automatique des comptes
 ACCOUNT_EMAIL_VERIFICATION = "none"
-ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_LOGIN_METHOD = "email"
 ACCOUNT_EMAIL_REQUIRED = True
 
 # Config Google
@@ -135,14 +136,20 @@ SITE_ID = 1
 
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "http"  # Mettre "http" si en local
 SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "APP": {
-            "client_id": "TON_CLIENT_ID",
-            "secret": "TON_CLIENT_SECRET",
-            "key": "",
+    'google': {
+        'APP': {
+            'client_id': '210016567660-jkn8444d0vl12ioom2leooamt3m2ein4.apps.googleusercontent.com',
+            'secret': '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',
+            'key': 'RHCYBER'
         },
-        "SCOPE": ["profile", "email"],
-        "AUTH_PARAMS": {"access_type": "online"},
+        'SCOPE': [
+            'profile',
+            'email',
+            'https://www.googleapis.com/auth/admin.directory.user.readonly'
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
     }
 }
 

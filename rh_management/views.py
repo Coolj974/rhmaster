@@ -12,6 +12,7 @@ from reportlab.pdfgen import canvas
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q
 from django.template.loader import render_to_string
+from django.core.mail import send_mail  # Ajoutez cette ligne
 
 # Vérifie si l'utilisateur est un admin ou un RH
 def is_admin_or_hr(user):
@@ -194,6 +195,14 @@ def approve_leave(request, leave_id):
     leave = get_object_or_404(LeaveRequest, id=leave_id)
     leave.status = 'approved'
     leave.save()
+
+    send_mail(
+        subject="Votre demande de congé a été approuvée",
+        message=f"Bonjour {leave.user.username},\n\nVotre demande de congé du {leave.start_date} au {leave.end_date} a été approuvée.",
+        from_email="noreply@cyberun.info",
+        recipient_list=[leave.user.email]
+    )
+
     messages.success(request, f"Congé approuvé pour {leave.user.username}.")
     return redirect('manage_leaves')
 
@@ -205,6 +214,14 @@ def reject_leave(request, leave_id):
     leave = get_object_or_404(LeaveRequest, id=leave_id)
     leave.status = 'rejected'
     leave.save()
+
+    send_mail(
+        subject="Votre demande de congé a été refusée",
+        message=f"Bonjour {leave.user.username},\n\nVotre demande de congé du {leave.start_date} au {leave.end_date} a été refusée.",
+        from_email="noreply@cyberun.info",
+        recipient_list=[leave.user.email]
+    )
+
     messages.error(request, f"Congé refusé pour {leave.user.username}.")
     return redirect('manage_leaves')
 
@@ -253,12 +270,12 @@ def approve_expense(request, expense_id):
     expense.status = 'approved'
     expense.save()
 
-    # send_mail(
-    #    subject="Votre note de frais a été approuvée",
-    #    message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été approuvée.",
-    #    from_email="noreply@entreprise.com",
-    #    recipient_list=[expense.user.email]
-    # )
+    send_mail(
+        subject="Votre note de frais a été approuvée",
+        message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été approuvée.",
+        from_email="noreply@cyberun.info",
+        recipient_list=[expense.user.email]
+     )
 
     messages.success(request, "Note de frais approuvée.")
     return redirect('manage_expenses')
@@ -272,12 +289,12 @@ def reject_expense(request, expense_id):
     expense.status = 'rejected'
     expense.save()
 
-    # send_mail(
-    #    subject="Votre note de frais a été refusée",
-    #    message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été refusée.",
-    #    from_email="noreply@entreprise.com",
-    #    recipient_list=[expense.user.email]
-    # )
+    send_mail(
+        subject="Votre note de frais a été refusée",
+        message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été refusée.",
+        from_email="noreply@cyberun.info",
+        recipient_list=[expense.user.email]
+    )
 
     messages.error(request, "Note de frais refusée.")
     return redirect('manage_expenses')
@@ -449,7 +466,16 @@ def approve_kilometric_expense(request, expense_id):
     expense = get_object_or_404(KilometricExpense, id=expense_id)
     expense.status = "approved"
     expense.save()
+
+    send_mail(
+        subject="Votre frais kilométrique a été approuvé",
+        message=f"Bonjour {expense.user.username},\n\nVotre frais kilométrique de {expense.distance} km a été approuvé.",
+        from_email="noreply@cyberun.info",
+        recipient_list=[expense.user.email]
+    )
+
     return redirect("manage_kilometric_expenses")
+
 
 @login_required
 @user_passes_test(is_admin_or_hr)
@@ -458,7 +484,16 @@ def reject_kilometric_expense(request, expense_id):
     expense = get_object_or_404(KilometricExpense, id=expense_id)
     expense.status = "rejected"
     expense.save()
+
+    send_mail(
+        subject="Votre frais kilométrique a été refusé",
+        message=f"Bonjour {expense.user.username},\n\nVotre frais kilométrique de {expense.distance} km a été refusé.",
+        from_email="noreply@cyberun.info",
+        recipient_list=[expense.user.email]
+    )
+
     return redirect("manage_kilometric_expenses")
+
 
 @login_required
 @user_passes_test(is_admin_or_hr)
