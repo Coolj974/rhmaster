@@ -3,12 +3,15 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import HttpResponse
 import pandas as pd
+from django.http import JsonResponse
 from django.contrib.auth.models import User
 from .models import LeaveRequest, ExpenseReport, KilometricExpense
 from .forms import ExpenseReportForm, KilometricExpenseForm, ExpenseForm
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from django.contrib.auth import authenticate, login, logout
+from django.db.models import Q
+from django.template.loader import render_to_string
 
 # Vérifie si l'utilisateur est un admin ou un RH
 def is_admin_or_hr(user):
@@ -107,9 +110,56 @@ def dashboard_view(request):
     }
     return render(request, 'rh_management/dashboard.html', context)
 
-### 🌟 GESTION DES CONGÉS ###
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def dashboard_filtered(request):
+    # Filtrage et tri des demandes de congés
+    leave_requests = LeaveRequest.objects.all()
+    status_leave = request.GET.get('status_leave')
+    sort_leave = request.GET.get('sort_leave')
+
+    if status_leave:
+        leave_requests = leave_requests.filter(status=status_leave)
+
+    if sort_leave == 'date_desc':
+        leave_requests = leave_requests.order_by('-start_date')
+    elif sort_leave == 'date_asc':
+        leave_requests = leave_requests.order_by('start_date')
+
+    # Filtrage et tri des notes de frais
+    expense_reports = ExpenseReport.objects.all()
+    status_expense = request.GET.get('status_expense')
+    sort_expense = request.GET.get('sort_expense')
+
+    if status_expense:
+        expense_reports = expense_reports.filter(status=status_expense)
+
+    if sort_expense == 'date_desc':
+        expense_reports = expense_reports.order_by('-date')
+    elif sort_expense == 'date_asc':
+        expense_reports = expense_reports.order_by('date')
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'leave_requests': render_to_string('rh_management/partials/leave_requests.html', {'leave_requests': leave_requests}),
+            'expense_reports': render_to_string('rh_management/partials/expense_reports.html', {'expense_reports': expense_reports}),
+        })
+
+    return render(request, 'rh_management/dashboard.html', {
+        'leave_requests': leave_requests,
+        'expense_reports': expense_reports,
+        'is_hr': request.user.groups.filter(name='HR').exists(),
+        'is_admin': request.user.is_superuser,
+    })
+    
 def is_hr(user):
     """Vérifie si l'utilisateur est RH."""
+    return user.is_staff  # Seuls les RH peuvent approuver les congés
+
+### 🌟 GESTION DES CONGÉS ###
     return user.is_staff  # Seuls les RH peuvent approuver les congés
 
 # ✅ Demande de congé

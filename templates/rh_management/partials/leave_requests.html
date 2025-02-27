@@ -1,0 +1,15 @@
+{% for leave in leave_requests %}
+    <tr data-id="{{ leave.id }}">
+        <td>{{ leave.user.username }}</td>
+        <td>{{ leave.start_date }}</td>
+        <td>{{ leave.end_date }}</td>
+        <td>{{ leave.get_leave_type_display }}</td>
+        <td>
+            <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                {{ leave.status }}
+            </span>
+        </td>
+    </tr>
+{% empty %}
+    <tr><td colspan="5" class="text-center">Aucune demande de congé</td></tr>
+{% endfor %}

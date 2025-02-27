@@ -1,0 +1,15 @@
+{% for expense in expense_reports %}
+    <tr data-id="{{ expense.id }}">
+        <td>{{ expense.user.username }}</td>
+        <td>{{ expense.date }}</td>
+        <td>{{ expense.description }}</td>
+        <td>{{ expense.amount }} €</td>
+        <td>
+            <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                {{ expense.status }}
+            </span>
+        </td>
+    </tr>
+{% empty %}
+    <tr><td colspan="5" class="text-center">Aucune note de frais enregistrée</td></tr>
+{% endfor %}
