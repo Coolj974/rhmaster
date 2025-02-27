@@ -1,6 +1,6 @@
 from rh_management.views import register_view
 from django.contrib.auth.views import LogoutView
-from django.urls import path
+from django.urls import path, include
 from rh_management.views import login_view
 from django.contrib import admin
 from rh_management import views
@@ -24,6 +24,8 @@ urlpatterns = [
     path("login/", login_view, name="login"),  # Login page
     path("register/", register_view, name="register"),  # Registration page
     path("logout/", LogoutView.as_view(), name="logout"),  # Logout page
+    path('accounts/login/', login_view, name="login"),  # Add this
+
 
     # Home and Dashboard
     path("", home_view, name="home"),  # Home page
@@ -44,8 +46,6 @@ urlpatterns = [
     path("export-expenses-pdf/", export_expenses_pdf, name="export_expenses_pdf"),  # Export expenses to PDF
     path("export-expenses/", export_expenses, name="export_expenses"),  # Export expenses
     path("cancel-expense/<int:expense_id>/", cancel_expense, name="cancel_expense"),
-    
-
 
     # Kilometric Expense Management
     path("submit-kilometric-expense/", submit_kilometric_expense, name="submit_kilometric_expense"),  # Submit kilometric expense
@@ -54,7 +54,8 @@ urlpatterns = [
     path("approve-kilometric-expense/<int:expense_id>/", approve_kilometric_expense, name="approve_kilometric_expense"),  # Approve kilometric expense
     path("reject-kilometric-expense/<int:expense_id>/", reject_kilometric_expense, name="reject_kilometric_expense"),  # Reject kilometric expense
     path("edit-kilometric-expense/<int:expense_id>/", edit_kilometric_expense, name="edit_kilometric_expense"),  # Edit kilometric expense
-# ... autres URL patterns ...
+
+    # Other URLs
     path('dashboard_filtered/', views.dashboard_filtered, name='dashboard_filtered'),
 ]
 

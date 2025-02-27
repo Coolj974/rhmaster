@@ -64,6 +64,7 @@ def register_view(request):
 
     return render(request, 'auth/register.html')
 
+
 # ✅ Déconnexion
 def logout_view(request):
     """Gère la déconnexion de l'utilisateur."""

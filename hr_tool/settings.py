@@ -60,9 +60,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'allauth',
-    'crispy_forms',  # ✅ Ajouté pour les formulaires
+    'crispy_forms',  # Ajoutez cette ligne
     'crispy_bootstrap4',
+
 
     # Ajoutez ici votre application
     'rh_management',
@@ -78,7 +78,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',  # Ajouté pour corriger l'erreur
 ]
 
 ROOT_URLCONF = 'hr_tool.urls'
@@ -114,21 +113,11 @@ DATABASES = {
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
 ]
-
-SITE_ID = 1
 
 # Redirections après connexion
 LOGIN_REDIRECT_URL = '/dashboard/'
-ACCOUNT_LOGOUT_REDIRECT_URL = "/"
-
-# Activation automatique des comptes
-ACCOUNT_EMAIL_VERIFICATION = "none"
-ACCOUNT_LOGIN_METHOD = "email"
-ACCOUNT_EMAIL_REQUIRED = True
-
-
+LOGOUT_REDIRECT_URL = "/login/"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
