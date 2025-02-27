@@ -49,8 +49,6 @@ SECRET_KEY = 'django-insecure-(ldbt*&5n8)v_qai_-tlay1r-ini25nloi2cb(sgnv#$kl*k$#
 DEBUG = True
 
 ALLOWED_HOSTS = []
-# Config Google
-SITE_ID = 1
 
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "http"  # Mettre "http" si en local
 
