@@ -167,13 +167,22 @@ def leave_request_view(request):
         reason = request.POST['reason']
         leave_type = request.POST['leave_type']
 
-        LeaveRequest.objects.create(
+        leave_request = LeaveRequest.objects.create(
             user=request.user,
             start_date=start_date,
             end_date=end_date,
             reason=reason,
             leave_type=leave_type
         )
+
+        # Envoi d'un email de notification pour validation
+        send_mail(
+            subject="Nouvelle demande de congé soumise",
+            message=f"Bonjour,\n\nUne nouvelle demande de congé a été soumise par {leave_request.user.username}. Veuillez la valider.",
+            from_email="noreply@cyberun.info",
+            recipient_list=["rh@cyberun.info"]  # Remplacez par l'email du service RH
+        )
+
         messages.success(request, "Votre demande de congé a été soumise avec succès.")
         return redirect('dashboard')
 
@@ -237,6 +246,15 @@ def submit_expense(request):
             expense = form.save(commit=False)
             expense.user = request.user
             expense.save()
+            
+            # Envoi d'un email de notification pour validation
+            send_mail(
+                subject="Nouvelle note de frais soumise",
+                message=f"Bonjour,\n\nUne nouvelle note de frais a été soumise par {expense.user.username}. Veuillez la valider.",
+                from_email="noreply@cyberun.info",
+                recipient_list=["rh@cyberun.info"]  # Remplacez par l'email du service RH
+            )
+            
             messages.success(request, "Note de frais enregistrée avec succès.")
             return redirect("dashboard")
         else:
@@ -383,6 +401,15 @@ def submit_kilometric_expense(request):
                 expense.distance *= 2  # Double la distance
             
             expense.save()
+            
+            # Envoi d'un email de notification pour validation
+            send_mail(
+                subject="Nouvelle note de frais kilométrique soumise",
+                message=f"Bonjour,\n\nUne nouvelle note de frais kilométrique a été soumise par {expense.user.username}. Veuillez la valider.",
+                from_email="noreply@cyberun.info",
+                recipient_list=["rh@cyberun.info"]  # Remplacez par l'email du service RH
+            )
+            
             messages.success(request, "Frais kilométrique enregistré avec succès !")
             return redirect("my_kilometric_expenses")
     else:

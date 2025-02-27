@@ -61,9 +61,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
     'crispy_forms',  # ✅ Ajouté pour les formulaires
     'crispy_bootstrap4',
 
@@ -131,27 +128,6 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_LOGIN_METHOD = "email"
 ACCOUNT_EMAIL_REQUIRED = True
 
-# Config Google
-SITE_ID = 1
-
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = "http"  # Mettre "http" si en local
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'APP': {
-            'client_id': '210016567660-jkn8444d0vl12ioom2leooamt3m2ein4.apps.googleusercontent.com',
-            'secret': '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',
-            'key': 'RHCYBER'
-        },
-        'SCOPE': [
-            'profile',
-            'email',
-            'https://www.googleapis.com/auth/admin.directory.user.readonly'
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        }
-    }
-}
 
 
 # Password validation

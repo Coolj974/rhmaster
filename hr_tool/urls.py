@@ -1,6 +1,6 @@
 from rh_management.views import register_view
 from django.contrib.auth.views import LogoutView
-from django.urls import path, include
+from django.urls import path
 from rh_management.views import login_view
 from django.contrib import admin
 from rh_management import views
@@ -21,7 +21,6 @@ from rh_management.views import (
 urlpatterns = [
     # Administration
     path("admin/", admin.site.urls),  # Admin site
-    path('accounts/', include('allauth.urls')),  # Ajoute les URLs d'authentification
     path("login/", login_view, name="login"),  # Login page
     path("register/", register_view, name="register"),  # Registration page
     path("logout/", LogoutView.as_view(), name="logout"),  # Logout page
