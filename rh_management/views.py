@@ -121,15 +121,30 @@ def dashboard_filtered(request):
     elif sort_expense == 'date_asc':
         expense_reports = expense_reports.order_by('date')
 
+    # Filtrage et tri des frais kilométriques
+    kilometric_expenses = KilometricExpense.objects.all()
+    status_kilometric_expense = request.GET.get('status_kilometric_expense')
+    sort_kilometric_expense = request.GET.get('sort_kilometric_expense')
+
+    if status_kilometric_expense:
+        kilometric_expenses = kilometric_expenses.filter(status=status_kilometric_expense)
+
+    if sort_kilometric_expense == 'date_desc':
+        kilometric_expenses = kilometric_expenses.order_by('-date')
+    elif sort_kilometric_expense == 'date_asc':
+        kilometric_expenses = kilometric_expenses.order_by('date')
+
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({
             'leave_requests': render_to_string('rh_management/partials/leave_requests.html', {'leave_requests': leave_requests}),
             'expense_reports': render_to_string('rh_management/partials/expense_reports.html', {'expense_reports': expense_reports}),
+            'kilometric_expense_reports': render_to_string('rh_management/partials/kilometric_expense_reports.html', {'kilometric_expenses': kilometric_expenses}),
         })
 
     return render(request, 'rh_management/dashboard.html', {
         'leave_requests': leave_requests,
         'expense_reports': expense_reports,
+        'kilometric_expenses': kilometric_expenses,
         'is_hr': request.user.groups.filter(name='HR').exists(),
         'is_admin': request.user.is_superuser,
     })

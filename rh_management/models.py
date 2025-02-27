@@ -89,8 +89,11 @@ class KilometricExpense(models.Model):
         choices=STATUS_CHOICES,
         default='pending'
     )
+    description = models.CharField(max_length=255, blank=True)
 
     def save(self, *args, **kwargs):
+        if not self.description:
+            self.description = f"Frais kilométrique de {self.departure} à {self.arrival}"
         rate_per_km = {3: 0.502, 4: 0.575, 5: 0.601, 6: 0.631, 7: 0.661}
         if self.distance:
             self.amount = self.distance * rate_per_km.get(self.fiscal_power, 0.502)

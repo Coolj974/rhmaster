@@ -174,6 +174,71 @@
             </table>
         </div>
     </div>
+
+    <!-- Section Les Frais Kilométriques -->
+    <div class="card shadow-lg mt-4">
+        <div class="card-body">
+            <h4>🚗 Les Frais Kilométriques</h4>
+
+            <!-- Formulaire de filtrage pour les frais kilométriques -->
+            <form method="get" class="mb-4" id="kilometric_expense_filter_form">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="status_filter_kilometric_expense">Filtrer par statut:</label>
+                        <select class="form-control" id="status_filter_kilometric_expense" name="status_kilometric_expense">
+                            <option value="">Tous</option>
+                            <option value="pending">En attente</option>
+                            <option value="approved">Approuvé</option>
+                            <option value="rejected">Rejeté</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="sort_by_kilometric_expense">Trier par:</label>
+                        <select class="form-control" id="sort_by_kilometric_expense" name="sort_kilometric_expense">
+                            <option value="date_desc">Date (Récent à Ancien)</option>
+                            <option value="date_asc">Date (Ancien à Récent)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-primary mt-4" id="filter_kilometric_expense">Filtrer</button>
+                    </div>
+                </div>
+            </form>
+
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Employé</th>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Distance</th>
+                        <th>Montant (€)</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody id="kilometric_expense_reports_body">
+                    {% if kilometric_expenses %}
+                        {% for expense in kilometric_expenses %}
+                            <tr data-id="{{ expense.id }}">
+                                <td>{{ expense.user.username }}</td>
+                                <td>{{ expense.date }}</td>
+                                <td>{{ expense.description|default:"Frais kilométrique" }}</td>
+                                <td>{{ expense.distance }} km</td>
+                                <td>{{ expense.amount }}</td>
+                                <td>
+                                    <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                        {{ expense.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="5" class="text-center">Aucune note de frais kilométriques enregistrée</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
     {% else %}
     <!-- Section Mes Notes de Frais -->
     <div class="card shadow-lg mt-4">
@@ -281,6 +346,24 @@
                 success: function(data) {
                     $('#expense_reports_body').fadeOut(300, function() {
                         $(this).html(data.expense_reports).fadeIn(300);
+                    });
+                }
+            });
+        });
+
+        $('#filter_kilometric_expense').click(function() {
+            var selectedStatus = $('#status_filter_kilometric_expense').val();
+            var sortBy = $('#sort_by_kilometric_expense').val();
+
+            $.ajax({
+                url: "{% url 'dashboard_filtered' %}",
+                data: {
+                    status_kilometric_expense: selectedStatus,
+                    sort_kilometric_expense: sortBy
+                },
+                success: function(data) {
+                    $('#kilometric_expense_reports_body').fadeOut(300, function() {
+                        $(this).html(data.kilometric_expense_reports).fadeIn(300);
                     });
                 }
             });
