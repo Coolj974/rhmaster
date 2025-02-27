@@ -33,8 +33,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'mail.cyberun.info')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 465))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'False') == 'false'
-EMAIL_USE_SSL = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'False').lower() in ['true', '1', 't']
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'True').lower() in ['true', '1', 't']
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'cyberh@cyberun.info')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'ByEpOP3dIh*v')
 
@@ -49,7 +49,10 @@ SECRET_KEY = 'django-insecure-(ldbt*&5n8)v_qai_-tlay1r-ini25nloi2cb(sgnv#$kl*k$#
 DEBUG = True
 
 ALLOWED_HOSTS = []
+# Config Google
+SITE_ID = 1
 
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "http"  # Mettre "http" si en local
 
 # Application definition
 
