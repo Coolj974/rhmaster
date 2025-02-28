@@ -180,7 +180,7 @@ def leave_request_view(request):
         send_mail(
             subject="Nouvelle demande de congé soumise",
             message=f"Bonjour,\n\nUne nouvelle demande de congé a été soumise par {leave_request.user.username}. Veuillez la valider.",
-            from_email="noreply@cyberun.info",
+            from_email="enkai@outlook.fr",
             recipient_list=["rh@cyberun.info"]  # Remplacez par l'email du service RH
         )
 
@@ -209,7 +209,7 @@ def approve_leave(request, leave_id):
     send_mail(
         subject="Votre demande de congé a été approuvée",
         message=f"Bonjour {leave.user.username},\n\nVotre demande de congé du {leave.start_date} au {leave.end_date} a été approuvée.",
-        from_email="noreply@cyberun.info",
+        from_email="enkai@outlook.fr",
         recipient_list=[leave.user.email]
     )
 
@@ -228,7 +228,7 @@ def reject_leave(request, leave_id):
     send_mail(
         subject="Votre demande de congé a été refusée",
         message=f"Bonjour {leave.user.username},\n\nVotre demande de congé du {leave.start_date} au {leave.end_date} a été refusée.",
-        from_email="noreply@cyberun.info",
+        from_email="enkai@outlook.fr",
         recipient_list=[leave.user.email]
     )
 
@@ -252,7 +252,7 @@ def submit_expense(request):
             send_mail(
                 subject="Nouvelle note de frais soumise",
                 message=f"Bonjour,\n\nUne nouvelle note de frais a été soumise par {expense.user.username}. Veuillez la valider.",
-                from_email="noreply@cyberun.info",
+                from_email="enkai@outlook.fr",
                 recipient_list=["rh@cyberun.info"]  # Remplacez par l'email du service RH
             )
             
@@ -292,7 +292,7 @@ def approve_expense(request, expense_id):
     send_mail(
         subject="Votre note de frais a été approuvée",
         message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été approuvée.",
-        from_email="noreply@cyberun.info",
+        from_email="enkai@outlook.fr",
         recipient_list=[expense.user.email]
      )
 
@@ -311,7 +311,7 @@ def reject_expense(request, expense_id):
     send_mail(
         subject="Votre note de frais a été refusée",
         message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été refusée.",
-        from_email="noreply@cyberun.info",
+        from_email="enkai@outlook.fr",
         recipient_list=[expense.user.email]
     )
 
@@ -407,7 +407,7 @@ def submit_kilometric_expense(request):
             send_mail(
                 subject="Nouvelle note de frais kilométrique soumise",
                 message=f"Bonjour,\n\nUne nouvelle note de frais kilométrique a été soumise par {expense.user.username}. Veuillez la valider.",
-                from_email="noreply@cyberun.info",
+                from_email="enkai@outlook.fr",
                 recipient_list=["rh@cyberun.info"]  # Remplacez par l'email du service RH
             )
             
@@ -498,7 +498,7 @@ def approve_kilometric_expense(request, expense_id):
     send_mail(
         subject="Votre frais kilométrique a été approuvé",
         message=f"Bonjour {expense.user.username},\n\nVotre frais kilométrique de {expense.distance} km a été approuvé.",
-        from_email="noreply@cyberun.info",
+        from_email="enkai@outlook.fr",
         recipient_list=[expense.user.email]
     )
 
@@ -516,7 +516,7 @@ def reject_kilometric_expense(request, expense_id):
     send_mail(
         subject="Votre frais kilométrique a été refusé",
         message=f"Bonjour {expense.user.username},\n\nVotre frais kilométrique de {expense.distance} km a été refusé.",
-        from_email="noreply@cyberun.info",
+        from_email="enkai@outlook.fr",
         recipient_list=[expense.user.email]
     )
 

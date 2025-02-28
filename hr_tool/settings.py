@@ -31,12 +31,15 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'mail.cyberun.info')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', 465))
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp-mail.outlook.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'False').lower() in ['true', '1', 't']
-EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'True').lower() in ['true', '1', 't']
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'cyberh@cyberun.info')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'ByEpOP3dIh*v')
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() in ['true', '1', 't']
+EMAIL_USESTARTTLS = os.getenv('EMAIL_USESTARTTLS', 'True').lower() in ['true', '1', 't']
+EMAIL_HOST_USER = os.getenv('enkai@outlook.fr')
+EMAIL_HOST_PASSWORD = os.getenv('HnL$8@792_yz(pV')
+
+
 
 
 # Quick-start development settings - unsuitable for production
