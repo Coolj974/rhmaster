@@ -14,6 +14,10 @@ from django.db.models import Q
 from django.template.loader import render_to_string
 from django.core.mail import send_mail  # Ajoutez cette ligne
 
+### 🌟 MAIL RH ###
+mailrh = ['oti@cyberun.info']
+
+
 # Vérifie si l'utilisateur est un admin ou un RH
 def is_admin_or_hr(user):
     return user.is_staff or user.groups.filter(name="HR").exists()
@@ -209,7 +213,7 @@ def approve_leave(request, leave_id):
     send_mail(
         subject="Votre demande de congé a été approuvée",
         message=f"Bonjour {leave.user.username},\n\nVotre demande de congé du {leave.start_date} au {leave.end_date} a été approuvée.",
-        from_email="enkai@outlook.fr",
+        from_email="no-reply@cyberun.info",
         recipient_list=[leave.user.email]
     )
 
@@ -228,7 +232,7 @@ def reject_leave(request, leave_id):
     send_mail(
         subject="Votre demande de congé a été refusée",
         message=f"Bonjour {leave.user.username},\n\nVotre demande de congé du {leave.start_date} au {leave.end_date} a été refusée.",
-        from_email="enkai@outlook.fr",
+        from_email="no-reply@cyberun.info",
         recipient_list=[leave.user.email]
     )
 
@@ -252,8 +256,8 @@ def submit_expense(request):
             send_mail(
                 subject="Nouvelle note de frais soumise",
                 message=f"Bonjour,\n\nUne nouvelle note de frais a été soumise par {expense.user.username}. Veuillez la valider.",
-                from_email="enkai@outlook.fr",
-                recipient_list=["rh@cyberun.info"]  # Remplacez par l'email du service RH
+                from_email= expense.user.email,
+                recipient_list= mailrh  # Remplacez par l'email du service RH
             )
             
             messages.success(request, "Note de frais enregistrée avec succès.")
@@ -292,8 +296,8 @@ def approve_expense(request, expense_id):
     send_mail(
         subject="Votre note de frais a été approuvée",
         message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été approuvée.",
-        from_email="enkai@outlook.fr",
-        recipient_list=[expense.user.email]
+        from_email="no-reply@cyberun.info",
+        recipient_list= [expense.user.email]
      )
 
     messages.success(request, "Note de frais approuvée.")
@@ -311,7 +315,7 @@ def reject_expense(request, expense_id):
     send_mail(
         subject="Votre note de frais a été refusée",
         message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été refusée.",
-        from_email="enkai@outlook.fr",
+        from_email="no-reply@cyberun.info",
         recipient_list=[expense.user.email]
     )
 
@@ -498,7 +502,7 @@ def approve_kilometric_expense(request, expense_id):
     send_mail(
         subject="Votre frais kilométrique a été approuvé",
         message=f"Bonjour {expense.user.username},\n\nVotre frais kilométrique de {expense.distance} km a été approuvé.",
-        from_email="enkai@outlook.fr",
+        from_email="no-reply@cyberun.info",
         recipient_list=[expense.user.email]
     )
 

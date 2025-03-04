@@ -30,16 +30,18 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp-mail.outlook.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'False').lower() in ['true', '1', 't']
-EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() in ['true', '1', 't']
-EMAIL_USESTARTTLS = os.getenv('EMAIL_USESTARTTLS', 'True').lower() in ['true', '1', 't']
-EMAIL_HOST_USER = os.getenv('enkai@outlook.fr')
-EMAIL_HOST_PASSWORD = os.getenv('HnL$8@792_yz(pV')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'alabama.o2switch.net')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 465))  # ⚠️ Si 465, on active SSL
 
+# Assurez-vous que la bonne variable d'environnement est utilisée
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'False').lower() == 'true'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'True').lower() == 'true'  # Correction
 
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'cyberh@dlxi7823.odns.fr')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'Ld(hfnbK5cvO')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
 # Quick-start development settings - unsuitable for production
