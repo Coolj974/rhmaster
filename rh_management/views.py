@@ -181,12 +181,12 @@ def leave_request_view(request):
         )
 
         # Envoi d'un email de notification pour validation
-        send_mail(
-            subject="Nouvelle demande de congé soumise",
-            message=f"Bonjour,\n\nUne nouvelle demande de congé a été soumise par {leave_request.user.username}. Veuillez la valider.",
-            from_email="enkai@outlook.fr",
-            recipient_list=["rh@cyberun.info"]  # Remplacez par l'email du service RH
-        )
+       # send_mail(
+       #     subject="Nouvelle demande de congé soumise",
+       #     message=f"Bonjour,\n\nUne nouvelle demande de congé a été soumise par {leave_request.user.username}. Veuillez la valider.",
+       #     from_email=[leave.user.email],
+       #     recipient_list=["rh@cyberun.info"]  # Remplacez par l'email du service RH
+       # )
 
         messages.success(request, "Votre demande de congé a été soumise avec succès.")
         return redirect('dashboard')
@@ -210,12 +210,12 @@ def approve_leave(request, leave_id):
     leave.status = 'approved'
     leave.save()
 
-    send_mail(
-        subject="Votre demande de congé a été approuvée",
-        message=f"Bonjour {leave.user.username},\n\nVotre demande de congé du {leave.start_date} au {leave.end_date} a été approuvée.",
-        from_email="no-reply@cyberun.info",
-        recipient_list=[leave.user.email]
-    )
+   # send_mail(
+   #     subject="Votre demande de congé a été approuvée",
+   #     message=f"Bonjour {leave.user.username},\n\nVotre demande de congé du {leave.start_date} au {leave.end_date} a été approuvée.",
+   #     from_email="no-reply@cyberun.info",
+   #     recipient_list=[leave.user.email]
+   # )
 
     messages.success(request, f"Congé approuvé pour {leave.user.username}.")
     return redirect('manage_leaves')
@@ -229,12 +229,12 @@ def reject_leave(request, leave_id):
     leave.status = 'rejected'
     leave.save()
 
-    send_mail(
-        subject="Votre demande de congé a été refusée",
-        message=f"Bonjour {leave.user.username},\n\nVotre demande de congé du {leave.start_date} au {leave.end_date} a été refusée.",
-        from_email="no-reply@cyberun.info",
-        recipient_list=[leave.user.email]
-    )
+   # send_mail(
+   #     subject="Votre demande de congé a été refusée",
+   #     message=f"Bonjour {leave.user.username},\n\nVotre demande de congé du {leave.start_date} au {leave.end_date} a été refusée.",
+   #     from_email="no-reply@cyberun.info",
+   #     recipient_list=[leave.user.email]
+   # )
 
     messages.error(request, f"Congé refusé pour {leave.user.username}.")
     return redirect('manage_leaves')
@@ -253,12 +253,12 @@ def submit_expense(request):
             expense.save()
             
             # Envoi d'un email de notification pour validation
-            send_mail(
-                subject="Nouvelle note de frais soumise",
-                message=f"Bonjour,\n\nUne nouvelle note de frais a été soumise par {expense.user.username}. Veuillez la valider.",
-                from_email= expense.user.email,
-                recipient_list= mailrh  # Remplacez par l'email du service RH
-            )
+           # send_mail(
+           #     subject="Nouvelle note de frais soumise",
+           #     message=f"Bonjour,\n\nUne nouvelle note de frais a été soumise par {expense.user.username}. Veuillez la valider.",
+           #     from_email= expense.user.email,
+           #     recipient_list= mailrh  # Remplacez par l'email du service RH
+           # )
             
             messages.success(request, "Note de frais enregistrée avec succès.")
             return redirect("dashboard")
@@ -293,12 +293,12 @@ def approve_expense(request, expense_id):
     expense.status = 'approved'
     expense.save()
 
-    send_mail(
-        subject="Votre note de frais a été approuvée",
-        message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été approuvée.",
-        from_email="no-reply@cyberun.info",
-        recipient_list= [expense.user.email]
-     )
+   # send_mail(
+   #     subject="Votre note de frais a été approuvée",
+   #     message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été approuvée.",
+   #     from_email="no-reply@cyberun.info",
+   #     recipient_list= [expense.user.email]
+   #  )
 
     messages.success(request, "Note de frais approuvée.")
     return redirect('manage_expenses')
@@ -312,12 +312,12 @@ def reject_expense(request, expense_id):
     expense.status = 'rejected'
     expense.save()
 
-    send_mail(
-        subject="Votre note de frais a été refusée",
-        message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été refusée.",
-        from_email="no-reply@cyberun.info",
-        recipient_list=[expense.user.email]
-    )
+   # send_mail(
+   #     subject="Votre note de frais a été refusée",
+   #     message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été refusée.",
+   #     from_email="no-reply@cyberun.info",
+   #     recipient_list=[expense.user.email]
+   # )
 
     messages.error(request, "Note de frais refusée.")
     return redirect('manage_expenses')
@@ -408,12 +408,12 @@ def submit_kilometric_expense(request):
             expense.save()
             
             # Envoi d'un email de notification pour validation
-            send_mail(
-                subject="Nouvelle note de frais kilométrique soumise",
-                message=f"Bonjour,\n\nUne nouvelle note de frais kilométrique a été soumise par {expense.user.username}. Veuillez la valider.",
-                from_email="enkai@outlook.fr",
-                recipient_list=["rh@cyberun.info"]  # Remplacez par l'email du service RH
-            )
+           # send_mail(
+           #     subject="Nouvelle note de frais kilométrique soumise",
+           #     message=f"Bonjour,\n\nUne nouvelle note de frais kilométrique a été soumise par {expense.user.username}. Veuillez la valider.",
+           #     from_email="enkai@outlook.fr",
+           #     recipient_list=["rh@cyberun.info"]  # Remplacez par l'email du service RH
+           # )
             
             messages.success(request, "Frais kilométrique enregistré avec succès !")
             return redirect("my_kilometric_expenses")
@@ -499,12 +499,12 @@ def approve_kilometric_expense(request, expense_id):
     expense.status = "approved"
     expense.save()
 
-    send_mail(
-        subject="Votre frais kilométrique a été approuvé",
-        message=f"Bonjour {expense.user.username},\n\nVotre frais kilométrique de {expense.distance} km a été approuvé.",
-        from_email="no-reply@cyberun.info",
-        recipient_list=[expense.user.email]
-    )
+   # send_mail(
+   #     subject="Votre frais kilométrique a été approuvé",
+   #     message=f"Bonjour {expense.user.username},\n\nVotre frais kilométrique de {expense.distance} km a été approuvé.",
+   #     from_email="no-reply@cyberun.info",
+   #     recipient_list=[expense.user.email]
+   # )
 
     return redirect("manage_kilometric_expenses")
 
@@ -517,12 +517,12 @@ def reject_kilometric_expense(request, expense_id):
     expense.status = "rejected"
     expense.save()
 
-    send_mail(
-        subject="Votre frais kilométrique a été refusé",
-        message=f"Bonjour {expense.user.username},\n\nVotre frais kilométrique de {expense.distance} km a été refusé.",
-        from_email="enkai@outlook.fr",
-        recipient_list=[expense.user.email]
-    )
+   # send_mail(
+   #     subject="Votre frais kilométrique a été refusé",
+   #     message=f"Bonjour {expense.user.username},\n\nVotre frais kilométrique de {expense.distance} km a été refusé.",
+   #     from_email="enkai@outlook.fr",
+   #     recipient_list=[expense.user.email]
+   # )
 
     return redirect("manage_kilometric_expenses")
 
