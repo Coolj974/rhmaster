@@ -178,11 +178,11 @@ def leave_request_view(request):
             
             # Envoi d'un email de notification pour validation
             notification_emails = form.cleaned_data['notification_emails']
-            if notification_emails:
-                emails = [email.email for email in notification_emails]
-                subject = "Nouvelle demande de congé soumise"
-                message = f"Bonjour,\n\nUne nouvelle demande de congé a été soumise par {leave_request.user.username}. Veuillez la valider."
-                send_mail(subject, message, 'no-reply@cyberun.info', emails)
+            #if notification_emails:
+            #    emails = [email.email for email in notification_emails]
+            #    subject = "Nouvelle demande de congé soumise"
+            #    message = f"Bonjour,\n\nUne nouvelle demande de congé a été soumise par {leave_request.user.username}. Veuillez la valider."
+            #    send_mail(subject, message, 'no-reply@cyberun.info', emails)
             
             messages.success(request, "Votre demande de congé a été soumise avec succès.")
             return redirect('dashboard')
