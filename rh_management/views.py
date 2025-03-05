@@ -6,18 +6,18 @@ import pandas as pd
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from .forms import LeaveRequestForm
-from .models import LeaveRequest, ExpenseReport, KilometricExpense
+from .models import LeaveRequest, ExpenseReport, KilometricExpense, NotificationEmail
 from .forms import ExpenseReportForm, KilometricExpenseForm, ExpenseForm
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q
 from django.template.loader import render_to_string
+import json
 from django.core.mail import send_mail  # Ajoutez cette ligne
 
 ### 🌟 MAIL RH ###
 mailrh = ['oti@cyberun.info']
-
 
 # Vérifie si l'utilisateur est un admin ou un RH
 def is_admin_or_hr(user):
@@ -69,7 +69,6 @@ def register_view(request):
 
     return render(request, 'auth/register.html')
 
-
 # ✅ Déconnexion
 def logout_view(request):
     """Gère la déconnexion de l'utilisateur."""
@@ -98,6 +97,7 @@ def dashboard_view(request):
 
 from django.http import JsonResponse
 from django.template.loader import render_to_string
+
 
 @login_required
 @user_passes_test(is_admin_or_hr)
@@ -173,7 +173,17 @@ def leave_request_view(request):
         if form.is_valid():
             leave_request = form.save(commit=False)
             leave_request.user = request.user
+            leave_request.notification_emails = json.dumps([email.email for email in form.cleaned_data['notification_emails']])
             leave_request.save()
+            
+            # Envoi d'un email de notification pour validation
+            notification_emails = form.cleaned_data['notification_emails']
+            if notification_emails:
+                emails = [email.email for email in notification_emails]
+                subject = "Nouvelle demande de congé soumise"
+                message = f"Bonjour,\n\nUne nouvelle demande de congé a été soumise par {leave_request.user.username}. Veuillez la valider."
+                send_mail(subject, message, 'no-reply@cyberun.info', emails)
+            
             messages.success(request, "Votre demande de congé a été soumise avec succès.")
             return redirect('dashboard')
         else:
@@ -236,19 +246,20 @@ def reject_leave(request, leave_id):
 def submit_expense(request):
     """Permet à un utilisateur de soumettre une note de frais."""
     if request.method == "POST":
-        form = ExpenseForm(request.POST, request.FILES)
+        form = ExpenseReportForm(request.POST, request.FILES)
         if form.is_valid():
             expense = form.save(commit=False)
             expense.user = request.user
+            expense.notification_emails = json.dumps([email.email for email in form.cleaned_data['notification_emails']])
             expense.save()
             
             # Envoi d'un email de notification pour validation
-           # send_mail(
-           #     subject="Nouvelle note de frais soumise",
-           #     message=f"Bonjour,\n\nUne nouvelle note de frais a été soumise par {expense.user.username}. Veuillez la valider.",
-           #     from_email= expense.user.email,
-           #     recipient_list= mailrh  # Remplacez par l'email du service RH
-           # )
+            notification_emails = form.cleaned_data['notification_emails']
+            # if notification_emails:
+            #    emails = [email.email for email in notification_emails]
+            #    subject = "Nouvelle note de frais soumise"
+            #    message = f"Bonjour,\n\nUne nouvelle note de frais a été soumise par {expense.user.username}. Veuillez la valider."
+            #    send_mail(subject, message, 'no-reply@cyberun.info', emails)
             
             messages.success(request, "Note de frais enregistrée avec succès.")
             return redirect("dashboard")
@@ -258,6 +269,7 @@ def submit_expense(request):
         form = ExpenseReportForm()
 
     return render(request, "rh_management/submit_expense.html", {"form": form})
+
 
 # ✅ Voir ses notes de frais
 @login_required
@@ -395,15 +407,16 @@ def submit_kilometric_expense(request):
             if aller_retour:
                 expense.distance *= 2  # Double la distance
             
+            expense.notification_emails = json.dumps([email.email for email in form.cleaned_data['notification_emails']])
             expense.save()
             
             # Envoi d'un email de notification pour validation
-           # send_mail(
-           #     subject="Nouvelle note de frais kilométrique soumise",
-           #     message=f"Bonjour,\n\nUne nouvelle note de frais kilométrique a été soumise par {expense.user.username}. Veuillez la valider.",
-           #     from_email="enkai@outlook.fr",
-           #     recipient_list=["rh@cyberun.info"]  # Remplacez par l'email du service RH
-           # )
+            notification_emails = form.cleaned_data['notification_emails']
+            if notification_emails:
+                emails = [email.email for email in notification_emails]
+                subject = "Nouvelle note de frais kilométrique soumise"
+                message = f"Bonjour,\n\nUne nouvelle note de frais kilométrique a été soumise par {expense.user.username}. Veuillez la valider."
+                send_mail(subject, message, 'no-reply@cyberun.info', emails)
             
             messages.success(request, "Frais kilométrique enregistré avec succès !")
             return redirect("my_kilometric_expenses")

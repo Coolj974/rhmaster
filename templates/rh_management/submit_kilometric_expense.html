@@ -69,6 +69,11 @@
                         <input type="text" id="distance" name="distance" class="form-control" readonly>
                     </div>
                 </div>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        {{ form.notification_emails.label_tag }} {{ form.notification_emails }}
+                    </div>
+                </div>
                 <div id="map" style="height: 400px;" class="mb-3"></div>
                 <button type="submit" class="btn btn-primary mt-3">✅ Soumettre</button>
             </form>
