@@ -14,6 +14,7 @@
                         <th>Type</th>
                         <th>Dates</th>
                         <th>Motif</th>
+                        <th>Pièce justificative</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -25,13 +26,20 @@
                         <td>{{ leave.start_date }} → {{ leave.end_date }}</td>
                         <td>{{ leave.reason }}</td>
                         <td>
+                            {% if leave.attachment %}
+                            <a href="{{ leave.attachment.url }}" target="_blank" class="btn btn-info btn-sm">Voir</a>
+                            {% else %}
+                            Pas de pièce jointe
+                            {% endif %}
+                        </td>
+                        <td>
                             <a href="{% url 'approve_leave' leave.id %}" class="btn btn-success btn-sm">✅ Approuver</a>
                             <a href="{% url 'reject_leave' leave.id %}" class="btn btn-danger btn-sm">❌ Refuser</a>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="text-center">Aucune demande en attente</td>
+                        <td colspan="6" class="text-center">Aucune demande en attente</td>
                     </tr>
                     {% endfor %}
                 </tbody>

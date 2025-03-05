@@ -1,5 +1,5 @@
 from django import forms
-from .models import ExpenseReport, KilometricExpense, ExpenseReport
+from .models import ExpenseReport, KilometricExpense, ExpenseReport, LeaveRequest
 
 # Formulaire pour les rapports de dépenses
 class ExpenseReportForm(forms.ModelForm):
@@ -18,6 +18,21 @@ class ExpenseReportForm(forms.ModelForm):
             'location': forms.TextInput(attrs={'class': 'form-control'}),  # Champ de texte pour la localisation
             'refacturable': forms.CheckboxInput(attrs={'class': 'form-check-input'}),  # Case à cocher pour refacturable
             'receipt': forms.FileInput(attrs={'class': 'form-control-file'}),  # Champ de fichier pour le reçu
+        }
+
+# Formulaire pour les demandes de congés
+class LeaveRequestForm(forms.ModelForm):
+    attachment = forms.FileField(required=False, label="Joindre un justificatif")
+
+    class Meta:
+        model = LeaveRequest
+        fields = ['leave_type', 'start_date', 'end_date', 'reason', 'attachment']
+        widgets = {
+            'leave_type': forms.Select(attrs={'class': 'form-select'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'attachment': forms.FileInput(attrs={'class': 'form-control-file'}),
         }
 
 # Formulaire pour les dépenses kilométriques

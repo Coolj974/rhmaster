@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
+
 {% block content %}
 <div class="container mt-5">
     <div class="card shadow-sm">
@@ -6,86 +8,16 @@
             <h2 class="mb-0 text-center"><i class="fas fa-plane-departure"></i> Demande de congé</h2>      
         </div>
         <div class="card-body">
-            <form method="post">
-                {% csrf_token %}       
-                <div class="mb-3">
-                    <label for="leave_type" class="form-label">Type de congé :</label>
-                    <select name="leave_type" id="leave_type" class="form-select" required>
-                        <option value="CP">Congé payé</option>
-                        <option value="RTT">RTT</option>
-                        <option value="CM">Congé maladie</option>
-                        <option value="SansSolde">Congé sans solde</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="start_date" class="form-label">Date de début :</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                        <input type="date" name="start_date" id="start_date" class="form-control" required>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="end_date" class="form-label">Date de fin :</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                        <input type="date" name="end_date" id="end_date" class="form-control" required>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="reason" class="form-label">Commentaire :</label>
-                    <textarea name="reason" id="reason" class="form-control" rows="4"></textarea>
-                </div>
-                <div class="d-grid">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                {{ form|crispy }}
+                <div class="d-grid mt-4">
                     <button type="submit" id="submit_leave" class="btn btn-success btn-lg">📩 Soumettre la demande</button>
                 </div>
                 <div id="leave_warning" class="alert alert-warning mt-3" style="display:none;">
-                    ⚠️ Les demandes de congé doivent être effectuées **au moins 7 jours à l'avance**.
                 </div>   
             </form>
         </div>
     </div>
 </div>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        let startDateInput = document.getElementById("start_date");
-        let endDateInput = document.getElementById("end_date");
-        let submitButton = document.getElementById("submit_leave");
-        let warningMessage = document.getElementById("leave_warning");
-    
-        function validateDate() {
-            let today = new Date();
-            today.setHours(0, 0, 0, 0); // Réinitialise l'heure pour comparer uniquement la date
-            let oneWeekLater = new Date();
-            oneWeekLater.setDate(today.getDate() + 7);
-    
-            let startDate = new Date(startDateInput.value);
-            let endDate = new Date(endDateInput.value);
-    
-            // Vérifie si la date de début est antérieure à aujourd'hui
-            if (startDate < today) {
-                alert("⛔ Vous ne pouvez pas sélectionner une date passée.");
-                startDateInput.value = "";
-                return;
-            }
-
-            if (endDate < today) {
-                alert("⛔ Vous ne pouvez pas sélectionner une date passée.");
-                endDateInput.value = "";
-                return;
-            }
-    
-            // Vérifie si la date de début est inférieure à 7 jours
-            if (startDate < oneWeekLater) {
-                warningMessage.style.display = "block"; // Affiche le message d'avertissement
-                submitButton.disabled = true; // Désactive le bouton
-            } else {
-                warningMessage.style.display = "none";
-                submitButton.disabled = false;
-            }
-        }
-    
-        startDateInput.addEventListener("change", validateDate);
-        endDateInput.addEventListener("change", validateDate);
-    });
-</script>
 {% endblock %}

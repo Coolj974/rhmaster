@@ -5,6 +5,7 @@ from django.http import HttpResponse
 import pandas as pd
 from django.http import JsonResponse
 from django.contrib.auth.models import User
+from .forms import LeaveRequestForm
 from .models import LeaveRequest, ExpenseReport, KilometricExpense
 from .forms import ExpenseReportForm, KilometricExpenseForm, ExpenseForm
 from reportlab.lib.pagesizes import letter
@@ -163,35 +164,24 @@ def is_hr(user):
     return user.is_staff  # Seuls les RH peuvent approuver les congés
 
 # ✅ Demande de congé
+
 @login_required
 def leave_request_view(request):
     """Gère la demande de congé."""
     if request.method == "POST":
-        start_date = request.POST['start_date']
-        end_date = request.POST['end_date']
-        reason = request.POST['reason']
-        leave_type = request.POST['leave_type']
+        form = LeaveRequestForm(request.POST, request.FILES)
+        if form.is_valid():
+            leave_request = form.save(commit=False)
+            leave_request.user = request.user
+            leave_request.save()
+            messages.success(request, "Votre demande de congé a été soumise avec succès.")
+            return redirect('dashboard')
+        else:
+            messages.error(request, "Veuillez corriger les erreurs dans le formulaire.")
+    else:
+        form = LeaveRequestForm()
 
-        leave_request = LeaveRequest.objects.create(
-            user=request.user,
-            start_date=start_date,
-            end_date=end_date,
-            reason=reason,
-            leave_type=leave_type
-        )
-
-        # Envoi d'un email de notification pour validation
-       # send_mail(
-       #     subject="Nouvelle demande de congé soumise",
-       #     message=f"Bonjour,\n\nUne nouvelle demande de congé a été soumise par {leave_request.user.username}. Veuillez la valider.",
-       #     from_email=[leave.user.email],
-       #     recipient_list=["rh@cyberun.info"]  # Remplacez par l'email du service RH
-       # )
-
-        messages.success(request, "Votre demande de congé a été soumise avec succès.")
-        return redirect('dashboard')
-
-    return render(request, 'rh_management/leave_request.html')
+    return render(request, 'rh_management/leave_request.html', {'form': form})
 
 # ✅ Gérer les congés en attente (RH)
 @login_required

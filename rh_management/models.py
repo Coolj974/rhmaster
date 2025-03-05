@@ -23,6 +23,7 @@ class LeaveRequest(models.Model):
     reason = models.TextField(blank=True, null=True)  # ✅ Commentaire optionnel
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')  # ✅ Correction
     created_at = models.DateTimeField(auto_now_add=True)
+    attachment = models.FileField(upload_to='receipts/', blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.get_leave_type_display()} ({self.start_date} à {self.end_date})"
