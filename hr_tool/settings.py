@@ -32,15 +32,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'alabama.o2switch.net')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 465))  # ⚠️ Si 465, on active SSL
 
 # Assurez-vous que la bonne variable d'environnement est utilisée
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'False').lower() == 'true'
 EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'True').lower() == 'true'  # Correction
 
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'cyberh@dlxi7823.odns.fr')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'Ld(hfnbK5cvO')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'cyberun.rh@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'mkhw lmiw wbyw vokl')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
@@ -116,6 +116,18 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.mysql',
+#        'NAME': os.getenv('MYSQL_DATABASE', 'your_database_name'),
+#        'USER': os.getenv('MYSQL_USER', 'your_database_user'),
+#        'PASSWORD': os.getenv('MYSQL_PASSWORD', 'your_database_password'),
+#        'HOST': os.getenv('MYSQL_HOST', 'localhost'),
+#        'PORT': os.getenv('MYSQL_PORT', '3306'),
+#    }
+#}
+
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
