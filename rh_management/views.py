@@ -412,11 +412,11 @@ def submit_kilometric_expense(request):
             
             # Envoi d'un email de notification pour validation
             notification_emails = form.cleaned_data['notification_emails']
-            if notification_emails:
-                emails = [email.email for email in notification_emails]
-                subject = "Nouvelle note de frais kilométrique soumise"
-                message = f"Bonjour,\n\nUne nouvelle note de frais kilométrique a été soumise par {expense.user.username}. Veuillez la valider."
-                send_mail(subject, message, 'no-reply@cyberun.info', emails)
+            #if notification_emails:
+            #    emails = [email.email for email in notification_emails]
+            #    subject = "Nouvelle note de frais kilométrique soumise"
+            #    message = f"Bonjour,\n\nUne nouvelle note de frais kilométrique a été soumise par {expense.user.username}. Veuillez la valider."
+            #    send_mail(subject, message, 'no-reply@cyberun.info', emails)
             
             messages.success(request, "Frais kilométrique enregistré avec succès !")
             return redirect("my_kilometric_expenses")

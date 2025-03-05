@@ -147,7 +147,7 @@ class KilometricExpense(models.Model):
                 message = (
                     f"Une nouvelle dépense kilométrique a été soumise par {self.user.username}.\n\n"
                     f"Description: {self.description}\n"
-                    f"Montant: {self.amount} {self.currency}\n"
+                    f"Montant: {self.amount:.2f} €\n"
                     f"Statut: {self.status}"
                 )
                 send_mail(subject, message, 'no-reply@example.com', emails)

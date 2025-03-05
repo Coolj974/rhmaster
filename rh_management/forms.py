@@ -8,7 +8,7 @@ class ExpenseReportForm(forms.ModelForm):
     notification_emails = forms.ModelMultipleChoiceField(
         queryset=NotificationEmail.objects.all(),
         required=False,
-        label="Adresses e-mail de notification",
+        label="Voulez vous envoyer à qui ?",
         widget=forms.SelectMultiple(attrs={'class': 'form-control'})
     )
 
@@ -37,7 +37,7 @@ class LeaveRequestForm(forms.ModelForm):
     notification_emails = forms.ModelMultipleChoiceField(
         queryset=NotificationEmail.objects.all(),
         required=False,
-        label="Adresses e-mail de notification",
+        label="Voulez vous envoyer à qui ?",
         widget=forms.SelectMultiple(attrs={'class': 'form-control'})
     )
 
@@ -62,7 +62,7 @@ class KilometricExpenseForm(forms.ModelForm):
     notification_emails = forms.ModelMultipleChoiceField(
         queryset=NotificationEmail.objects.all(),
         required=False,
-        label="Adresses e-mail de notification",
+        label="Voulez vous envoyer à qui ?",
         widget=forms.SelectMultiple(attrs={'class': 'form-control'})
     )
 
