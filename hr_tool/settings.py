@@ -178,3 +178,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuration des pages d'erreurs personnalisées
+ERROR_404_TEMPLATE = 'errors/404.html'
+ERROR_500_TEMPLATE = 'errors/500.html'
+ERROR_403_TEMPLATE = 'errors/403.html'
+ERROR_400_TEMPLATE = 'errors/400.html'

@@ -15,6 +15,7 @@ from django.db.models import Q
 from django.template.loader import render_to_string
 import json
 from django.core.mail import send_mail  # Ajoutez cette ligne
+from django.contrib.auth.hashers import make_password
 
 ### 🌟 MAIL RH ###
 mailrh = ['oti@cyberun.info']
@@ -566,3 +567,43 @@ def delete_kilometric_expense(request, id):
     if request.user.is_superuser:
         expense.delete()
     return redirect('dashboard')
+
+def register(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        email = request.POST['email']
+        password = request.POST['password']
+        
+        # Validation côté serveur
+        if not email.endswith('@cyberun.info'):
+            messages.error(request, 'Veuillez utiliser une adresse e-mail se terminant par cyberun.info')
+            return redirect('register')
+        
+        # Hachage du mot de passe
+        hashed_password = make_password(password)
+        
+        # Création de l'utilisateur
+        user = User.objects.create(username=username, email=email, password=hashed_password)
+        user.save()
+        
+        messages.success(request, 'Inscription réussie. Vous pouvez maintenant vous connecter.')
+        return redirect('login')
+    
+    return render(request, 'auth/register.html')
+
+def user_login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        
+        # Authentification de l'utilisateur
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            messages.success(request, 'Connexion réussie.')
+            return redirect('home')  # Redirigez vers la page d'accueil ou une autre page sécurisée
+        else:
+            messages.error(request, 'Nom d\'utilisateur ou mot de passe incorrect.')
+            return redirect('login')
+    
+    return render(request, 'auth/login.html')

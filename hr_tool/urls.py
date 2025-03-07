@@ -9,6 +9,8 @@ from rh_management.views import manage_leaves_view
 from rh_management.views import export_expenses
 from django.conf.urls.static import static
 from django.conf import settings
+from django.conf.urls import handler404, handler500, handler403, handler400
+from django.shortcuts import render
 
 from rh_management.views import (
     home_view, dashboard_view,
@@ -17,6 +19,23 @@ from rh_management.views import (
     approve_kilometric_expense, reject_kilometric_expense, edit_kilometric_expense,
     export_expenses_excel, export_expenses_pdf, approve_leave, reject_leave, cancel_expense,
 )
+
+def error_404(request, exception):
+    return render(request, 'errors/404.html', status=404)
+
+def error_500(request):
+    return render(request, 'errors/500.html', status=500)
+
+def error_403(request, exception):
+    return render(request, 'errors/403.html', status=403)
+
+def error_400(request, exception):
+    return render(request, 'errors/400.html', status=400)
+
+handler404 = error_404
+handler500 = error_500
+handler403 = error_403
+handler400 = error_400
 
 urlpatterns = [
     # Administration
