@@ -545,3 +545,24 @@ def edit_kilometric_expense(request, expense_id):
         form = KilometricExpenseForm(instance=expense)
 
     return render(request, "rh_management/edit_kilometric_expense.html", {"form": form, "expense": expense})
+
+@login_required
+def delete_leave(request, id):
+    leave = get_object_or_404(LeaveRequest, id=id)
+    if request.user.is_superuser:
+        leave.delete()
+    return redirect('dashboard')
+
+@login_required
+def delete_expense(request, id):
+    expense = get_object_or_404(ExpenseReport, id=id)
+    if request.user.is_superuser:
+        expense.delete()
+    return redirect('dashboard')
+
+@login_required
+def delete_kilometric_expense(request, id):
+    expense = get_object_or_404(KilometricExpense, id=id)
+    if request.user.is_superuser:
+        expense.delete()
+    return redirect('dashboard')

@@ -87,6 +87,9 @@
                         <th>Date Fin</th>
                         <th>Type</th>
                         <th>Statut</th>
+                        {% if is_admin %}
+                        <th>Actions</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody id="leave_requests_body">
@@ -102,10 +105,18 @@
                                         {{ leave.status }}
                                     </span>
                                 </td>
+                                {% if is_admin %}
+                                <td>
+                                    <form method="post" action="{% url 'delete_leave' leave.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
+                                    </form>
+                                </td>
+                                {% endif %}
                             </tr>
                         {% endfor %}
                     {% else %}
-                        <tr><td colspan="5" class="text-center">Aucune demande de congé</td></tr>
+                        <tr><td colspan="6" class="text-center">Aucune demande de congé</td></tr>
                     {% endif %}
                 </tbody>
             </table>
@@ -150,6 +161,9 @@
                         <th>Description</th>
                         <th>Montant</th>
                         <th>Statut</th>
+                        {% if is_admin %}
+                        <th>Actions</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody id="expense_reports_body">
@@ -165,10 +179,18 @@
                                         {{ expense.status }}
                                     </span>
                                 </td>
+                                {% if is_admin %}
+                                <td>
+                                    <form method="post" action="{% url 'delete_expense' expense.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
+                                    </form>
+                                </td>
+                                {% endif %}
                             </tr>
                         {% endfor %}
                     {% else %}
-                        <tr><td colspan="5" class="text-center">Aucune note de frais enregistrée</td></tr>
+                        <tr><td colspan="6" class="text-center">Aucune note de frais enregistrée</td></tr>
                     {% endif %}
                 </tbody>
             </table>
@@ -214,6 +236,9 @@
                         <th>Distance</th>
                         <th>Montant (€)</th>
                         <th>Statut</th>
+                        {% if is_admin %}
+                        <th>Actions</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody id="kilometric_expense_reports_body">
@@ -230,10 +255,18 @@
                                         {{ expense.status }}
                                     </span>
                                 </td>
+                                {% if is_admin %}
+                                <td>
+                                    <form method="post" action="{% url 'delete_kilometric_expense' expense.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
+                                    </form>
+                                </td>
+                                {% endif %}
                             </tr>
                         {% endfor %}
                     {% else %}
-                        <tr><td colspan="5" class="text-center">Aucune note de frais kilométriques enregistrée</td></tr>
+                        <tr><td colspan="6" class="text-center">Aucune note de frais kilométriques enregistrée</td></tr>
                     {% endif %}
                 </tbody>
             </table>

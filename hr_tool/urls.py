@@ -36,6 +36,7 @@ urlpatterns = [
     path("manage-leaves/", manage_leaves_view, name="manage_leaves"),  # Manage leaves
     path("approve-leave/<int:leave_id>/", approve_leave, name="approve_leave"),  # Approve leave
     path("reject-leave/<int:leave_id>/", reject_leave, name="reject_leave"),  # Reject leave
+    path('delete_leave/<int:id>/', views.delete_leave, name='delete_leave'),
 
     # Expense Management
     path("submit-expense/", submit_expense, name="submit_expense"),  # Submit expense
@@ -46,6 +47,8 @@ urlpatterns = [
     path("export-expenses-pdf/", export_expenses_pdf, name="export_expenses_pdf"),  # Export expenses to PDF
     path("export-expenses/", export_expenses, name="export_expenses"),  # Export expenses
     path("cancel-expense/<int:expense_id>/", cancel_expense, name="cancel_expense"),
+    path('delete_expense/<int:id>/', views.delete_expense, name='delete_expense'),
+
 
     # Kilometric Expense Management
     path("submit-kilometric-expense/", submit_kilometric_expense, name="submit_kilometric_expense"),  # Submit kilometric expense
@@ -54,6 +57,7 @@ urlpatterns = [
     path("approve-kilometric-expense/<int:expense_id>/", approve_kilometric_expense, name="approve_kilometric_expense"),  # Approve kilometric expense
     path("reject-kilometric-expense/<int:expense_id>/", reject_kilometric_expense, name="reject_kilometric_expense"),  # Reject kilometric expense
     path("edit-kilometric-expense/<int:expense_id>/", edit_kilometric_expense, name="edit_kilometric_expense"),  # Edit kilometric expense
+    path('delete_kilometric_expense/<int:id>/', views.delete_kilometric_expense, name='delete_kilometric_expense'),
 
     # Other URLs
     path('dashboard_filtered/', views.dashboard_filtered, name='dashboard_filtered'),

@@ -20,6 +20,7 @@ LEAVE_TYPES = [
 
 VEHICLE_TYPES = [
     ('car', 'Voiture'),
+    ('electric_car', 'Voiture électrique'),
     ('motorbike', 'Moto'),
     ('bike', 'Vélo'),
 ]
@@ -132,11 +133,50 @@ class KilometricExpense(models.Model):
     def save(self, *args, **kwargs):
         if not self.description:
             self.description = f"Frais kilométrique de {self.departure} à {self.arrival}"
-        rate_per_km = {3: 0.502, 4: 0.575, 5: 0.601, 6: 0.631, 7: 0.661}
+        
         if self.distance:
-            self.amount = self.distance * rate_per_km.get(self.fiscal_power, 0.502)
+            self.amount = self.calculate_amount()
+        
         super().save(*args, **kwargs)
         self.send_notification_emails()
+
+    def calculate_amount(self):
+        """Calculate the reimbursement amount based on the distance and fiscal power."""
+        rate_per_km = {
+            'car': {
+                3: [(0.529, 5000), (0.316, 20000, 1065), (0.37, float('inf'))],
+                4: [(0.606, 5000), (0.340, 20000, 1330), (0.407, float('inf'))],
+                5: [(0.636, 5000), (0.357, 20000, 1395), (0.427, float('inf'))],
+                6: [(0.665, 5000), (0.374, 20000, 1457), (0.447, float('inf'))],
+                7: [(0.697, 5000), (0.394, 20000, 1515), (0.470, float('inf'))],
+            },
+            'electric_car': {
+                3: [(0.635, 5000), (0.380, 20000, 1278), (0.444, float('inf'))],
+                4: [(0.727, 5000), (0.408, 20000, 1596), (0.488, float('inf'))],
+                5: [(0.763, 5000), (0.428, 20000, 1674), (0.512, float('inf'))],
+                6: [(0.798, 5000), (0.449, 20000, 1748), (0.536, float('inf'))],
+                7: [(0.836, 5000), (0.472, 20000, 1818), (0.564, float('inf'))],
+                8: [(0.875, 5000), (0.495, 20000, 1890), (0.592, float('inf'))]
+            }
+        }
+
+        vehicle_rates = rate_per_km.get(self.vehicle_type, {})
+        rates = vehicle_rates.get(self.fiscal_power, [(0.502, float('inf'))])
+
+        amount = 0
+        remaining_distance = self.distance
+
+        for rate, max_distance, *bonus in rates:
+            if remaining_distance > max_distance:
+                amount += rate * max_distance
+                remaining_distance -= max_distance
+            else:
+                amount += rate * remaining_distance
+                if bonus:
+                    amount += bonus[0]
+                break
+
+        return round(amount)
 
     def send_notification_emails(self):
         """Send notification emails when a kilometric expense is created."""

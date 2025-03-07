@@ -1,6 +1,6 @@
 from django import forms
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from crispy_forms.layout import Submit, Layout, Fieldset, Field, Div
 from .models import ExpenseReport, KilometricExpense, LeaveRequest, NotificationEmail
 
 class ExpenseReportForm(forms.ModelForm):
@@ -8,7 +8,7 @@ class ExpenseReportForm(forms.ModelForm):
     notification_emails = forms.ModelMultipleChoiceField(
         queryset=NotificationEmail.objects.all(),
         required=False,
-        label="Voulez vous envoyer à qui ?",
+        label="Voulez-vous envoyer à qui ?",
         widget=forms.SelectMultiple(attrs={'class': 'form-control'})
     )
 
@@ -30,14 +30,31 @@ class ExpenseReportForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = 'post'
-        self.helper.add_input(Submit('submit', 'Submit'))
+        self.helper.layout = Layout(
+            Fieldset(
+                'Informations sur le rapport de dépenses',
+                'date',
+                'description',
+                'amount',
+                'vat',
+                'project',
+                'location',
+                'refacturable',
+                'receipt',
+                'notification_emails'
+            ),
+            Div(
+                Submit('submit', 'Soumettre', css_class='btn btn-primary'),
+                css_class='d-grid gap-2'
+            )
+        )
 
 class LeaveRequestForm(forms.ModelForm):
     attachment = forms.FileField(required=False, label="Joindre un justificatif")
     notification_emails = forms.ModelMultipleChoiceField(
         queryset=NotificationEmail.objects.all(),
         required=False,
-        label="Voulez vous envoyer à qui ?",
+        label="Voulez-vous envoyer à qui ?",
         widget=forms.SelectMultiple(attrs={'class': 'form-control'})
     )
 
@@ -56,13 +73,27 @@ class LeaveRequestForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = 'post'
-        self.helper.add_input(Submit('submit', 'Submit'))
+        self.helper.layout = Layout(
+            Fieldset(
+                'Demande de congé',
+                'leave_type',
+                'start_date',
+                'end_date',
+                'reason',
+                'attachment',
+                'notification_emails'
+            ),
+            Div(
+                Submit('submit', 'Soumettre', css_class='btn btn-primary'),
+                css_class='d-grid gap-2'
+            )
+        )
 
 class KilometricExpenseForm(forms.ModelForm):
     notification_emails = forms.ModelMultipleChoiceField(
         queryset=NotificationEmail.objects.all(),
         required=False,
-        label="Voulez vous envoyer à qui ?",
+        label="Voulez-vous envoyer à qui ?",
         widget=forms.SelectMultiple(attrs={'class': 'form-control'})
     )
 
@@ -83,7 +114,27 @@ class KilometricExpenseForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = 'post'
-        self.helper.add_input(Submit('submit', 'Submit'))
+        self.helper.layout = Layout(
+            Fieldset(
+                'Frais kilométriques',
+                'date',
+                'vehicle_type',
+                'project',
+                'fiscal_power',
+                'departure',
+                'departure_lat',
+                'departure_lng',
+                'arrival',
+                'arrival_lat',
+                'arrival_lng',
+                'distance',
+                'notification_emails'
+            ),
+            Div(
+                Submit('submit', 'Soumettre', css_class='btn btn-primary'),
+                css_class='d-grid gap-2'
+            )
+        )
 
 class ExpenseForm(forms.ModelForm):
     class Meta:
@@ -99,4 +150,20 @@ class ExpenseForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = 'post'
-        self.helper.add_input(Submit('submit', 'Submit'))
+        self.helper.layout = Layout(
+            Fieldset(
+                'Dépenses',
+                'date',
+                'description',
+                'amount',
+                'vat',
+                'project',
+                'location',
+                'refacturable',
+                'receipt'
+            ),
+            Div(
+                Submit('submit', 'Soumettre', css_class='btn btn-primary'),
+                css_class='d-grid gap-2'
+            )
+        )
