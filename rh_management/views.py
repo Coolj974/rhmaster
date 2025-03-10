@@ -5,7 +5,7 @@ from django.http import HttpResponse, JsonResponse
 import pandas as pd
 from django.contrib.auth.models import User
 from .forms import LeaveRequestForm, ExpenseReportForm, KilometricExpenseForm
-from .models import LeaveRequest, ExpenseReport, KilometricExpense, NotificationEmail
+from .models import LeaveRequest, ExpenseReport, KilometricExpense
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from django.contrib.auth import authenticate, login, logout
@@ -14,10 +14,6 @@ from django.template.loader import render_to_string
 import json
 from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password
-
-
-### 🌟 MAIL RH ###
-mailrh = ['oti@cyberun.info']
 
 # Vérifie si l'utilisateur est un admin ou un RH
 def is_admin_or_hr(user):
@@ -163,11 +159,10 @@ def dashboard_filtered(request):
     })
     
 def is_hr(user):
-    """Vérifie si l'utilisateur est RH."""
+    """Vérifie si l'utilisateur est RH (responsable des congés)."""
     return user.is_staff  # Seuls les RH peuvent approuver les congés
 
 ### 🌟 GESTION DES CONGÉS ###
-    return user.is_staff  # Seuls les RH peuvent approuver les congés
 
 # ✅ Demande de congé
 
@@ -572,43 +567,3 @@ def delete_kilometric_expense(request, id):
     if request.user.is_superuser:
         expense.delete()
     return redirect('dashboard')
-
-def register(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        email = request.POST['email']
-        password = request.POST['password']
-        
-        # Validation côté serveur
-        if not email.endswith('@cyberun.info'):
-            messages.error(request, 'Veuillez utiliser une adresse e-mail se terminant par cyberun.info')
-            return redirect('register')
-        
-        # Hachage du mot de passe
-        hashed_password = make_password(password)
-        
-        # Création de l'utilisateur
-        user = User.objects.create(username=username, email=email, password=hashed_password)
-        user.save()
-        
-        messages.success(request, 'Inscription réussie. Vous pouvez maintenant vous connecter.')
-        return redirect('login')
-    
-    return render(request, 'auth/register.html')
-
-def user_login(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        
-        # Authentification de l'utilisateur
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            messages.success(request, 'Connexion réussie.')
-            return redirect('home')  # Redirigez vers la page d'accueil ou une autre page sécurisée
-        else:
-            messages.error(request, 'Nom d\'utilisateur ou mot de passe incorrect.')
-            return redirect('login')
-    
-    return render(request, 'auth/login.html')
