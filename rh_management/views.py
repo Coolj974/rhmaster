@@ -1,20 +1,18 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 import pandas as pd
-from django.http import JsonResponse
 from django.contrib.auth.models import User
-from .forms import LeaveRequestForm
+from .forms import LeaveRequestForm, ExpenseReportForm, KilometricExpenseForm
 from .models import LeaveRequest, ExpenseReport, KilometricExpense, NotificationEmail
-from .forms import ExpenseReportForm, KilometricExpenseForm, ExpenseForm
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q
 from django.template.loader import render_to_string
 import json
-from django.core.mail import send_mail  # Ajoutez cette ligne
+from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password
 
 
