@@ -287,8 +287,8 @@
                     </tr>
                 </thead>
                 <tbody id="my_expense_reports_body">
-                    {% if expense_reports %}
-                        {% for expense in expense_reports %}
+                    {% if my_expense_reports %}
+                        {% for expense in my_expense_reports %}
                             <tr data-id="{{ expense.id }}">
                                 <td>{{ expense.date }}</td>
                                 <td>{{ expense.description }}</td>
@@ -322,8 +322,8 @@
                     </tr>
                 </thead>
                 <tbody id="my_leave_requests_body">
-                    {% if leave_requests %}
-                        {% for leave in leave_requests %}
+                    {% if my_leave_requests %}
+                        {% for leave in my_leave_requests %}
                             <tr data-id="{{ leave.id }}">
                                 <td>{{ leave.start_date }}</td>
                                 <td>{{ leave.end_date }}</td>

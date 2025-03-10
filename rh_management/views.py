@@ -17,6 +17,7 @@ import json
 from django.core.mail import send_mail  # Ajoutez cette ligne
 from django.contrib.auth.hashers import make_password
 
+
 ### 🌟 MAIL RH ###
 mailrh = ['oti@cyberun.info']
 
@@ -83,21 +84,27 @@ def dashboard_view(request):
     new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
     new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
 
+    if request.user.is_superuser or request.user.groups.filter(name='HR').exists():
+        leave_requests = LeaveRequest.objects.all()
+        expense_reports = ExpenseReport.objects.all()
+        kilometric_expenses = KilometricExpense.objects.all()
+    else:
+        leave_requests = LeaveRequest.objects.filter(user=request.user)
+        expense_reports = ExpenseReport.objects.filter(user=request.user)
+        kilometric_expenses = KilometricExpense.objects.filter(user=request.user)
+
     context = {
         "is_admin": request.user.is_superuser,
         "is_hr": request.user.groups.filter(name='HR').exists(),
         "is_employee": request.user.groups.filter(name='Employé').exists(),
-        "leave_requests": LeaveRequest.objects.all(),
-        "expense_reports": ExpenseReport.objects.all(),
-        "kilometric_expenses": KilometricExpense.objects.all(),
+        "leave_requests": leave_requests,
+        "expense_reports": expense_reports,
+        "kilometric_expenses": kilometric_expenses,
         "new_leave_requests_count": new_leave_requests_count,
         "new_expense_reports_count": new_expense_reports_count,
         "new_kilometric_expenses_count": new_kilometric_expenses_count,
     }
     return render(request, 'rh_management/dashboard.html', context)
-
-from django.http import JsonResponse
-from django.template.loader import render_to_string
 
 
 @login_required
