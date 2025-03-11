@@ -68,26 +68,20 @@ class LeaveRequest(models.Model):
                 )
                 send_mail(subject, message, 'no-reply@example.com', emails)
             except json.JSONDecodeError:
-                pass  # Handle JSON decode error if necessary
+                pass
 
 class ExpenseReport(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'En attente'),
-        ('approved', 'Approuvée'),
-        ('rejected', 'Rejetée')
-    ]
-
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField()
     description = models.CharField(max_length=255)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)  # Montant HT
-    vat = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)  # ✅ Applique une TVA par défaut de 20%
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    vat = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     project = models.CharField(max_length=255, blank=True, null=True)  
     location = models.CharField(max_length=255, blank=True, null=True)  
     refacturable = models.BooleanField(default=False)  
-    receipt = models.FileField(upload_to="receipts/", blank=True, null=True)  # Champ pour les pièces justificatives
+    receipt = models.FileField(upload_to="receipts/", blank=True, null=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-    notification_emails = models.TextField(blank=True, null=True)  # Champ pour les adresses e-mail de notification
+    notification_emails = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.description} ({self.status})"
@@ -109,7 +103,7 @@ class ExpenseReport(models.Model):
                 message = f"Une nouvelle note de frais a été soumise par {self.user.username}.\n\nDescription: {self.description}\nMontant: {self.amount} €\nStatut: {self.status}"
                 send_mail(subject, message, 'no-reply@example.com', emails)
             except json.JSONDecodeError:
-                pass  # Gérer l'erreur de décodage JSON si nécessaire
+                pass
 
 class KilometricExpense(models.Model):
     """Model to handle kilometric expenses."""
@@ -168,7 +162,7 @@ class KilometricExpense(models.Model):
             },
             'bike': {
                 1: [(0.1, 5000), (0.05, 20000, 250), (0.07, float('inf'))],
-                2: [(0.12, 5000), (0.408, 20000, 1596), (0.488, float('inf'))],
+                2: [(0.12, 5000), (0.06, 20000, 300), (0.08, float('inf'))],
                 3: [(0.15, 5000), (0.07, 20000, 350), (0.1, float('inf'))],
             }
         }
@@ -205,7 +199,7 @@ class KilometricExpense(models.Model):
                 )
                 send_mail(subject, message, 'no-reply@example.com', emails)
             except json.JSONDecodeError:
-                pass  # Handle JSON decode error if necessary
+                pass
 
     def __str__(self):
         return f"{self.user.username} - {self.date} ({self.distance} km) - {self.amount:.2f} €"

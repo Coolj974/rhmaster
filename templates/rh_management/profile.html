@@ -42,7 +42,6 @@
                         <div class="col-md-6">
                             <div class="card mb-4 border-0 shadow-sm rounded-4 bg-light">
                                 <div class="card-body">
-                                    <h5 class="card-title mb-3"><i class="fas fa-info-circle me-2"></i>Informations du compte</h5>
                                     <form method="post" action="{% url 'update_profile' %}">
                                         {% csrf_token %}
                                         <div class="mb-3">
@@ -122,9 +121,167 @@
 </div>
 
 <style>
+    /* Styles de base pour les éléments du formulaire */
+    .form-control {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
     .form-control:read-only {
         background-color: #f8f9fa;
         opacity: 0.8;
+    }
+    
+    .input-group-text {
+        border-radius: 0.5rem 0 0 0.5rem;
+        border-right: none;
+        transition: all 0.3s ease;
+    }
+    
+    .input-group .form-control {
+        border-radius: 0 0.5rem 0.5rem 0;
+    }
+    
+    /* Animations et effets */
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .card {
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Styles pour les boutons */
+    .btn {
+        padding: 0.6rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn:active {
+        transform: translateY(1px);
+    }
+    
+    /* Styles pour les dégradés */
+    .bg-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(45deg, #f6c23e, #dda20a);
+    }
+    
+    .bg-gradient-danger {
+        background: linear-gradient(45deg, #e74a3b, #be392d);
+    }
+    
+    .bg-gradient-secondary {
+        background: linear-gradient(45deg, #858796, #60616f);
+        color: white;
+    }
+    
+    .btn-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+        color: white;
+    }
+    
+    .btn-gradient-warning {
+        background: linear-gradient(45deg, #f6c23e, #dda20a);
+        color: white;
+    }
+    
+    .btn-gradient-secondary {
+        background: linear-gradient(45deg, #858796, #60616f);
+        color: white;
+    }
+    
+    /* Améliorations pour les messages d'alerte */
+    .alert {
+        border: none;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Animation pour les icônes */
+    .fas {
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover .fas {
+        transform: scale(1.2);
+    }
+    
+    /* Style pour le titre de la carte */
+    .card-title {
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+        color: #4e73df;
+    }
+    
+    /* Arrondi des coins */
+    .rounded-4 {
+        border-radius: 0.75rem !important;
+    }
+    
+    /* Animation du badge */
+    .badge {
+        transition: all 0.3s ease;
+    }
+    
+    .badge:hover {
+        transform: scale(1.1);
+    }
+    
+    /* Effet de focus sur les champs */
+    .input-group:focus-within .input-group-text {
+        border-color: #4e73df;
+        background-color: #eef1ff;
+    }
+    
+    /* Animation de validation */
+    .form-control:valid:focus {
+        border-color: #1cc88a;
+        box-shadow: 0 0 0 0.2rem rgba(28, 200, 138, 0.25);
+    }
+    
+    /* Style pour l'avatar */
+    .user-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 </style>
 {% endblock %}

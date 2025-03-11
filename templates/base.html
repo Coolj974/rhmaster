@@ -405,34 +405,8 @@
                 });
             });
             
-            // Initialisation manuelle des dropdowns
-            const dropdownElementList = document.querySelectorAll('.dropdown-toggle');
-            dropdownElementList.forEach(function(dropdownToggleEl) {
-                dropdownToggleEl.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const dropdownMenu = this.nextElementSibling;
-                    const isActive = dropdownMenu.classList.contains('show');
-                    
-                    // Fermer tous les dropdowns ouverts
-                    document.querySelectorAll('.dropdown-menu.show').forEach(function(menu) {
-                        menu.classList.remove('show');
-                    });
-                    
-                    // Ouvrir le dropdown actuel si ce n'était pas déjà ouvert
-                    if (!isActive) {
-                        dropdownMenu.classList.add('show');
-                    }
-                });
-            });
-            
-            // Fermer les dropdowns quand on clique en dehors
-            document.addEventListener('click', function(e) {
-                if (!e.target.matches('.dropdown-toggle') && !e.target.closest('.dropdown-menu')) {
-                    document.querySelectorAll('.dropdown-menu.show').forEach(function(menu) {
-                        menu.classList.remove('show');
-                    });
-                }
-            });
+            // Bootstrap 5 handles dropdowns automatically with data-bs-toggle attribute
+            // No manual initialization needed
         });
     </script>
     {% block extra_scripts %}{% endblock %}

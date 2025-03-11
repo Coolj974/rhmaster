@@ -15,3 +15,5 @@ try:
     print("✅ Email envoyé avec succès")
 except Exception as e:
     print(f"❌ Erreur: {e}")
+
+# Ce fichier peut être supprimé car il est vide et inutile

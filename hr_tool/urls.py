@@ -18,8 +18,6 @@ from rh_management.views import (
     submit_kilometric_expense, my_kilometric_expenses, manage_kilometric_expenses,
     approve_kilometric_expense, reject_kilometric_expense, edit_kilometric_expense,
     export_expenses_excel, export_expenses_pdf, approve_leave, reject_leave, cancel_expense,
-    edit_user, delete_user, manage_users_view,
-    profile_view, update_profile, change_password,  # Ajout de ces importations
 )
 
 def error_404(request, exception):
@@ -47,10 +45,6 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),  # Logout page
     path('accounts/login/', login_view, name="login"),  # Add this
 
-    # User Management
-    path("manage-users/", manage_users_view, name="manage_users"),  # Gestion des utilisateurs
-    path("edit-user/<int:user_id>/", edit_user, name="edit_user"),  # Éditer un utilisateur
-    path("delete-user/<int:user_id>/", delete_user, name="delete_user"),  # Supprimer un utilisateur
 
     # Home and Dashboard
     path("", home_view, name="home"),  # Home page
@@ -74,6 +68,7 @@ urlpatterns = [
     path("cancel-expense/<int:expense_id>/", cancel_expense, name="cancel_expense"),
     path('delete_expense/<int:id>/', views.delete_expense, name='delete_expense'),
 
+
     # Kilometric Expense Management
     path("submit-kilometric-expense/", submit_kilometric_expense, name="submit_kilometric_expense"),  # Submit kilometric expense
     path("my-kilometric-expenses/", my_kilometric_expenses, name="my_kilometric_expenses"),  # View my kilometric expenses
@@ -82,11 +77,6 @@ urlpatterns = [
     path("reject-kilometric-expense/<int:expense_id>/", reject_kilometric_expense, name="reject_kilometric_expense"),  # Reject kilometric expense
     path("edit-kilometric-expense/<int:expense_id>/", edit_kilometric_expense, name="edit_kilometric_expense"),  # Edit kilometric expense
     path('delete_kilometric_expense/<int:id>/', views.delete_kilometric_expense, name='delete_kilometric_expense'),
-
-    # User Profile Management
-    path("profile/", profile_view, name="profile"),  # Page de profil
-    path("profile/update/", update_profile, name="update_profile"),  # Mise à jour du profil
-    path("profile/change-password/", change_password, name="change_password"),  # Changement de mot de passe
 
     # Other URLs
     path('dashboard_filtered/', views.dashboard_filtered, name='dashboard_filtered'),

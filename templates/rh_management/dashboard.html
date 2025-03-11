@@ -403,11 +403,19 @@
     {% endif %}
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Supprimez ces scripts car ils sont déjà dans base.html -->
+<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script> -->
+
 <script>
     // Ajouter des animations et des effets modernes
     $(document).ready(function() {
+        // Initialisation manuelle des dropdowns pour s'assurer qu'ils fonctionnent
+        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))
+        dropdownElementList.forEach(function (dropdownToggleEl) {
+            var dropdown = new bootstrap.Dropdown(dropdownToggleEl);
+        });
+        
         // Animation d'entrée pour les cartes
         $('.card').hide().each(function(index) {
             $(this).delay(100 * index).fadeIn(500);
