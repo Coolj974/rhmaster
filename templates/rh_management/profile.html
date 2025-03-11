@@ -114,6 +114,20 @@
                             <i class="fas fa-arrow-left me-2"></i>Retour au tableau de bord
                         </a>
                     </div>
+
+                    {% if request.user.is_superuser %}
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'register' %}" class="btn btn-gradient-info btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>Créer un compte
+                        </a>
+                    </div>
+                    <!-- Mise à jour: changer 'manage_users_view' en 'manage_users' -->
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'manage_users' %}" class="btn btn-gradient-secondary btn-lg">
+                            <i class="fas fa-users me-2"></i>Gérer les utilisateurs
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -214,6 +228,11 @@
     
     .btn-gradient-secondary {
         background: linear-gradient(45deg, #858796, #60616f);
+        color: white;
+    }
+
+    .btn-gradient-info {
+        background: linear-gradient(45deg, #36b9cc, #2c9faf);
         color: white;
     }
     

@@ -18,7 +18,7 @@ from rh_management.views import (
     submit_kilometric_expense, my_kilometric_expenses, manage_kilometric_expenses,
     approve_kilometric_expense, reject_kilometric_expense, edit_kilometric_expense,
     export_expenses_excel, export_expenses_pdf, approve_leave, reject_leave, cancel_expense,
-    profile_view, update_profile, change_password,
+    profile_view, update_profile, change_password, manage_users_view, edit_user, delete_user
 )
 
 def error_404(request, exception):
@@ -46,7 +46,12 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),  # Logout page
     path('accounts/login/', login_view, name="login"),  # Add this
 
-# User Profile Management
+    # GESTION DES UTILISATEURS (ADMIN)
+    path("manage-users/", manage_users_view, name="manage_users"),
+    path("edit-user/<int:user_id>/", edit_user, name="edit_user"),
+    path("delete-user/<int:user_id>/", delete_user, name="delete_user"),
+
+    # User Profile Management
     path("profile/", profile_view, name="profile"),  # Page de profil
     path("profile/update/", update_profile, name="update_profile"),  # Mise à jour du profil
     path("profile/change-password/", change_password, name="change_password"),  # Changement de mot de passe

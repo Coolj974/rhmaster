@@ -33,6 +33,19 @@
                                 <input type="password" name="password" id="id_password" class="form-control form-control-lg shadow-sm" required>
                             </div>
                         </div>
+                        <div class="mb-4">
+                            <label for="id_role" class="form-label fw-bold">Rôle</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-0"><i class="fas fa-user-tag"></i></span>
+                                <select name="role" id="id_role" class="form-select form-control-lg shadow-sm" required>
+                                    <option value="employe">Employé</option>
+                                    <option value="encadrant">Encadrant</option>
+                                    <option value="stp">STP</option>
+                                    <option value="rh">RH</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="text-center mt-5">
                             <button type="submit" class="btn btn-gradient-info btn-lg px-5 py-3 rounded-pill shadow-sm">
                                 <i class="fas fa-check-circle me-2"></i>Créer mon compte

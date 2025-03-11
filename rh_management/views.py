@@ -23,6 +23,19 @@ def is_admin_or_hr(user):
 def is_employee(user):
     return user.groups.filter(name='Employé').exists()
 
+# Nouvelles fonctions d'autorisation
+def is_admin(user):
+    return user.is_superuser
+
+def is_rh(user):
+    return user.is_staff or user.groups.filter(name="HR").exists()
+
+def is_encadrant(user):
+    return user.groups.filter(name="Encadrant").exists()
+
+def is_stp(user):
+    return user.groups.filter(name="STP").exists()
+
 ### 🌟 AUTHENTIFICATION ###
 
 # ✅ Page d'accueil
@@ -46,23 +59,43 @@ def login_view(request):
 
     return render(request, 'auth/login.html')
 
-# ✅ Inscription
+# Restreindre la création de comptes aux administrateurs
+@login_required
+@user_passes_test(is_admin)
 def register_view(request):
-    """Gère l'inscription de l'utilisateur."""
+    """Gère l'inscription de l'utilisateur. Seuls les admins peuvent créer des comptes."""
     if request.method == "POST":
         username = request.POST['username']
         email = request.POST['email']
         password = request.POST['password']
-
+        role = request.POST.get('role', 'employe')  # Récupère le rôle sélectionné
+        
         if User.objects.filter(username=username).exists():
             messages.error(request, "Ce nom d'utilisateur est déjà pris.")
         elif User.objects.filter(email=email).exists():
             messages.error(request, "Cet email est déjà utilisé.")
         else:
             user = User.objects.create_user(username=username, email=email, password=password)
-            messages.success(request, "Inscription réussie. Vous pouvez maintenant vous connecter.")
-            return redirect('login')
-
+            from django.contrib.auth.models import Group
+            if role == 'admin':
+                user.is_superuser = True
+                user.is_staff = True
+            elif role == 'rh':
+                user.is_staff = True
+                hr_group, _ = Group.objects.get_or_create(name='HR')
+                user.groups.add(hr_group)
+            elif role == 'encadrant':
+                encadrant_group, _ = Group.objects.get_or_create(name='Encadrant')
+                user.groups.add(encadrant_group)
+            elif role == 'stp':
+                stp_group, _ = Group.objects.get_or_create(name='STP')
+                user.groups.add(stp_group)
+            else:  # employé
+                employe_group, _ = Group.objects.get_or_create(name='Employé')
+                user.groups.add(employe_group)
+            user.save()
+            messages.success(request, "Inscription réussie. Le compte a été créé.")
+            return redirect('manage_users')
     return render(request, 'auth/register.html')
 
 # ✅ Déconnexion
@@ -83,21 +116,29 @@ def dashboard_view(request):
     is_hr = request.user.is_staff or request.user.groups.filter(name='HR').exists()
     is_employee = request.user.groups.filter(name='Employé').exists() or not (is_superuser or is_hr)
 
-    if is_superuser or is_hr:
-        # Logique pour les admins et RH
+    is_admin_flag = request.user.is_superuser
+    is_rh_flag = is_rh(request.user)
+    is_encadrant_flag = is_encadrant(request.user)
+    is_stp_flag = is_stp(request.user)
+    is_employee_flag = request.user.groups.filter(name="Employé").exists() or not (is_admin_flag or is_rh_flag or is_encadrant_flag or is_stp_flag)
+
+    if is_admin_flag or is_rh_flag:
+        # Logique pour admins et RH
         leave_requests = LeaveRequest.objects.all().order_by('-created_at')[:10]
         expense_reports = ExpenseReport.objects.all().order_by('-date')[:10]
         kilometric_expenses = KilometricExpense.objects.all().order_by('-date')[:10]
     else:
-        # Logique pour les employés
+        # Logique pour employés
         leave_requests = LeaveRequest.objects.filter(user=request.user).order_by('-created_at')
         expense_reports = ExpenseReport.objects.filter(user=request.user).order_by('-date')
         kilometric_expenses = KilometricExpense.objects.filter(user=request.user).order_by('-date')
 
     context = {
-        "is_admin": is_superuser,
-        "is_hr": is_hr,
-        "is_employee": is_employee,
+        "is_admin": is_admin_flag,
+        "is_rh": is_rh_flag,
+        "is_encadrant": is_encadrant_flag,
+        "is_stp": is_stp_flag,
+        "is_employee": is_employee_flag,
         "leave_requests": leave_requests,
         "expense_reports": expense_reports,
         "kilometric_expenses": kilometric_expenses,
@@ -383,12 +424,13 @@ def edit_user(request, user_id):
         email = request.POST.get('email')
         is_staff = request.POST.get('is_staff') == 'on'
         is_superuser = request.POST.get('is_superuser') == 'on'
+        is_encadrant = request.POST.get('is_encadrant') == 'on'
+        is_stp = request.POST.get('is_stp') == 'on'
         
         # Vérifier si le nom d'utilisateur existe déjà pour un autre utilisateur
         if User.objects.exclude(id=user_id).filter(username=username).exists():
             messages.error(request, "Ce nom d'utilisateur est déjà utilisé.")
             return redirect('edit_user', user_id=user_id)
-            
         # Vérifier si l'email existe déjà pour un autre utilisateur
         if User.objects.exclude(id=user_id).filter(email=email).exists():
             messages.error(request, "Cet email est déjà utilisé.")
@@ -401,23 +443,45 @@ def edit_user(request, user_id):
         user_to_edit.is_superuser = is_superuser
         user_to_edit.save()
         
-        # Gérer l'ajout/retrait du groupe HR
         from django.contrib.auth.models import Group
-        hr_group, created = Group.objects.get_or_create(name='HR')
-        
+        # Mise à jour du groupe HR
+        hr_group, _ = Group.objects.get_or_create(name='HR')
         if is_staff:
-            # S'assurer que l'utilisateur est dans le groupe HR
             if not user_to_edit.groups.filter(name='HR').exists():
                 user_to_edit.groups.add(hr_group)
         else:
-            # Retirer l'utilisateur du groupe HR s'il n'est plus staff
             if user_to_edit.groups.filter(name='HR').exists():
                 user_to_edit.groups.remove(hr_group)
-        
+                
+        # Mise à jour du groupe Encadrant
+        encadrant_group, _ = Group.objects.get_or_create(name='Encadrant')
+        if is_encadrant:
+            if not user_to_edit.groups.filter(name='Encadrant').exists():
+                user_to_edit.groups.add(encadrant_group)
+        else:
+            if user_to_edit.groups.filter(name='Encadrant').exists():
+                user_to_edit.groups.remove(encadrant_group)
+                
+        # Mise à jour du groupe STP
+        stp_group, _ = Group.objects.get_or_create(name='STP')
+        if is_stp:
+            if not user_to_edit.groups.filter(name='STP').exists():
+                user_to_edit.groups.add(stp_group)
+        else:
+            if user_to_edit.groups.filter(name='STP').exists():
+                user_to_edit.groups.remove(stp_group)
+                
         messages.success(request, f"L'utilisateur {username} a été mis à jour avec succès.")
         return redirect('manage_users')
     
-    return render(request, 'rh_management/edit_user.html', {'user': user_to_edit});
+    # Passage des informations de groupe au template
+    context = {
+         'user': user_to_edit,
+         'is_in_hr': user_to_edit.groups.filter(name="HR").exists(),
+         'is_encadrant': user_to_edit.groups.filter(name="Encadrant").exists(),
+         'is_stp': user_to_edit.groups.filter(name="STP").exists()
+    }
+    return render(request, 'rh_management/edit_user.html', context)
 
 @login_required
 @user_passes_test(lambda user: user.is_superuser)

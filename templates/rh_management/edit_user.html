@@ -1,4 +1,3 @@
-user.html
 {% extends "base.html" %}
 
 {% block content %}
@@ -8,62 +7,56 @@ user.html
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
                 <div class="card-header bg-gradient-primary text-white p-4">
                     <div class="d-flex align-items-center">
-                        <div class="avatar-circle bg-white text-primary me-3" style="width: 50px; height: 50px;">
-                            {{ user.username|first|upper }}
+                        <div>
+                            <h2 class="mb-0"><i class="fas fa-user-edit me-2"></i>Modifier l'utilisateur</h2>
                         </div>
-                        <h2 class="mb-0"><i class="fas fa-user-edit me-2"></i> Modifier l'utilisateur</h2>
                     </div>
                 </div>
+                
                 <div class="card-body p-4">
-                    <form method="post">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" action="{% url 'edit_user' user.id %}">
                         {% csrf_token %}
-                        <div class="mb-4">
-                            <label for="username" class="form-label fw-bold"><i class="fas fa-user me-2"></i>Nom d'utilisateur</label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-light border-0"><i class="fas fa-user"></i></span>
-                                <input type="text" name="username" id="username" value="{{ user.username }}" class="form-control form-control-lg shadow-sm" required>
+                        <div class="mb-3">
+                            <label for="username" class="form-label fw-bold">Nom d'utilisateur</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="fas fa-user"></i></span>
+                                <input type="text" name="username" id="username" value="{{ user.username }}" class="form-control" required>
                             </div>
                         </div>
-
-                        <div class="mb-4">
-                            <label for="email" class="form-label fw-bold"><i class="fas fa-envelope me-2"></i>Email</label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-light border-0"><i class="fas fa-envelope"></i></span>
-                                <input type="email" name="email" id="email" value="{{ user.email }}" class="form-control form-control-lg shadow-sm" required>
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-bold">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="fas fa-envelope"></i></span>
+                                <input type="email" name="email" id="email" value="{{ user.email }}" class="form-control" required>
                             </div>
                         </div>
-
-                        <div class="card border-0 shadow-sm rounded-3 bg-light p-4 mb-4">
-                            <h5 class="mb-3"><i class="fas fa-user-shield me-2"></i>Rôles et permissions</h5>
-                            
-                            <div class="mb-3 form-check form-switch">
-                                <input type="checkbox" name="is_staff" id="is_staff" class="form-check-input" role="switch" style="width: 3em; height: 1.5em;" {% if user.is_staff or user.groups.filter(name='HR').exists %}checked{% endif %}>
-                                <label class="form-check-label" for="is_staff">
-                                    <span class="badge bg-gradient-warning rounded-pill px-3 py-2">
-                                        <i class="fas fa-user-tie me-1"></i> RH
-                                    </span>
-                                    <span class="ms-2 text-muted">Peut gérer les congés et notes de frais</span>
-                                </label>
-                            </div>
-
-                            <div class="mb-3 form-check form-switch">
-                                <input type="checkbox" name="is_superuser" id="is_superuser" class="form-check-input" role="switch" style="width: 3em; height: 1.5em;" {% if user.is_superuser %}checked{% endif %}>
-                                <label class="form-check-label" for="is_superuser">
-                                    <span class="badge bg-gradient-danger rounded-pill px-3 py-2">
-                                        <i class="fas fa-crown me-1"></i> Admin
-                                    </span>
-                                    <span class="ms-2 text-muted">Accès total à la plateforme</span>
-                                </label>
+                        <div class="mb-3">
+                            <label for="is_staff" class="form-label fw-bold">RH</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_staff" id="is_staff" {% if is_in_hr %}checked{% endif %}>
+                                <label class="form-check-label" for="is_staff">RH</label>
                             </div>
                         </div>
-
-                        <div class="d-flex gap-2 mt-4">
-                            <button type="submit" class="btn btn-gradient-success btn-lg px-4 rounded-pill shadow-sm">
-                                <i class="fas fa-save me-2"></i> Enregistrer les modifications
+                        <div class="mb-3">
+                            <label for="is_superuser" class="form-label fw-bold">Admin</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_superuser" id="is_superuser" {% if user.is_superuser %}checked{% endif %}>
+                                <label class="form-check-label" for="is_superuser">Admin</label>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-gradient-primary rounded-pill">
+                                <i class="fas fa-save me-2"></i>Enregistrer les modifications
                             </button>
-                            <a href="{% url 'manage_users' %}" class="btn btn-gradient-secondary btn-lg px-4 rounded-pill shadow-sm">
-                                <i class="fas fa-arrow-left me-2"></i> Retour
-                            </a>
                         </div>
                     </form>
                 </div>
@@ -72,83 +65,32 @@ user.html
     </div>
 </div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Animation d'entrée pour la carte
-        const card = document.querySelector('.animate-fade-in');
-        if (card) {
-            card.style.animation = 'fadeIn 0.8s ease-in-out';
-        }
-    });
-</script>
-
 <style>
-    /* Styles pour les gradients et effets modernes */
-    .bg-gradient-primary {
-        background: linear-gradient(45deg, #4e73df, #224abe);
-    }
-    
-    .bg-gradient-success {
-        background: linear-gradient(45deg, #1cc88a, #13855c);
-    }
-    
-    .bg-gradient-warning {
-        background: linear-gradient(45deg, #f6c23e, #dda20a);
-    }
-    
-    .bg-gradient-danger {
-        background: linear-gradient(45deg, #e74a3b, #be392d);
-    }
-    
-    .bg-gradient-secondary {
-        background: linear-gradient(45deg, #858796, #60616f);
-    }
-    
-    .btn-gradient-success {
-        background: linear-gradient(45deg, #1cc88a, #13855c);
-        color: white;
-        border: none;
-        transition: all 0.3s;
-    }
-    
-    .btn-gradient-secondary {
-        background: linear-gradient(45deg, #858796, #60616f);
-        color: white;
-        border: none;
-        transition: all 0.3s;
-    }
-    
-    .btn-gradient-success:hover, .btn-gradient-secondary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        color: white;
-    }
-    
-    .rounded-4 {
-        border-radius: 0.75rem !important;
-    }
-    
-    .form-control, .input-group-text {
+    /* Styles de base pour les éléments du formulaire */
+    .form-control {
         border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
     }
     
     .form-control:focus {
         border-color: #4e73df;
-        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
     }
     
     .input-group-text {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
+        border-radius: 0.5rem 0 0 0.5rem;
+        border-right: none;
+        transition: all 0.3s ease;
     }
     
-    .avatar-circle {
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-weight: bold;
-        font-size: 24px;
+    .input-group .form-control {
+        border-radius: 0 0.5rem 0.5rem 0;
+    }
+    
+    /* Animations et effets */
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-in-out;
     }
     
     @keyframes fadeIn {
@@ -156,8 +98,97 @@ user.html
         to { opacity: 1; transform: translateY(0); }
     }
     
-    .animate-fade-in {
-        animation: fadeIn 0.8s ease-in-out;
+    .card {
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Styles pour les boutons */
+    .btn {
+        padding: 0.6rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn:active {
+        transform: translateY(1px);
+    }
+    
+    /* Styles pour les dégradés */
+    .bg-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+    }
+    
+    .btn-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+        color: white;
+    }
+    
+    /* Améliorations pour les messages d'alerte */
+    .alert {
+        border: none;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Animation pour les icônes */
+    .fas {
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover .fas {
+        transform: scale(1.2);
+    }
+    
+    /* Style pour le titre de la carte */
+    .card-title {
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+        color: #4e73df;
+    }
+    
+    /* Arrondi des coins */
+    .rounded-4 {
+        border-radius: 0.75rem !important;
+    }
+    
+    /* Animation du badge */
+    .badge {
+        transition: all 0.3s ease;
+    }
+    
+    .badge:hover {
+        transform: scale(1.1);
+    }
+    
+    /* Effet de focus sur les champs */
+    .input-group:focus-within .input-group-text {
+        border-color: #4e73df;
+        background-color: #eef1ff;
+    }
+    
+    /* Animation de validation */
+    .form-control:valid:focus {
+        border-color: #1cc88a;
+        box-shadow: 0 0 0 0.2rem rgba(28, 200, 138, 0.25);
     }
 </style>
 {% endblock %}
