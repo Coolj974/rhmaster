@@ -12,7 +12,159 @@
                 {% csrf_token %}
                 <div class="row">
                     <div class="col-12 mb-4">
-                        {{ form|crispy }}
+                        <!-- Type de congé -->
+                        <div class="mb-4">
+                            <label for="{{ form.leave_type.id_for_label }}" class="form-label fw-bold">
+                                 <h6 class="mb-0">Type de congé</h6>
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="fas fa-list-alt"></i>
+                                </span>
+                                {{ form.leave_type }}
+                            </div>
+                            {% if form.leave_type.help_text %}
+                                <small class="form-text text-muted">{{ form.leave_type.help_text }}</small>
+                            {% endif %}
+                            {% if form.leave_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.leave_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Bloc de dates (start_date et end_date côte à côte) -->
+                        <div class="card mb-4 border-0 shadow-sm rounded-4 bg-light">
+                            <div class="card-header bg-gradient-secondary text-white py-2 px-3">
+                                <h5 class="mb-0"><i class="fas fa-calendar me-2"></i>Période du congé</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <!-- Date de début -->
+                                    <div class="col-md-6">
+                                        <div class="mb-3 mb-md-0">
+                                            <label for="{{ form.start_date.id_for_label }}" class="form-label fw-bold">
+                                                 <h6 class="mb-0">Date de début</h6>
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-white border-0">
+                                                    <i class="fas fa-calendar-day text-primary"></i>
+                                                </span>
+                                                {{ form.start_date }}
+                                            </div>
+                                            {% if form.start_date.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {% for error in form.start_date.errors %}
+                                                        {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Date de fin -->
+                                    <div class="col-md-6">
+                                        <div>
+                                            <label for="{{ form.end_date.id_for_label }}" class="form-label fw-bold">
+                                                <h6 class="mb-0">Date de fin</h6>
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-white border-0">
+                                                    <i class="fas fa-calendar-check text-success"></i>
+                                                </span>
+                                                {{ form.end_date }}
+                                            </div>
+                                            {% if form.end_date.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {% for error in form.end_date.errors %}
+                                                        {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Motif du congé -->
+                        <div class="mb-4">
+                            <label for="{{ form.reason.id_for_label }}" class="form-label fw-bold">
+                                <i class="fas fa-comment-alt me-2"></i>{{ form.reason.label }}
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="fas fa-comment-alt"></i>
+                                </span>
+                                {{ form.reason }}
+                            </div>
+                            {% if form.reason.help_text %}
+                                <small class="form-text text-muted">{{ form.reason.help_text }}</small>
+                            {% endif %}
+                            {% if form.reason.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.reason.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Bloc Justificatif -->
+                        <div class="card mb-4 border-0 shadow-sm rounded-4 bg-light">
+                            <div class="card-header bg-gradient-info text-white py-2 px-3">
+                                <h5 class="mb-0"><i class="fas fa-paperclip me-2"></i>Justificatif</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="{{ form.attachment.id_for_label }}" class="form-label fw-bold">
+                                        <h6 class="mb-0">Joindre un document</h6>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-0">
+                                            <i class="fas fa-file-upload text-info"></i>
+                                        </span>
+                                        {{ form.attachment }}
+                                    </div>
+                                    <small class="form-text text-muted mt-2">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Formats acceptés: PDF, JPG, PNG. Taille max: 5 Mo.
+                                    </small>
+                                    {% if form.attachment.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.attachment.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Destinataires -->
+                        <div class="mb-4">
+                            <label for="{{ form.notification_emails.id_for_label }}" class="form-label fw-bold">
+                                <i class="fas fa-envelope me-2"></i>{{ form.notification_emails.label }}
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                {{ form.notification_emails }}
+                            </div>
+                            {% if form.notification_emails.help_text %}
+                                <small class="form-text text-muted">{{ form.notification_emails.help_text }}</small>
+                            {% endif %}
+                            {% if form.notification_emails.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.notification_emails.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 <div class="text-center mt-4">
@@ -31,6 +183,53 @@
     document.addEventListener("DOMContentLoaded", function() {
         // Animation d'entrée pour la carte
         document.querySelector('.card').classList.add('animate-fade-in');
+        
+        // Vérification des dates
+        const startDateInput = document.getElementById('{{ form.start_date.id_for_label }}');
+        const endDateInput = document.getElementById('{{ form.end_date.id_for_label }}');
+        const warningDiv = document.getElementById('leave_warning');
+        
+        function checkDates() {
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            
+            if (startDate && endDate && endDate < startDate) {
+                warningDiv.textContent = "La date de fin doit être égale ou postérieure à la date de début.";
+                warningDiv.style.display = "block";
+                return false;
+            } else {
+                warningDiv.style.display = "none";
+                return true;
+            }
+        }
+        
+        startDateInput.addEventListener('change', checkDates);
+        endDateInput.addEventListener('change', checkDates);
+        
+        document.querySelector('form').addEventListener('submit', function(e) {
+            if (!checkDates()) {
+                e.preventDefault();
+            }
+        });
+
+        // Animation du bouton de soumission
+        const submitButton = document.getElementById('submit_leave');
+        submitButton.addEventListener('mouseenter', function() {
+            this.querySelector('i').classList.add('fa-bounce');
+            this.classList.add('pulse-grow');
+        });
+        
+        submitButton.addEventListener('mouseleave', function() {
+            this.querySelector('i').classList.remove('fa-bounce');
+            this.classList.remove('pulse-grow');
+        });
+        
+        submitButton.addEventListener('click', function() {
+            if (checkDates()) {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Traitement en cours...';
+                this.classList.add('processing');
+            }
+        });
     });
 </script>
 
@@ -57,7 +256,7 @@
     }
     
     .bg-gradient-secondary {
-        background: linear-gradient(45deg, #5a5c69, #373840);
+        background: linear-gradient(45deg, #858796, #60616f);
     }
     
     .btn-gradient-primary {
@@ -105,6 +304,103 @@
     /* Amélioration pour le formulaire crispy */
     .form-group {
         margin-bottom: 1.5rem;
+    }
+
+    /* Amélioration des styles de formulaire */
+    .form-control, .form-select {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+        transform: translateY(-1px);
+    }
+    
+    textarea.form-control {
+        min-height: 100px;
+    }
+
+    .input-group-text {
+        background-color: #f8f9fc;
+        border-right: none;
+    }
+    
+    .form-control, .form-select {
+        border-left: none;
+    }
+
+    .invalid-feedback.d-block {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background-color: rgba(231, 74, 59, 0.1);
+        border-radius: 0.5rem;
+    }
+
+    /* Styles pour le champ d'upload de fichier */
+    input[type=file] {
+        padding: 0.5rem;
+    }
+    
+    .form-control::-webkit-file-upload-button {
+        background: linear-gradient(45deg, #36b9cc, #258391);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.4rem;
+        margin-right: 0.8rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control::-webkit-file-upload-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    .pulse-grow {
+        animation: pulse-grow 0.75s infinite alternate;
+    }
+    
+    @keyframes pulse-grow {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    .fa-bounce {
+        animation: fa-bounce 0.6s infinite;
+    }
+    
+    @keyframes fa-bounce {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-4px);
+        }
+    }
+    
+    .btn.processing {
+        background: linear-gradient(45deg, #6e8eff, #224abe) !important;
+        pointer-events: none;
+    }
+    
+    .btn-gradient-primary:not(.processing):active {
+        transform: scale(0.97);
+    }
+    
+    /* Effet de focus amélioré pour les champs de formulaire */
+    .form-control:focus, .form-select:focus {
+        transform: translateY(-2px);
+        transition: all 0.3s ease;
     }
 </style>
 {% endblock %}

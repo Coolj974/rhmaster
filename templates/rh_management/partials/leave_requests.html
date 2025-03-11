@@ -2,9 +2,6 @@
     <tr data-id="{{ leave.id }}">
         <td>
             <div class="d-flex align-items-center">
-                <div class="avatar-circle bg-gradient-secondary text-white me-2" style="width: 32px; height: 32px; font-size: 14px;">
-                    {{ leave.user.username|first|upper }}
-                </div>
                 <span class="fw-bold">{{ leave.user.username }}</span>
             </div>
         </td>
@@ -30,13 +27,21 @@
             {% endif %}
         </td>
         <td>
-            <span class="badge bg-gradient-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %} rounded-pill px-3 py-2">
-                {{ leave.status }}
+            <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                {% if leave.status == 'approved' %}Approuvé{% elif leave.status == 'rejected' %}Refusé{% else %}En attente{% endif %}
             </span>
         </td>
+        {% if is_admin %}
+        <td>
+            <form method="post" action="{% url 'delete_leave' leave.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
+            </form>
+        </td>
+        {% endif %}
     </tr>
 {% empty %}
-    <tr><td colspan="5" class="text-center py-4">
+    <tr><td colspan="{% if is_admin %}6{% else %}5{% endif %}" class="text-center py-4">
         <div class="d-flex flex-column align-items-center">
             <i class="far fa-calendar-check text-muted fa-2x mb-3"></i>
             <p>Aucune demande de congé</p>

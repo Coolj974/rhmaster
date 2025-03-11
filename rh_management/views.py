@@ -8,7 +8,7 @@ from .forms import LeaveRequestForm, ExpenseReportForm, KilometricExpenseForm
 from .models import LeaveRequest, ExpenseReport, KilometricExpense
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.db.models import Q
 from django.template.loader import render_to_string
 import json
@@ -145,9 +145,9 @@ def dashboard_filtered(request):
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({
-            'leave_requests': render_to_string('rh_management/partials/leave_requests.html', {'leave_requests': leave_requests}),
-            'expense_reports': render_to_string('rh_management/partials/expense_reports.html', {'expense_reports': expense_reports}),
-            'kilometric_expense_reports': render_to_string('rh_management/partials/kilometric_expense_reports.html', {'kilometric_expenses': kilometric_expenses}),
+            'leave_requests': render_to_string('rh_management/partials/leave_requests.html', {'leave_requests': leave_requests, 'is_admin': request.user.is_superuser}),
+            'expense_reports': render_to_string('rh_management/partials/expense_reports.html', {'expense_reports': expense_reports, 'is_admin': request.user.is_superuser}),
+            'kilometric_expense_reports': render_to_string('rh_management/partials/kilometric_expense_reports.html', {'kilometric_expenses': kilometric_expenses, 'is_admin': request.user.is_superuser}),
         })
 
     return render(request, 'rh_management/dashboard.html', {
@@ -368,7 +368,7 @@ def manage_users_view(request):
 
 @login_required
 @user_passes_test(lambda user: user.is_superuser)
-def edit_user_view(request, user_id):
+def edit_user(request, user_id):  # Renommé de edit_user_view à edit_user pour correspondre à l'import dans urls.py
     """Gère la modification d'un utilisateur (Admin)."""
     user = User.objects.get(id=user_id)
 
@@ -378,17 +378,20 @@ def edit_user_view(request, user_id):
         user.is_staff = 'is_staff' in request.POST
         user.is_superuser = 'is_superuser' in request.POST
         user.save()
+        messages.success(request, f"L'utilisateur {user.username} a été mis à jour avec succès.")
         return redirect('manage_users')
 
     return render(request, 'rh_management/edit_user.html', {'user': user})
 
 @login_required
 @user_passes_test(lambda user: user.is_superuser)
-def delete_user_view(request, user_id):
+def delete_user(request, user_id):  # Renommé de delete_user_view à delete_user pour correspondre à l'import dans urls.py
     """Gère la suppression d'un utilisateur (Admin)."""
     user = User.objects.get(id=user_id)
     if request.method == "POST":
+        username = user.username
         user.delete()
+        messages.success(request, f"L'utilisateur {username} a été supprimé avec succès.")
         return redirect('manage_users')
 
     return render(request, 'rh_management/delete_user.html', {'user': user})
@@ -567,3 +570,79 @@ def delete_kilometric_expense(request, id):
     if request.user.is_superuser:
         expense.delete()
     return redirect('dashboard')
+
+### 🌟 GESTION DU PROFIL UTILISATEUR ###
+@login_required
+def profile_view(request):
+    """Affiche la page de profil de l'utilisateur."""
+    return render(request, 'rh_management/profile.html')
+
+@login_required
+def update_profile(request):
+    """Met à jour les informations de profil de l'utilisateur."""
+    if request.method == "POST":
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        
+        user = request.user
+        
+        # Pour les utilisateurs non-admin et non-RH, le nom d'utilisateur et l'email ne peuvent pas être modifiés
+        if not user.is_superuser and not user.is_staff:
+            messages.error(request, "Vous n'avez pas les permissions nécessaires pour modifier ces informations.")
+            return redirect('profile')
+        
+        # Vérifier si le nom d'utilisateur existe déjà
+        if User.objects.exclude(id=user.id).filter(username=username).exists():
+            messages.error(request, "Ce nom d'utilisateur est déjà pris.")
+            return redirect('profile')
+            
+        # Vérifier si l'email existe déjà
+        if User.objects.exclude(id=user.id).filter(email=email).exists():
+            messages.error(request, "Cette adresse email est déjà utilisée.")
+            return redirect('profile')
+        
+        user.username = username
+        user.email = email
+        user.save()
+        
+        messages.success(request, "Votre profil a été mis à jour avec succès!")
+        return redirect('profile')
+    
+    return redirect('profile')
+
+@login_required
+def change_password(request):
+    """Permet à l'utilisateur de changer son mot de passe."""
+    if request.method == "POST":
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        user = request.user
+        
+        # Vérification du mot de passe actuel
+        if not user.check_password(current_password):
+            messages.error(request, "Le mot de passe actuel est incorrect.")
+            return redirect('profile')
+            
+        # Vérification que les nouveaux mots de passe correspondent
+        if new_password != confirm_password:
+            messages.error(request, "Les nouveaux mots de passe ne correspondent pas.")
+            return redirect('profile')
+            
+        # Vérification de la complexité du mot de passe (à adapter selon vos besoins)
+        if len(new_password) < 8:
+            messages.error(request, "Le mot de passe doit contenir au moins 8 caractères.")
+            return redirect('profile')
+            
+        # Modification du mot de passe
+        user.set_password(new_password)
+        user.save()
+        
+        # Mise à jour de la session pour éviter la déconnexion
+        update_session_auth_hash(request, user)
+        
+        messages.success(request, "Votre mot de passe a été modifié avec succès!")
+        return redirect('profile')
+    
+    return redirect('profile')

@@ -43,10 +43,10 @@
                                     {{ expense.description }}
                                 </span>
                             </td>
-                            <td><strong>{{ expense.amount }}</strong> {{ expense.currency }}</td>
+                            <td><strong>{{ expense.amount }}</strong> <span class="text-muted">€</span></td>
                             <td>
                                 <span class="badge bg-gradient-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %} rounded-pill px-3 py-2">
-                                    {{ expense.get_status_display }}
+                                    {% if expense.status == 'approved' %}Approuvé{% elif expense.status == 'rejected' %}Refusé{% else %}En attente{% endif %}
                                 </span>
                             </td>
                             <td>

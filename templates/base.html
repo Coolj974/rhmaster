@@ -44,12 +44,76 @@
             background: linear-gradient(45deg, #3a3b45, #1e1f29);
         }
         
-        /* Boutons avec gradient */
-        .btn-gradient-primary {
-            background: linear-gradient(45deg, #4e73df, #224abe);
+        /* Boutons avec gradient et effets avancés */
+        .btn-gradient-primary,
+        .btn-gradient-success,
+        .btn-gradient-info,
+        .btn-gradient-warning,
+        .btn-gradient-secondary,
+        .btn-gradient-danger {
+            position: relative;
+            overflow: hidden;
             color: white;
             border: none;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+        
+        /* Effet d'onde ripple pour tous les boutons gradient */
+        .btn-gradient-primary::after,
+        .btn-gradient-success::after,
+        .btn-gradient-info::after,
+        .btn-gradient-warning::after,
+        .btn-gradient-secondary::after,
+        .btn-gradient-danger::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            z-index: -1;
+            transition: width 0.5s, height 0.5s, opacity 0.5s;
+        }
+        
+        /* Animation d'onde au survol */
+        .btn-gradient-primary:hover::after,
+        .btn-gradient-success:hover::after,
+        .btn-gradient-info:hover::after,
+        .btn-gradient-warning:hover::after,
+        .btn-gradient-secondary:hover::after,
+        .btn-gradient-danger:hover::after {
+            width: 300%;
+            height: 300%;
+            opacity: 1;
+        }
+        
+        /* Effets au survol des boutons */
+        .btn-gradient-primary:hover, 
+        .btn-gradient-success:hover, 
+        .btn-gradient-info:hover, 
+        .btn-gradient-warning:hover, 
+        .btn-gradient-secondary:hover,
+        .btn-gradient-danger:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 7px 15px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+        
+        /* Effet au clic */
+        .btn-gradient-primary:active, 
+        .btn-gradient-success:active, 
+        .btn-gradient-info:active, 
+        .btn-gradient-warning:active, 
+        .btn-gradient-secondary:active,
+        .btn-gradient-danger:active {
+            transform: translateY(1px) scale(0.98);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
         
         /* Navbar moderne */
@@ -165,6 +229,57 @@
         .shadow-lg {
             box-shadow: 0 0.5rem 1.5rem 0 rgba(58, 59, 69, 0.1) !important;
         }
+        
+        /* Styles améliorés pour le dropdown */
+        .dropdown-menu {
+            animation: fadeInMenu 0.3s ease;
+        }
+        
+        @keyframes fadeInMenu {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .dropdown-item {
+            transition: all 0.2s;
+            padding: 0.6rem 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+        }
+        
+        .dropdown-item.text-danger:hover {
+            background-color: rgba(231, 74, 59, 0.1);
+        }
+        
+        /* Style pour l'effet ripple */
+        .btn {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ripple-effect {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+            width: 150px;
+            height: 150px;
+            transform: translate(-50%, -50%);
+        }
+        
+        @keyframes ripple {
+            to {
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -204,7 +319,7 @@
                             <i class="fas fa-user-circle me-1"></i> Mon Compte
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-1"></i> Profil</a></li>
+                            <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user-cog me-1"></i> Mon Profil</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="post" action="{% url 'logout' %}">
@@ -262,6 +377,61 @@
             const animatedElements = document.querySelectorAll('.animate-fade-in');
             animatedElements.forEach(element => {
                 element.style.animation = 'fadeIn 0.8s ease-in-out forwards';
+            });
+            
+            // Effet ripple pour les boutons
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    // Créer un élément pour l'effet ripple
+                    const ripple = document.createElement('span');
+                    ripple.classList.add('ripple-effect');
+                    
+                    // Positionner l'élément là où l'utilisateur a cliqué
+                    const rect = button.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    
+                    // Ajouter l'élément au bouton
+                    button.appendChild(ripple);
+                    
+                    // Supprimer l'élément après l'animation
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+            
+            // Initialisation manuelle des dropdowns
+            const dropdownElementList = document.querySelectorAll('.dropdown-toggle');
+            dropdownElementList.forEach(function(dropdownToggleEl) {
+                dropdownToggleEl.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const dropdownMenu = this.nextElementSibling;
+                    const isActive = dropdownMenu.classList.contains('show');
+                    
+                    // Fermer tous les dropdowns ouverts
+                    document.querySelectorAll('.dropdown-menu.show').forEach(function(menu) {
+                        menu.classList.remove('show');
+                    });
+                    
+                    // Ouvrir le dropdown actuel si ce n'était pas déjà ouvert
+                    if (!isActive) {
+                        dropdownMenu.classList.add('show');
+                    }
+                });
+            });
+            
+            // Fermer les dropdowns quand on clique en dehors
+            document.addEventListener('click', function(e) {
+                if (!e.target.matches('.dropdown-toggle') && !e.target.closest('.dropdown-menu')) {
+                    document.querySelectorAll('.dropdown-menu.show').forEach(function(menu) {
+                        menu.classList.remove('show');
+                    });
+                }
             });
         });
     </script>

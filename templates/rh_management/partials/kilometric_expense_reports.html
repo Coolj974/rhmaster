@@ -2,9 +2,6 @@
     <tr data-id="{{ expense.id }}">
         <td>
             <div class="d-flex align-items-center">
-                <div class="avatar-circle bg-gradient-secondary text-white me-2" style="width: 32px; height: 32px; font-size: 14px;">
-                    {{ expense.user.username|first|upper }}
-                </div>
                 <span class="fw-bold">{{ expense.user.username }}</span>
             </div>
         </td>
@@ -22,7 +19,7 @@
         <td><strong>{{ expense.amount }}</strong> <span class="text-muted">€</span></td>
         <td>
             <span class="badge bg-gradient-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %} rounded-pill px-3 py-2">
-                {{ expense.status }}
+                {% if expense.status == 'approved' %}Approuvé{% elif expense.status == 'rejected' %}Refusé{% else %}En attente{% endif %}
             </span>
         </td>
     </tr>

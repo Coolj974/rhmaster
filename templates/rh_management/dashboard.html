@@ -113,13 +113,13 @@
                                 {% if leave_requests %}
                                     {% for leave in leave_requests %}
                                         <tr data-id="{{ leave.id }}">
-                                            <td>{{ leave.user.username }}</td>
+                                            <td><span class="fw-bold">{{ leave.user.username }}</span></td>
                                             <td>{{ leave.start_date }}</td>
                                             <td>{{ leave.end_date }}</td>
                                             <td>{{ leave.get_leave_type_display }}</td>
                                             <td>
                                                 <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
-                                                    {{ leave.status }}
+                                                    {% if leave.status == 'approved' %}Approuvé{% elif leave.status == 'rejected' %}Refusé{% else %}En attente{% endif %}
                                                 </span>
                                             </td>
                                             {% if is_admin %}
@@ -199,13 +199,13 @@
                                 {% if expense_reports %}
                                     {% for expense in expense_reports %}
                                         <tr data-id="{{ expense.id }}">
-                                            <td>{{ expense.user.username }}</td>
+                                            <td><span class="fw-bold">{{ expense.user.username }}</span></td>
                                             <td>{{ expense.date }}</td>
                                             <td>{{ expense.description }}</td>
-                                            <td>{{ expense.amount }} €</td>
+                                            <td><strong>{{ expense.amount }}</strong> <span class="text-muted">€</span></td>
                                             <td>
                                                 <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
-                                                    {{ expense.status }}
+                                                    {% if expense.status == 'approved' %}Approuvé{% elif expense.status == 'rejected' %}Refusé{% else %}En attente{% endif %}
                                                 </span>
                                             </td>
                                             {% if is_admin %}
@@ -286,14 +286,14 @@
                                 {% if kilometric_expenses %}
                                     {% for expense in kilometric_expenses %}
                                         <tr data-id="{{ expense.id }}">
-                                            <td>{{ expense.user.username }}</td>
+                                            <td><span class="fw-bold">{{ expense.user.username }}</span></td>
                                             <td>{{ expense.date }}</td>
                                             <td>{{ expense.description|default:"Frais kilométrique" }}</td>
                                             <td>{{ expense.distance }} km</td>
                                             <td>{{ expense.amount }}</td>
                                             <td>
                                                 <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
-                                                    {{ expense.status }}
+                                                    {% if expense.status == 'approved' %}Approuvé{% elif expense.status == 'rejected' %}Refusé{% else %}En attente{% endif %}
                                                 </span>
                                             </td>
                                             {% if is_admin %}
@@ -341,10 +341,10 @@
                                         <tr data-id="{{ expense.id }}">
                                             <td>{{ expense.date }}</td>
                                             <td>{{ expense.description }}</td>
-                                            <td>{{ expense.amount }} €</td>
+                                            <td><strong>{{ expense.amount }}</strong> <span class="text-muted">€</span></td>
                                             <td>
                                                 <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
-                                                    {{ expense.status }}
+                                                    {% if expense.status == 'approved' %}Approuvé{% elif expense.status == 'rejected' %}Refusé{% else %}En attente{% endif %}
                                                 </span>
                                             </td>
                                         </tr>
@@ -385,7 +385,7 @@
                                             <td>{{ leave.get_leave_type_display }}</td>
                                             <td>
                                                 <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
-                                                    {{ leave.status }}
+                                                    {% if leave.status == 'approved' %}Approuvé{% elif leave.status == 'rejected' %}Refusé{% else %}En attente{% endif %}
                                                 </span>
                                             </td>
                                         </tr>
@@ -427,6 +427,98 @@
         
         // Style pour les boutons de suppression
         $('.btn-outline-danger').addClass('rounded-pill');
+        
+        // Animation de pulsation pour les badges de notification
+        $('.badge.bg-danger').addClass('animate-pulse');
+        
+        // Ajouter un effet de survol aux boutons d'action
+        $('.btn').hover(function() {
+            $(this).find('i').addClass('fa-beat');
+        }, function() {
+            $(this).find('i').removeClass('fa-beat');
+        });
+        
+        // CORRECTION DES FILTRES
+        // Fonctions de filtrage pour les différentes sections
+        function filterData(filterType, statusValue, sortValue) {
+            let queryParams = {};
+            
+            if (statusValue) {
+                queryParams[`status_${filterType}`] = statusValue;
+            }
+            
+            if (sortValue) {
+                queryParams[`sort_${filterType}`] = sortValue;
+            }
+            
+            console.log("Envoi de la requête de filtrage:", queryParams);
+            
+            $.ajax({
+                url: '{% url 'dashboard_filtered' %}',
+                type: 'GET',
+                data: queryParams,
+                dataType: 'json',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(data) {
+                    console.log("Réponse reçue:", data);
+                    
+                    if (filterType === 'leave') {
+                        $('#leave_requests_body').html(data.leave_requests);
+                    } else if (filterType === 'expense') {
+                        $('#expense_reports_body').html(data.expense_reports);
+                    } else if (filterType === 'kilometric_expense') {
+                        $('#kilometric_expense_reports_body').html(data.kilometric_expense_reports);
+                    }
+                    
+                    // Réappliquer les styles après le filtrage
+                    applyBadgeStyles();
+                },
+                error: function(xhr, status, error) {
+                    console.error("Erreur lors du filtrage:", error);
+                    console.error("Statut:", status);
+                    console.error("Réponse:", xhr.responseText);
+                    alert("Erreur lors du filtrage. Consultez la console pour plus de détails.");
+                }
+            });
+        }
+        
+        // Fonction pour appliquer les styles aux badges après mise à jour du DOM
+        function applyBadgeStyles() {
+            $('span.badge').each(function() {
+                if ($(this).hasClass('bg-warning')) {
+                    $(this).removeClass('bg-warning').addClass('bg-gradient-warning');
+                } else if ($(this).hasClass('bg-success')) {
+                    $(this).removeClass('bg-success').addClass('bg-gradient-success');
+                } else if ($(this).hasClass('bg-danger')) {
+                    $(this).removeClass('bg-danger').addClass('bg-gradient-danger');
+                }
+                $(this).addClass('rounded-pill px-3 py-2');
+            });
+            
+            // Réappliquer les styles aux boutons de suppression
+            $('.btn-outline-danger').addClass('rounded-pill');
+        }
+        
+        // Attacher les événements de clic aux boutons de filtrage
+        $('#filter_leave').click(function() {
+            const statusValue = $('#status_filter_leave').val();
+            const sortValue = $('#sort_by_leave').val();
+            filterData('leave', statusValue, sortValue);
+        });
+        
+        $('#filter_expense').click(function() {
+            const statusValue = $('#status_filter_expense').val();
+            const sortValue = $('#sort_by_expense').val();
+            filterData('expense', statusValue, sortValue);
+        });
+        
+        $('#filter_kilometric_expense').click(function() {
+            const statusValue = $('#status_filter_kilometric_expense').val();
+            const sortValue = $('#sort_by_kilometric_expense').val();
+            filterData('kilometric_expense', statusValue, sortValue);
+        });
     });
 </script>
 
@@ -514,6 +606,59 @@
     /* Animation pour les changements de statut */
     .badge {
         transition: all 0.3s ease;
+    }
+    
+    .animate-pulse {
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.2);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    .btn {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .btn:active {
+        transform: scale(0.95);
+    }
+    
+    .fa-beat {
+        animation: beat 0.5s infinite alternate;
+    }
+    
+    @keyframes beat {
+        to { transform: scale(1.2); }
+    }
+    
+    .btn-outline-danger {
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(231, 74, 59, 0.2);
+    }
+    
+    .table tbody tr {
+        transition: all 0.3s;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(78, 115, 223, 0.05);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     }
 </style>
 {% endblock %}

@@ -12,14 +12,14 @@
                 {% csrf_token %}
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <label for="id_date" class="form-label fw-bold"><i class="fas fa-calendar-alt me-2"></i>Date</label>
+                        <label for="id_date" class="form-label fw-bold">Date</label>
                         <div class="input-group input-group-lg">
                             <span class="input-group-text bg-light border-0"><i class="fas fa-calendar-alt"></i></span>
                             {{ form.date }}
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label for="project" class="form-label fw-bold"><i class="fas fa-project-diagram me-2"></i>Projet associé</label>
+                        <label for="project" class="form-label fw-bold">Projet associé</label>
                         <div class="input-group input-group-lg">
                             <span class="input-group-text bg-light border-0"><i class="fas fa-project-diagram"></i></span>
                             <input type="text" id="project" name="project" class="form-control form-control-lg shadow-sm" placeholder="Ex: Audit Sécurité 2025" required>
@@ -31,7 +31,7 @@
                 </div>
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <label for="id_vehicle_type" class="form-label fw-bold"><i class="fas fa-car me-2"></i>Type de véhicule</label>
+                        <label for="id_vehicle_type" class="form-label fw-bold">Type de véhicule</label>
                         <div class="input-group input-group-lg">
                             <span class="input-group-text bg-light border-0"><i class="fas fa-car"></i></span>
                             {{ form.vehicle_type }}
@@ -39,7 +39,7 @@
                         <div class="form-text text-muted" id="basic-addon4">Ex: Voiture, vélo</div>
                     </div>
                     <div class="col-md-6">
-                        <label for="id_fiscal_power" class="form-label fw-bold"><i class="fas fa-tachometer-alt me-2"></i>Puissance fiscale</label>
+                        <label for="id_fiscal_power" class="form-label fw-bold">Puissance fiscale</label>
                         <div class="input-group input-group-lg">
                             <span class="input-group-text bg-light border-0"><i class="fas fa-tachometer-alt"></i></span>
                             {{ form.fiscal_power }}
@@ -55,7 +55,7 @@
                     <div class="card-body">
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <label for="departure" class="form-label fw-bold"><i class="fas fa-map-marker-alt me-2 text-danger"></i>Départ</label>
+                                <label for="departure" class="form-label fw-bold">Départ</label>
                                 <div class="input-group input-group-lg">
                                     <span class="input-group-text bg-white border-0"><i class="fas fa-map-marker-alt text-danger"></i></span>
                                     <input type="text" id="departure" name="departure" class="form-control form-control-lg shadow-sm" required>
@@ -65,7 +65,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="arrival" class="form-label fw-bold"><i class="fas fa-flag-checkered me-2 text-success"></i>Arrivée</label>
+                                <label for="arrival" class="form-label fw-bold">Arrivée</label>
                                 <div class="input-group input-group-lg">
                                     <span class="input-group-text bg-white border-0"><i class="fas fa-flag-checkered text-success"></i></span>
                                     <input type="text" id="arrival" name="arrival" class="form-control form-control-lg shadow-sm" required>
@@ -92,7 +92,7 @@
                             </div>
                             
                             <div class="col-md-6">
-                                <label for="distance" class="form-label fw-bold"><i class="fas fa-road me-2"></i>Distance (km)</label>
+                                <label for="distance" class="form-label fw-bold">Distance (km)</label>
                                 <div class="input-group input-group-lg">
                                     <span class="input-group-text bg-light border-0"><i class="fas fa-road"></i></span>
                                     <input type="text" id="distance" name="distance" class="form-control form-control-lg shadow-sm" readonly required>
@@ -104,7 +104,7 @@
 
                 <div class="row mb-4">
                     <div class="col-md-12">
-                        <label for="notification_emails" class="form-label fw-bold"><i class="fas fa-envelope me-2"></i>Emails de notification</label>
+                        <label for="notification_emails" class="form-label fw-bold">Emails de notification</label>
                         <div class="input-group input-group-lg">
                             <span class="input-group-text bg-light border-0"><i class="fas fa-envelope"></i></span>
                             {{ form.notification_emails }}
@@ -114,7 +114,7 @@
 
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <label for="reimbursement" class="form-label fw-bold"><i class="fas fa-euro-sign me-2"></i>Montant du remboursement (€)</label>
+                        <label for="reimbursement" class="form-label fw-bold">Montant du remboursement (€)</label>
                         <div class="input-group input-group-lg">
                             <span class="input-group-text bg-light border-0"><i class="fas fa-euro-sign"></i></span>
                             <input type="text" id="reimbursement" name="reimbursement" class="form-control form-control-lg fw-bold shadow-sm" readonly required>
@@ -288,7 +288,7 @@
                     })
                     .catch(error => {
                         console.error("Erreur lors du calcul de l'itinéraire :", error);
-                        alert("Erreur : Impossible de récupérer l'itinéraire. Vérifiez votre connexion et l'API Key.");
+                        alert("Erreur : Impossible de récupérer l'itinéraire. Vérifiez votre connexion et la clé API.");
                     });
             }
         }

@@ -1,6 +1,5 @@
 <!-- filepath: /c:/Users/coolj/OneDrive/RHCYBER/hr_tool/rhmaster/templates/rh_management/submit_expense.html -->
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
 
 {% block content %}
 <div class="container mt-5">
@@ -14,7 +13,118 @@
                 
                 <div class="row">
                     <div class="col-12 mb-4">
-                        {{ form|crispy }}
+                        <!-- Date, Description, Montant, etc. -->
+                        {% for field in form %}
+                            {% if field.name != 'receipt' and field.name != 'notification_emails' %}
+                                <div class="mb-4">
+                                    <label for="{{ field.id_for_label }}" class="form-label fw-bold">
+                                        {% if field.name == 'date' %}
+                                            <h6 class="mb-0">Date</h6>
+                                        {% elif field.name == 'description' %}
+                                            <h6 class="mb-0">Description</h6>
+                                        {% elif field.name == 'amount' %}
+                                            <h6 class="mb-0">Montant</h6>
+                                        {% elif field.name == 'vat' %}
+                                            <h6 class="mb-0">TVA</h6>
+                                        {% elif field.name == 'project' %}
+                                            <h6 class="mb-0">Projet</h6>
+                                        {% elif field.name == 'location' %}
+                                            <h6 class="mb-0">Localisation</h6>
+                                        {% elif field.name == 'refacturable' %}
+                                            <h6 class="mb-0">Refacturable</h6>
+                                        {% else %}
+                                            <h6 class="mb-0">{{ field.label }}</h6>
+                                        {% endif %}
+                                    </label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text bg-light border-0">
+                                            {% if field.name == 'date' %}
+                                                <i class="fas fa-calendar-alt"></i>
+                                            {% elif field.name == 'description' %}
+                                                <i class="fas fa-file-alt"></i>
+                                            {% elif field.name == 'amount' %}
+                                                <i class="fas fa-coins"></i>
+                                            {% elif field.name == 'vat' %}
+                                                <i class="fas fa-percentage"></i>
+                                            {% elif field.name == 'project' %}
+                                                <i class="fas fa-project-diagram"></i>
+                                            {% elif field.name == 'location' %}
+                                                <i class="fas fa-map-marker-alt"></i>
+                                            {% elif field.name == 'refacturable' %}
+                                                <i class="fas fa-redo-alt"></i>
+                                            {% else %}
+                                                <i class="fas fa-info-circle"></i>
+                                            {% endif %}
+                                        </span>
+                                        {{ field }}
+                                    </div>
+                                    {% if field.help_text %}
+                                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in field.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- Bloc Facture -->
+                        <div class="card mb-4 border-0 shadow-sm rounded-4 bg-light">
+                            <div class="card-header bg-gradient-success text-white py-2 px-3">
+                                <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Justificatif de dépense</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="{{ form.receipt.id_for_label }}" class="form-label fw-bold">
+                                        <h6 class="mb-0">Joindre une facture</h6>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-0">
+                                            <i class="fas fa-file-invoice text-success"></i>
+                                        </span>
+                                        {{ form.receipt }}
+                                    </div>
+                                    <small class="form-text text-muted mt-2">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Formats acceptés: PDF, JPG, PNG. Taille max: 10 Mo. La facture est fortement recommandée pour accélérer la validation.
+                                    </small>
+                                    {% if form.receipt.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.receipt.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notifications -->
+                        <div class="mb-4">
+                            <label for="{{ form.notification_emails.id_for_label }}" class="form-label fw-bold">
+                                <i class="fas fa-envelope me-2"></i>{{ form.notification_emails.label }}
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                {{ form.notification_emails }}
+                            </div>
+                            {% if form.notification_emails.help_text %}
+                                <small class="form-text text-muted">{{ form.notification_emails.help_text }}</small>
+                            {% endif %}
+                            {% if form.notification_emails.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.notification_emails.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 
@@ -32,6 +142,36 @@
     document.addEventListener("DOMContentLoaded", function() {
         // Animation d'entrée pour la carte
         document.querySelector('.card').classList.add('animate-fade-in');
+        
+        // Animer le bouton de soumission
+        const submitButton = document.querySelector('button[type="submit"]');
+        
+        submitButton.addEventListener('mouseenter', function() {
+            this.querySelector('i').classList.add('fa-shake');
+        });
+        
+        submitButton.addEventListener('mouseleave', function() {
+            this.querySelector('i').classList.remove('fa-shake');
+        });
+        
+        // Ajouter un indicateur de chargement lors de la soumission
+        document.querySelector('form').addEventListener('submit', function() {
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Traitement...';
+            submitButton.disabled = true;
+            submitButton.classList.add('processing');
+        });
+        
+        // Animation lors du focus sur les champs
+        const inputFields = document.querySelectorAll('.form-control, .form-select');
+        inputFields.forEach(field => {
+            field.addEventListener('focus', function() {
+                this.closest('.mb-4').classList.add('input-focused');
+            });
+            
+            field.addEventListener('blur', function() {
+                this.closest('.mb-4').classList.remove('input-focused');
+            });
+        });
     });
 </script>
 
@@ -106,6 +246,76 @@
     /* Amélioration pour le formulaire crispy */
     .form-group {
         margin-bottom: 1.5rem;
+    }
+
+    /* Styles pour le champ d'upload de fichier */
+    input[type=file] {
+        padding: 0.5rem;
+    }
+    
+    .form-control::-webkit-file-upload-button {
+        background: linear-gradient(45deg, #1cc88a, #13855c);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.4rem;
+        margin-right: 0.8rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control::-webkit-file-upload-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+    
+    .fa-shake {
+        animation: shake 0.5s infinite;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-3px); }
+        75% { transform: translateX(3px); }
+    }
+    
+    .btn.processing {
+        background: linear-gradient(45deg, #28a745, #13855c) !important;
+        pointer-events: none;
+    }
+    
+    /* Style pour le focus des champs */
+    .input-focused {
+        transform: translateY(-2px);
+        transition: transform 0.3s ease;
+    }
+    
+    .input-focused label {
+        color: #1cc88a;
+        transition: color 0.3s ease;
+    }
+    
+    .input-focused .input-group-text i {
+        transform: scale(1.2);
+        transition: transform 0.3s ease;
+        color: #1cc88a;
+    }
+    
+    /* Amélioration du bouton de téléchargement de fichier */
+    .form-control::-webkit-file-upload-button {
+        background: linear-gradient(45deg, #1cc88a, #13855c);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.4rem;
+        margin-right: 0.8rem;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-control::-webkit-file-upload-button:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
 </style>
 {% endblock %}
