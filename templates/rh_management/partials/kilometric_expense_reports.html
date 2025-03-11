@@ -1,15 +1,36 @@
 {% for expense in kilometric_expenses %}
     <tr data-id="{{ expense.id }}">
-        <td>{{ expense.user.username }}</td>
-        <td>{{ expense.date }}</td>
-        <td>{{ expense.description }}</td>
-        <td>{{ expense.distance }} km</td>
         <td>
-            <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
+            <div class="d-flex align-items-center">
+                <div class="avatar-circle bg-gradient-secondary text-white me-2" style="width: 32px; height: 32px; font-size: 14px;">
+                    {{ expense.user.username|first|upper }}
+                </div>
+                <span class="fw-bold">{{ expense.user.username }}</span>
+            </div>
+        </td>
+        <td><i class="fas fa-calendar-day text-muted me-1"></i> {{ expense.date }}</td>
+        <td>
+            {% if expense.description %}
+                <span class="text-truncate d-inline-block" style="max-width: 150px;" title="{{ expense.description }}">
+                    {{ expense.description }}
+                </span>
+            {% else %}
+                <span class="text-muted">Frais kilométrique</span>
+            {% endif %}
+        </td>
+        <td><strong>{{ expense.distance }}</strong> <span class="text-muted">km</span></td>
+        <td><strong>{{ expense.amount }}</strong> <span class="text-muted">€</span></td>
+        <td>
+            <span class="badge bg-gradient-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %} rounded-pill px-3 py-2">
                 {{ expense.status }}
             </span>
         </td>
     </tr>
 {% empty %}
-    <tr><td colspan="5" class="text-center">Aucune note de frais kilométriques enregistrée</td></tr>
+    <tr><td colspan="5" class="text-center py-4">
+        <div class="d-flex flex-column align-items-center">
+            <i class="fas fa-route text-muted fa-2x mb-3"></i>
+            <p>Aucune note de frais kilométriques enregistrée</p>
+        </div>
+    </td></tr>
 {% endfor %}

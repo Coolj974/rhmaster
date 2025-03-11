@@ -1,21 +1,98 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Conteneur principal centré -->
-<div class="container text-center">
-    <!-- Titre de la page avec un emoji d'avertissement -->
-    <h2>⚠️ Supprimer un Utilisateur</h2>
-    
-    <!-- Message de confirmation indiquant quel utilisateur sera supprimé -->
-    <p>Voulez-vous vraiment supprimer l'utilisateur <strong>{{ user.username }}</strong> ?</p>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
+                <div class="card-header bg-gradient-danger text-white p-4 text-center">
+                    <h2 class="mb-0"><i class="fas fa-user-times me-2"></i> Supprimer un Utilisateur</h2>
+                </div>
+                <div class="card-body p-5 text-center">
+                    <div class="mb-4">
+                        <div class="avatar-circle bg-gradient-secondary text-white mx-auto mb-4" style="width: 80px; height: 80px; font-size: 32px;">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <p class="lead mb-4">Voulez-vous vraiment supprimer l'utilisateur <strong>{{ user.username }}</strong> ?</p>
+                        <p class="text-muted mb-4">Cette action est irréversible et supprimera toutes les données associées à cet utilisateur.</p>
+                    </div>
 
-    <!-- Formulaire pour soumettre la suppression -->
-    <form method="post">
-        {% csrf_token %}
-        <!-- Bouton de suppression avec style danger -->
-        <button type="submit" class="btn btn-danger">🗑 Supprimer</button>
-        <!-- Lien pour annuler l'action et revenir à la gestion des utilisateurs -->
-        <a href="{% url 'manage_users' %}" class="btn btn-secondary">Annuler</a>
-    </form>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex flex-wrap justify-content-center gap-3">
+                            <button type="submit" class="btn btn-gradient-danger btn-lg px-4 py-2 rounded-pill shadow-sm">
+                                <i class="fas fa-trash-alt me-2"></i> Confirmer la suppression
+                            </button>
+                            <a href="{% url 'manage_users' %}" class="btn btn-gradient-secondary btn-lg px-4 py-2 rounded-pill shadow-sm">
+                                <i class="fas fa-times me-2"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Animation d'entrée pour la carte
+        const card = document.querySelector('.animate-fade-in');
+        if (card) {
+            card.style.animation = 'fadeIn 0.8s ease-in-out';
+        }
+    });
+</script>
+
+<style>
+    /* Styles pour les gradients et effets modernes */
+    .bg-gradient-danger {
+        background: linear-gradient(45deg, #e74a3b, #be392d);
+    }
+    
+    .bg-gradient-secondary {
+        background: linear-gradient(45deg, #858796, #60616f);
+    }
+    
+    .btn-gradient-danger {
+        background: linear-gradient(45deg, #e74a3b, #be392d);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-secondary {
+        background: linear-gradient(45deg, #858796, #60616f);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-danger:hover, .btn-gradient-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        color: white;
+    }
+    
+    .rounded-4 {
+        border-radius: 0.75rem !important;
+    }
+    
+    .avatar-circle {
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.8s ease-in-out;
+    }
+</style>
 {% endblock %}

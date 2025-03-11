@@ -2,67 +2,217 @@
 
 {% block content %}
 <div class="container mt-5">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h2 class="mb-0">Gestion des frais kilométriques</h2>
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
+        <div class="card-header bg-gradient-info text-white p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0"><i class="fas fa-car me-2"></i> Gestion des frais kilométriques</h2>
+                <a href="{% url 'dashboard' %}" class="btn btn-light rounded-pill shadow-sm">
+                    <i class="fas fa-home me-1"></i> Tableau de bord
+                </a>
+            </div>
         </div>
-        <div class="card-body">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Employé</th>
-                        <th>Date</th>
-                        <th>Projet</th>
-                        <th>Départ</th>
-                        <th>Arrivée</th>
-                        <th>Distance (km)</th>
-                        <th>Véhicule</th>
-                        <th>Montant (€)</th>
-                        <th>Statut</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for expense in expenses %}
-                    <tr>
-                        <td>{{ expense.user.username }}</td>
-                        <td>{{ expense.date }}</td>
-                        <td>{{ expense.project }}</td>
-                        <td>{{ expense.departure }}</td>
-                        <td>{{ expense.arrival }}</td>
-                        <td>{{ expense.distance }}</td>
-                        <td>{{ expense.vehicle_type }}</td>
-                        <td>{{ expense.amount }}</td>
-                        <td>
-                            <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
-                                {{ expense.get_status_display }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if expense.status == "pending" %}
-                                <a href="{% url 'approve_kilometric_expense' expense.id %}" class="btn btn-success btn-sm">✅ Approuver</a>
-                                <a href="{% url 'reject_kilometric_expense' expense.id %}" class="btn btn-danger btn-sm">❌ Rejeter</a>
-                            {% endif %}
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th class="border-0">Employé</th>
+                            <th class="border-0">Date</th>
+                            <th class="border-0">Projet</th>
+                            <th class="border-0">Départ</th>
+                            <th class="border-0">Arrivée</th>
+                            <th class="border-0">Distance</th>
+                            <th class="border-0">Véhicule</th>
+                            <th class="border-0">Montant</th>
+                            <th class="border-0">Statut</th>
+                            <th class="border-0">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in expenses %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle bg-gradient-secondary text-white me-2">
+                                        {{ expense.user.username|first|upper }}
+                                    </div>
+                                    <span class="fw-bold">{{ expense.user.username }}</span>
+                                </div>
+                            </td>
+                            <td><i class="fas fa-calendar-day text-muted me-1"></i> {{ expense.date }}</td>
+                            <td>
+                                {% if expense.project %}
+                                    <span class="badge bg-gradient-primary rounded-pill px-3">{{ expense.project }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ expense.departure }}</td>
+                            <td><i class="fas fa-flag-checkered text-success me-1"></i> {{ expense.arrival }}</td>
+                            <td><strong>{{ expense.distance }}</strong> km</td>
+                            <td>
+                                {% if expense.vehicle_type == 'car' %}
+                                    <i class="fas fa-car me-1 text-primary"></i>
+                                {% elif expense.vehicle_type == 'electric_car' %}
+                                    <i class="fas fa-charging-station me-1 text-success"></i>
+                                {% elif expense.vehicle_type == 'motorbike' %}
+                                    <i class="fas fa-motorcycle me-1 text-warning"></i>
+                                {% elif expense.vehicle_type == 'bicycle' %}
+                                    <i class="fas fa-bicycle me-1 text-info"></i>
+                                {% endif %}
+                                {{ expense.vehicle_type }}
+                            </td>
+                            <td><strong>{{ expense.amount }} €</strong></td>
+                            <td>
+                                <span class="badge bg-gradient-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %} rounded-pill px-3 py-2">
+                                    {{ expense.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    {% if expense.status == "pending" %}
+                                        <a href="{% url 'approve_kilometric_expense' expense.id %}" class="btn btn-gradient-success btn-sm rounded-pill shadow-sm">
+                                            <i class="fas fa-check me-1"></i> Approuver
+                                        </a>
+                                        <a href="{% url 'reject_kilometric_expense' expense.id %}" class="btn btn-gradient-danger btn-sm rounded-pill shadow-sm">
+                                            <i class="fas fa-times me-1"></i> Rejeter
+                                        </a>
+                                    {% endif %}
 
-                            {% if expense.status == "approved" %}
-                            <a href="{% url 'export_expenses_excel' %}" class="btn btn-primary btn-sm">
-                                📥 Exporter en Excel
-                            </a>
-                            {% endif %}
-                            
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="10" class="text-center">Aucun frais kilométrique trouvé.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <div class="text-center mt-4">
-                <a href="{% url 'dashboard' %}" class="btn btn-secondary">Retour au tableau de bord</a>
+                                    {% if expense.status == "approved" %}
+                                    <a href="{% url 'export_expenses_excel' %}" class="btn btn-gradient-primary btn-sm rounded-pill shadow-sm">
+                                        <i class="fas fa-file-excel me-1"></i> Exporter
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center py-5">
+                                <div class="d-flex flex-column align-items-center">
+                                    <i class="fas fa-route fa-3x mb-3 text-muted"></i>
+                                    <p class="lead">Aucun frais kilométrique trouvé.</p>
+                                    <a href="{% url 'dashboard' %}" class="btn btn-gradient-primary mt-2 rounded-pill">
+                                        <i class="fas fa-home me-2"></i> Retour au tableau de bord
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Animation d'entrée pour la carte
+        const card = document.querySelector('.animate-fade-in');
+        if (card) {
+            card.style.animation = 'fadeIn 0.8s ease-in-out';
+        }
+    });
+</script>
+
+<style>
+    /* Styles pour les gradients et effets modernes */
+    .bg-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(45deg, #1cc88a, #13855c);
+    }
+    
+    .bg-gradient-info {
+        background: linear-gradient(45deg, #36b9cc, #258391);
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(45deg, #f6c23e, #dda20a);
+    }
+    
+    .bg-gradient-danger {
+        background: linear-gradient(45deg, #e74a3b, #be392d);
+    }
+    
+    .bg-gradient-secondary {
+        background: linear-gradient(45deg, #858796, #60616f);
+    }
+    
+    .btn-gradient-success {
+        background: linear-gradient(45deg, #1cc88a, #13855c);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-danger {
+        background: linear-gradient(45deg, #e74a3b, #be392d);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-info {
+        background: linear-gradient(45deg, #36b9cc, #258391);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-success:hover, .btn-gradient-danger:hover,
+    .btn-gradient-info:hover, .btn-gradient-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        color: white;
+    }
+    
+    .rounded-4 {
+        border-radius: 0.75rem !important;
+    }
+    
+    .avatar-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #5a5c69;
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.8s ease-in-out;
+    }
+</style>
 {% endblock %}

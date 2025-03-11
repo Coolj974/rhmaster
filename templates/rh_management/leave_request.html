@@ -3,21 +3,108 @@
 
 {% block content %}
 <div class="container mt-5">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h2 class="mb-0 text-center"><i class="fas fa-plane-departure"></i> Demande de congé</h2>      
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
+        <div class="card-header bg-gradient-primary text-white p-4">
+            <h2 class="mb-0 text-center"><i class="fas fa-calendar-plus me-2"></i> Demande de congé</h2>      
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                 {% csrf_token %}
-                {{ form|crispy }}
-                <div class="d-grid mt-4">
-                    <button type="submit" id="submit_leave" class="btn btn-success btn-lg">📩 Soumettre la demande</button>
+                <div class="row">
+                    <div class="col-12 mb-4">
+                        {{ form|crispy }}
+                    </div>
                 </div>
-                <div id="leave_warning" class="alert alert-warning mt-3" style="display:none;">
+                <div class="text-center mt-4">
+                    <button type="submit" id="submit_leave" class="btn btn-gradient-primary btn-lg px-5 py-3 rounded-pill shadow-sm">
+                        <i class="fas fa-paper-plane me-2"></i> Soumettre ma demande
+                    </button>
+                </div>
+                <div id="leave_warning" class="alert alert-warning mt-3 rounded-3 shadow-sm" style="display:none;">
                 </div>   
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Animation d'entrée pour la carte
+        document.querySelector('.card').classList.add('animate-fade-in');
+    });
+</script>
+
+<style>
+    /* Styles pour les gradients et effets modernes */
+    .bg-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(45deg, #1cc88a, #13855c);
+    }
+    
+    .bg-gradient-info {
+        background: linear-gradient(45deg, #36b9cc, #258391);
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(45deg, #f6c23e, #dda20a);
+    }
+    
+    .bg-gradient-danger {
+        background: linear-gradient(45deg, #e74a3b, #be392d);
+    }
+    
+    .bg-gradient-secondary {
+        background: linear-gradient(45deg, #5a5c69, #373840);
+    }
+    
+    .btn-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        color: white;
+    }
+    
+    .rounded-4 {
+        border-radius: 0.75rem !important;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.8s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #5a5c69;
+    }
+    
+    /* Amélioration pour le formulaire crispy */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+</style>
 {% endblock %}

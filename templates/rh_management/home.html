@@ -1,15 +1,135 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container text-center">
-    <h1>Bienvenue sur votre plateforme RH</h1>
-    <p>Gérez vos congés et notes de frais facilement.</p>
-    
-    {% if user.is_authenticated %}
-        <a href="{% url 'dashboard' %}" class="btn btn-primary">Accéder au Tableau de Bord</a>
-    {% else %}
-        <a href="{% url 'login' %}" class="btn btn-success">Se Connecter</a>
-        <a href="{% url 'register' %}" class="btn btn-info">Créer un Compte</a>
-    {% endif %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
+                <div class="card-header bg-gradient-primary text-white p-5 text-center">
+                    <h1 class="display-4 fw-bold mb-2"><i class="fas fa-building me-3"></i>CybeRH</h1>
+                    <p class="lead mb-0">Votre plateforme de gestion RH</p>
+                </div>
+                <div class="card-body p-5 text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-tasks fa-4x text-primary mb-3"></i>
+                        <h2 class="h3 mb-4">Gérez vos congés et notes de frais facilement</h2>
+                        <p class="lead text-muted mb-5">Une solution complète pour simplifier vos démarches administratives</p>
+                    </div>
+                    
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard' %}" class="btn btn-gradient-primary btn-lg px-5 py-3 rounded-pill shadow-sm">
+                            <i class="fas fa-tachometer-alt me-2"></i>Accéder au Tableau de Bord
+                        </a>
+                    {% else %}
+                        <div class="d-flex flex-wrap justify-content-center gap-3">
+                            <a href="{% url 'login' %}" class="btn btn-gradient-success btn-lg px-5 py-3 rounded-pill shadow-sm">
+                                <i class="fas fa-sign-in-alt me-2"></i>Se Connecter
+                            </a>
+                            <a href="{% url 'register' %}" class="btn btn-gradient-info btn-lg px-5 py-3 rounded-pill shadow-sm">
+                                <i class="fas fa-user-plus me-2"></i>Créer un Compte
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row g-4 text-center">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 animate-fade-in" style="animation-delay: 0.2s;">
+                        <div class="p-3 rounded-circle bg-light mx-auto mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-calendar-check text-primary fa-2x mt-2"></i>
+                        </div>
+                        <h3 class="h5">Gestion des congés</h3>
+                        <p class="text-muted small mb-0">Demandez et suivez vos congés en quelques clics</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 animate-fade-in" style="animation-delay: 0.4s;">
+                        <div class="p-3 rounded-circle bg-light mx-auto mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-receipt text-success fa-2x mt-2"></i>
+                        </div>
+                        <h3 class="h5">Notes de frais</h3>
+                        <p class="text-muted small mb-0">Soumettez et gérez vos dépenses professionnelles</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 animate-fade-in" style="animation-delay: 0.6s;">
+                        <div class="p-3 rounded-circle bg-light mx-auto mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-car text-info fa-2x mt-2"></i>
+                        </div>
+                        <h3 class="h5">Frais kilométriques</h3>
+                        <p class="text-muted small mb-0">Calculez et déclarez vos déplacements professionnels</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Animation d'entrée pour les éléments
+        const animatedElements = document.querySelectorAll('.animate-fade-in');
+        animatedElements.forEach((element, index) => {
+            setTimeout(() => {
+                element.style.animation = 'fadeIn 0.8s ease-in-out forwards';
+            }, index * 100);
+        });
+    });
+</script>
+
+<style>
+    /* Styles pour les gradients et effets modernes */
+    .bg-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(45deg, #1cc88a, #13855c);
+    }
+    
+    .bg-gradient-info {
+        background: linear-gradient(45deg, #36b9cc, #258391);
+    }
+    
+    .btn-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-success {
+        background: linear-gradient(45deg, #1cc88a, #13855c);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-info {
+        background: linear-gradient(45deg, #36b9cc, #258391);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-primary:hover, .btn-gradient-success:hover, .btn-gradient-info:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        color: white;
+    }
+    
+    .rounded-4 {
+        border-radius: 0.75rem !important;
+    }
+    
+    .animate-fade-in {
+        opacity: 0;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
 {% endblock %}

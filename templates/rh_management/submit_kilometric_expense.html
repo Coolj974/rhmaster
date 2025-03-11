@@ -3,131 +3,150 @@
 
 {% block content %}
 <div class="container mt-5">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h2 class="mb-0 text-center">🚗 Déclaration d'un Frais Kilométrique</h2>
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5">
+        <div class="card-header bg-gradient-primary text-white p-4">
+            <h2 class="mb-0 text-center"><i class="fas fa-car me-2"></i> Déclaration d'un Frais Kilométrique</h2>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             <form id="kilometric-expense-form" method="post" class="needs-validation" novalidate>
                 {% csrf_token %}
-                <div class="row mb-3">
+                <div class="row mb-4">
                     <div class="col-md-6">
-                        <label for="id_date" class="form-label"> Date</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                        <label for="id_date" class="form-label fw-bold"><i class="fas fa-calendar-alt me-2"></i>Date</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light border-0"><i class="fas fa-calendar-alt"></i></span>
                             {{ form.date }}
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label for="project" class="form-label"> Projet associé :</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-project-diagram"></i></span>
-                            <input type="text" id="project" name="project" class="form-control" placeholder="Ex: Audit Sécurité 2025" required>
+                        <label for="project" class="form-label fw-bold"><i class="fas fa-project-diagram me-2"></i>Projet associé</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light border-0"><i class="fas fa-project-diagram"></i></span>
+                            <input type="text" id="project" name="project" class="form-control form-control-lg shadow-sm" placeholder="Ex: Audit Sécurité 2025" required>
                             <div class="invalid-feedback">
                                 Veuillez entrer un projet associé.
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="row mb-3">
+                <div class="row mb-4">
                     <div class="col-md-6">
-                        <label for="id_vehicle_type" class="form-label"> Type de véhicule</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-car"></i></span>
+                        <label for="id_vehicle_type" class="form-label fw-bold"><i class="fas fa-car me-2"></i>Type de véhicule</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light border-0"><i class="fas fa-car"></i></span>
                             {{ form.vehicle_type }}
                         </div>
-                        <div class="form-text" id="basic-addon4">Ex: Voiture, vélo</div>
+                        <div class="form-text text-muted" id="basic-addon4">Ex: Voiture, vélo</div>
                     </div>
                     <div class="col-md-6">
-                        <label for="id_fiscal_power" class="form-label"> Puissance fiscale</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-tachometer-alt"></i></span>
+                        <label for="id_fiscal_power" class="form-label fw-bold"><i class="fas fa-tachometer-alt me-2"></i>Puissance fiscale</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light border-0"><i class="fas fa-tachometer-alt"></i></span>
                             {{ form.fiscal_power }}
                         </div>
-                        <div class="form-text" id="basic-addon4">Ex: 6 CV </div>
+                        <div class="form-text text-muted" id="basic-addon4">Ex: 6 CV</div>
                     </div>
                 </div>
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="departure" class="form-label"> Départ :</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                            <input type="text" id="departure" name="departure" class="form-control" required>
-                            <div class="invalid-feedback">
-                                Veuillez entrer un lieu de départ.
+
+                <div class="card mb-4 border-0 shadow-sm rounded-3 bg-light">
+                    <div class="card-header bg-gradient-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-route me-2"></i>Itinéraire</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="departure" class="form-label fw-bold"><i class="fas fa-map-marker-alt me-2 text-danger"></i>Départ</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-white border-0"><i class="fas fa-map-marker-alt text-danger"></i></span>
+                                    <input type="text" id="departure" name="departure" class="form-control form-control-lg shadow-sm" required>
+                                    <div class="invalid-feedback">
+                                        Veuillez entrer un lieu de départ.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="arrival" class="form-label fw-bold"><i class="fas fa-flag-checkered me-2 text-success"></i>Arrivée</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-white border-0"><i class="fas fa-flag-checkered text-success"></i></span>
+                                    <input type="text" id="arrival" name="arrival" class="form-control form-control-lg shadow-sm" required>
+                                    <div class="invalid-feedback">
+                                        Veuillez entrer un lieu d'arrivée.
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="arrival" class="form-label"> Arrivée :</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                            <input type="text" id="arrival" name="arrival" class="form-control" required>
-                            <div class="invalid-feedback">
-                                Veuillez entrer un lieu d'arrivée.
+
+                        <input type="hidden" id="departure_lat" name="departure_lat" required>
+                        <input type="hidden" id="departure_lng" name="departure_lng" required>
+                        <input type="hidden" id="arrival_lat" name="arrival_lat" required>
+                        <input type="hidden" id="arrival_lng" name="arrival_lng" required>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="aller_retour">
+                                    <label class="form-check-label" for="aller_retour">
+                                        <i class="fas fa-exchange-alt me-2"></i>Aller-retour
+                                    </label>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                <input type="hidden" id="departure_lat" name="departure_lat" required>
-                <input type="hidden" id="departure_lng" name="departure_lng" required>
-                <input type="hidden" id="arrival_lat" name="arrival_lat" required>
-                <input type="hidden" id="arrival_lng" name="arrival_lng" required>
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <label for="distance" class="form-label"> Distance (km) :</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-road"></i></span>
-                            <input type="text" id="distance" name="distance" class="form-control" readonly required>
                             
-                        </div>
-                        <div class="form-check mt-4">
-                            <input class="form-check-input" type="checkbox" value="" id="aller_retour">
-                            <label class="form-check-label" for="aller_retour">
-                                <i class="fas fa-exchange-alt"></i> Aller-retour
-                            </label>
+                            <div class="col-md-6">
+                                <label for="distance" class="form-label fw-bold"><i class="fas fa-road me-2"></i>Distance (km)</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-light border-0"><i class="fas fa-road"></i></span>
+                                    <input type="text" id="distance" name="distance" class="form-control form-control-lg shadow-sm" readonly required>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="row mb-3">
+
+                <div class="row mb-4">
                     <div class="col-md-12">
-                        <label for="notification_emails" class="form-label"> Emails de notification :</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                        <label for="notification_emails" class="form-label fw-bold"><i class="fas fa-envelope me-2"></i>Emails de notification</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light border-0"><i class="fas fa-envelope"></i></span>
                             {{ form.notification_emails }}
                         </div>
                     </div>
                 </div>
-                <div class="row mb-3">
+
+                <div class="row mb-4">
                     <div class="col-md-6">
-                        <label for="reimbursement" class="form-label"> Montant du remboursement (€) :</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-euro-sign"></i></span>
-                            <input type="text" id="reimbursement" name="reimbursement" class="form-control" readonly required>
+                        <label for="reimbursement" class="form-label fw-bold"><i class="fas fa-euro-sign me-2"></i>Montant du remboursement (€)</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light border-0"><i class="fas fa-euro-sign"></i></span>
+                            <input type="text" id="reimbursement" name="reimbursement" class="form-control form-control-lg fw-bold shadow-sm" readonly required>
                         </div>
                     </div>
                 </div>
-                <div id="map" style="height: 400px;" class="mb-3"></div>
-                <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-paper-plane"></i> Soumettre</button>
+
+                <div class="card border-0 shadow-lg rounded-3 overflow-hidden mb-4">
+                    <div class="card-header bg-gradient-secondary text-white p-2">
+                        <h5 class="mb-0"><i class="fas fa-map me-2"></i>Carte interactive</h5>
+                    </div>
+                    <div id="map" style="height: 400px;" class="leaflet-container"></div>
+                </div>
+                
+                <div class="text-center">
+                    <button type="submit" class="btn btn-gradient-primary btn-lg px-5 py-3 rounded-pill shadow-sm">
+                        <i class="fas fa-paper-plane me-2"></i> Soumettre ma demande
+                    </button>
+                </div>
             </form>
         </div>
     </div>
 </div>
-
-<!-- Bootstrap 5 CSS -->
-<link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
-
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 <!-- Leaflet.js -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>   
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // Animation d'entrée pour la carte
+        document.querySelector('.card').classList.add('animate-fade-in');
+        
         const form = document.getElementById("kilometric-expense-form");
         const allerRetourCheckbox = document.getElementById("aller_retour");
         const distanceField = document.getElementById("distance");
@@ -333,4 +352,89 @@
     });
 </script>
 
+<style>
+    /* Styles pour les gradients et effets modernes */
+    .bg-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(45deg, #1cc88a, #13855c);
+    }
+    
+    .bg-gradient-info {
+        background: linear-gradient(45deg, #36b9cc, #258391);
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(45deg, #f6c23e, #dda20a);
+    }
+    
+    .bg-gradient-danger {
+        background: linear-gradient(45deg, #e74a3b, #be392d);
+    }
+    
+    .bg-gradient-secondary {
+        background: linear-gradient(45deg, #5a5c69, #373840);
+    }
+    
+    .btn-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        color: white;
+    }
+    
+    .rounded-4 {
+        border-radius: 0.75rem !important;
+    }
+    
+    .form-control, .input-group-text, .form-select {
+        border-radius: 0.5rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .input-group-text {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    
+    .form-switch .form-check-input {
+        width: 3em;
+        height: 1.5em;
+        margin-top: 0.25em;
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.8s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .leaflet-container {
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+    
+    /* Amélioration pour les cartes internes */
+    .card .card {
+        transition: all 0.3s ease;
+    }
+    
+    .card .card:hover {
+        transform: translateY(-5px);
+    }
+</style>
 {% endblock %}

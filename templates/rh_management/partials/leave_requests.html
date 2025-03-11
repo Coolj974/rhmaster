@@ -1,15 +1,45 @@
 {% for leave in leave_requests %}
     <tr data-id="{{ leave.id }}">
-        <td>{{ leave.user.username }}</td>
-        <td>{{ leave.start_date }}</td>
-        <td>{{ leave.end_date }}</td>
-        <td>{{ leave.get_leave_type_display }}</td>
         <td>
-            <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+            <div class="d-flex align-items-center">
+                <div class="avatar-circle bg-gradient-secondary text-white me-2" style="width: 32px; height: 32px; font-size: 14px;">
+                    {{ leave.user.username|first|upper }}
+                </div>
+                <span class="fw-bold">{{ leave.user.username }}</span>
+            </div>
+        </td>
+        <td><i class="fas fa-calendar-day text-primary me-1"></i> {{ leave.start_date }}</td>
+        <td><i class="fas fa-calendar-check text-success me-1"></i> {{ leave.end_date }}</td>
+        <td>
+            {% if leave.leave_type == 'annual' %}
+                <span class="badge bg-gradient-info rounded-pill px-3">
+                    <i class="fas fa-umbrella-beach me-1"></i> {{ leave.get_leave_type_display }}
+                </span>
+            {% elif leave.leave_type == 'sick' %}
+                <span class="badge bg-gradient-warning rounded-pill px-3">
+                    <i class="fas fa-procedures me-1"></i> {{ leave.get_leave_type_display }}
+                </span>
+            {% elif leave.leave_type == 'family' %}
+                <span class="badge bg-gradient-success rounded-pill px-3">
+                    <i class="fas fa-users me-1"></i> {{ leave.get_leave_type_display }}
+                </span>
+            {% else %}
+                <span class="badge bg-gradient-secondary rounded-pill px-3">
+                    {{ leave.get_leave_type_display }}
+                </span>
+            {% endif %}
+        </td>
+        <td>
+            <span class="badge bg-gradient-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %} rounded-pill px-3 py-2">
                 {{ leave.status }}
             </span>
         </td>
     </tr>
 {% empty %}
-    <tr><td colspan="5" class="text-center">Aucune demande de congé</td></tr>
+    <tr><td colspan="5" class="text-center py-4">
+        <div class="d-flex flex-column align-items-center">
+            <i class="far fa-calendar-check text-muted fa-2x mb-3"></i>
+            <p>Aucune demande de congé</p>
+        </div>
+    </td></tr>
 {% endfor %}

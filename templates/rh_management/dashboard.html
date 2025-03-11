@@ -1,406 +1,519 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="text-center mb-4">📊 Tableau de Bord</h2>
+<div class="container mt-5">
+    <h2 class="text-center mb-5 fw-bold">📊 Tableau de Bord</h2>
+
+    <div class="row">
+        <div class="col-12">
+            {% if is_hr or is_admin %}
+                <!-- Dashboard complet pour RH / Admin -->
+                <div class="text-center mb-5">
+                    <div class="d-flex flex-wrap justify-content-center gap-3">
+                        <a href="{% url 'manage_leaves' %}" class="btn btn-gradient-warning btn-lg px-4 py-3 rounded-pill shadow-sm">
+                            <i class="fas fa-clipboard-list me-2"></i>Gérer les Congés
+                            {% if new_leave_requests_count > 0 %}
+                                <span class="badge rounded-pill bg-danger ms-2">{{ new_leave_requests_count }}</span>
+                            {% endif %}
+                        </a>
+                        <a href="{% url 'manage_expenses' %}" class="btn btn-gradient-info btn-lg px-4 py-3 rounded-pill shadow-sm">
+                            <i class="fas fa-chart-bar me-2"></i>Gérer les Notes de Frais
+                            {% if new_expense_reports_count > 0 %}
+                                <span class="badge rounded-pill bg-danger ms-2">{{ new_expense_reports_count }}</span>
+                            {% endif %}
+                        </a>
+                        <a href="{% url 'manage_kilometric_expenses' %}" class="btn btn-gradient-primary btn-lg px-4 py-3 rounded-pill shadow-sm">
+                            <i class="fas fa-car me-2"></i>Gérer les Frais Kilométriques
+                            {% if new_kilometric_expenses_count > 0 %}
+                                <span class="badge rounded-pill bg-danger ms-2">{{ new_kilometric_expenses_count }}</span>
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Dashboard simplifié pour les employés -->
+                <div class="text-center mb-5">
+                    <div class="d-flex flex-wrap justify-content-center gap-3">
+                        <a href="{% url 'leave_request' %}" class="btn btn-gradient-primary btn-lg px-4 py-3 rounded-pill shadow-sm">
+                            <i class="fas fa-plus-circle me-2"></i>Nouvelle Demande de Congé
+                        </a>
+                        <a href="{% url 'submit_expense' %}" class="btn btn-gradient-success btn-lg px-4 py-3 rounded-pill shadow-sm">
+                            <i class="fas fa-plus-circle me-2"></i>Nouvelle Note de Frais
+                        </a>
+                        <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-gradient-secondary btn-lg px-4 py-3 rounded-pill shadow-sm">
+                            <i class="fas fa-car me-2"></i>Ajouter un Frais Kilométrique
+                        </a>
+                        <a href="{% url 'my_kilometric_expenses' %}" class="btn btn-gradient-info btn-lg px-4 py-3 rounded-pill shadow-sm">
+                            <i class="fas fa-chart-bar me-2"></i>Voir mes Frais Kilométriques
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 
     {% if is_hr or is_admin %}
-        <!-- Dashboard complet pour RH / Admin -->
-        <div class="text-center mt-4">
-            <div class="btn-group" role="group" aria-label="Actions RH/Admin">
-                <a href="{% url 'manage_leaves' %}" class="btn btn-warning btn-lg">
-                    📋 Gérer les Congés
-                    {% if new_leave_requests_count > 0 %}
-                        <span class="badge bg-danger">{{ new_leave_requests_count }}</span>
-                    {% endif %}
-                </a>
-                <a href="{% url 'manage_expenses' %}" class="btn btn-warning btn-lg">
-                    📊 Gérer les Notes de Frais
-                    {% if new_expense_reports_count > 0 %}
-                        <span class="badge bg-danger">{{ new_expense_reports_count }}</span>
-                    {% endif %}
-                </a>
-                <a href="{% url 'manage_kilometric_expenses' %}" class="btn btn-warning btn-lg">
-                    🚗 Gérer les Frais Kilométriques
-                    {% if new_kilometric_expenses_count > 0 %}
-                        <span class="badge bg-danger">{{ new_kilometric_expenses_count }}</span>
-                    {% endif %}
-                </a>
+    <div class="row">
+        <div class="col-12">
+            <!-- Section Les Congés -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5">
+                <div class="card-header bg-gradient-primary text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="far fa-calendar-alt me-2"></i> Les demandes de Congés</h4>
+                        <button class="btn btn-light btn-sm rounded-pill" type="button" data-bs-toggle="collapse" data-bs-target="#leaveFilters">
+                            <i class="fas fa-filter me-1"></i> Filtres
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Formulaire de filtrage pour les demandes de congés -->
+                    <div class="collapse mb-4" id="leaveFilters">
+                        <form method="get" class="p-3 bg-light rounded-3" id="leave_filter_form">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-4">
+                                    <label for="status_filter_leave" class="form-label">Filtrer par statut:</label>
+                                    <select class="form-select" id="status_filter_leave" name="status_leave">
+                                        <option value="">Tous</option>
+                                        <option value="pending">En attente</option>
+                                        <option value="approved">Approuvé</option>
+                                        <option value="rejected">Rejeté</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="sort_by_leave" class="form-label">Trier par:</label>
+                                    <select class="form-select" id="sort_by_leave" name="sort_leave">
+                                        <option value="date_desc">Date (Récent à Ancien)</option>
+                                        <option value="date_asc">Date (Ancien à Récent)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="button" class="btn btn-primary w-100" id="filter_leave">
+                                        <i class="fas fa-search me-2"></i>Appliquer les filtres
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th class="border-0">Employés</th>
+                                    <th class="border-0">Date Début</th>
+                                    <th class="border-0">Date Fin</th>
+                                    <th class="border-0">Type</th>
+                                    <th class="border-0">Statut</th>
+                                    {% if is_admin %}
+                                    <th class="border-0">Actions</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody id="leave_requests_body">
+                                {% if leave_requests %}
+                                    {% for leave in leave_requests %}
+                                        <tr data-id="{{ leave.id }}">
+                                            <td>{{ leave.user.username }}</td>
+                                            <td>{{ leave.start_date }}</td>
+                                            <td>{{ leave.end_date }}</td>
+                                            <td>{{ leave.get_leave_type_display }}</td>
+                                            <td>
+                                                <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                                    {{ leave.status }}
+                                                </span>
+                                            </td>
+                                            {% if is_admin %}
+                                            <td>
+                                                <form method="post" action="{% url 'delete_leave' leave.id %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
+                                                </form>
+                                            </td>
+                                            {% endif %}
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr><td colspan="6" class="text-center">Aucune demande de congé</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
-    {% else %}
-        <!-- Dashboard simplifié pour les employés -->
-        <div class="text-center mt-5">
-            <div class="btn-group" role="group" aria-label="Actions Employé">
-                <a href="{% url 'leave_request' %}" class="btn btn-primary btn-lg">
-                    ➕ Nouvelle Demande de Congé
-                </a>
-                <a href="{% url 'submit_expense' %}" class="btn btn-success btn-lg">
-                    ➕ Nouvelle Note de Frais
-                </a>
-                <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-secondary btn-lg">
-                    🚗 Ajouter un Frais Kilométrique
-                </a>
-                <a href="{% url 'my_kilometric_expenses' %}" class="btn btn-info btn-lg">
-                    📊 Voir mes Frais Kilométriques
-                </a>
+
+            <!-- Section Les Notes de Frais -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5">
+                <div class="card-header bg-gradient-success text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i> Les Notes de Frais</h4>
+                        <button class="btn btn-light btn-sm rounded-pill" type="button" data-bs-toggle="collapse" data-bs-target="#expenseFilters">
+                            <i class="fas fa-filter me-1"></i> Filtres
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Formulaire de filtrage pour les notes de frais -->
+                    <div class="collapse mb-4" id="expenseFilters">
+                        <form method="get" class="p-3 bg-light rounded-3" id="expense_filter_form">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-4">
+                                    <label for="status_filter_expense" class="form-label">Filtrer par statut:</label>
+                                    <select class="form-select" id="status_filter_expense" name="status_expense">
+                                        <option value="">Tous</option>
+                                        <option value="pending">En attente</option>
+                                        <option value="approved">Approuvé</option>
+                                        <option value="rejected">Rejeté</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="sort_by_expense" class="form-label">Trier par:</label>
+                                    <select class="form-select" id="sort_by_expense" name="sort_expense">
+                                        <option value="date_desc">Date (Récent à Ancien)</option>
+                                        <option value="date_asc">Date (Ancien à Récent)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="button" class="btn btn-success w-100" id="filter_expense">
+                                        <i class="fas fa-search me-2"></i>Appliquer les filtres
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th class="border-0">Employé</th>
+                                    <th class="border-0">Date</th>
+                                    <th class="border-0">Description</th>
+                                    <th class="border-0">Montant</th>
+                                    <th class="border-0">Statut</th>
+                                    {% if is_admin %}
+                                    <th class="border-0">Actions</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody id="expense_reports_body">
+                                {% if expense_reports %}
+                                    {% for expense in expense_reports %}
+                                        <tr data-id="{{ expense.id }}">
+                                            <td>{{ expense.user.username }}</td>
+                                            <td>{{ expense.date }}</td>
+                                            <td>{{ expense.description }}</td>
+                                            <td>{{ expense.amount }} €</td>
+                                            <td>
+                                                <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                                    {{ expense.status }}
+                                                </span>
+                                            </td>
+                                            {% if is_admin %}
+                                            <td>
+                                                <form method="post" action="{% url 'delete_expense' expense.id %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
+                                                </form>
+                                            </td>
+                                            {% endif %}
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr><td colspan="6" class="text-center">Aucune note de frais enregistrée</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
-    {% endif %}
 
-    {% if is_hr or is_admin %}
-    <!-- Section Les Congés -->
-    <div class="card shadow-lg mt-4">
-        <div class="card-body">
-            <h4>🗓️ Les demandes de Congés</h4>
-
-            <!-- Formulaire de filtrage pour les demandes de congés -->
-            <form method="get" class="mb-4" id="leave_filter_form">
-                <div class="row">
-                    <div class="col-md-4">
-                        <label for="status_filter_leave">Filtrer par statut:</label>
-                        <select class="form-control" id="status_filter_leave" name="status_leave">
-                            <option value="">Tous</option>
-                            <option value="pending">En attente</option>
-                            <option value="approved">Approuvé</option>
-                            <option value="rejected">Rejeté</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="sort_by_leave">Trier par:</label>
-                        <select class="form-control" id="sort_by_leave" name="sort_leave">
-                            <option value="date_desc">Date (Récent à Ancien)</option>
-                            <option value="date_asc">Date (Ancien à Récent)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <button type="button" class="btn btn-primary mt-4" id="filter_leave">Filtrer</button>
+            <!-- Section Les Frais Kilométriques -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5">
+                <div class="card-header bg-gradient-info text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="fas fa-car me-2"></i> Les Frais Kilométriques</h4>
+                        <button class="btn btn-light btn-sm rounded-pill" type="button" data-bs-toggle="collapse" data-bs-target="#kilometricFilters">
+                            <i class="fas fa-filter me-1"></i> Filtres
+                        </button>
                     </div>
                 </div>
-            </form>
+                <div class="card-body p-4">
+                    <!-- Formulaire de filtrage pour les frais kilométriques -->
+                    <div class="collapse mb-4" id="kilometricFilters">
+                        <form method="get" class="p-3 bg-light rounded-3" id="kilometric_expense_filter_form">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-4">
+                                    <label for="status_filter_kilometric_expense" class="form-label">Filtrer par statut:</label>
+                                    <select class="form-select" id="status_filter_kilometric_expense" name="status_kilometric_expense">
+                                        <option value="">Tous</option>
+                                        <option value="pending">En attente</option>
+                                        <option value="approved">Approuvé</option>
+                                        <option value="rejected">Rejeté</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="sort_by_kilometric_expense" class="form-label">Trier par:</label>
+                                    <select class="form-select" id="sort_by_kilometric_expense" name="sort_kilometric_expense">
+                                        <option value="date_desc">Date (Récent à Ancien)</option>
+                                        <option value="date_asc">Date (Ancien à Récent)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="button" class="btn btn-info w-100 text-white" id="filter_kilometric_expense">
+                                        <i class="fas fa-search me-2"></i>Appliquer les filtres
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
 
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Employés</th>
-                        <th>Date Début</th>
-                        <th>Date Fin</th>
-                        <th>Type</th>
-                        <th>Statut</th>
-                        {% if is_admin %}
-                        <th>Actions</th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody id="leave_requests_body">
-                    {% if leave_requests %}
-                        {% for leave in leave_requests %}
-                            <tr data-id="{{ leave.id }}">
-                                <td>{{ leave.user.username }}</td>
-                                <td>{{ leave.start_date }}</td>
-                                <td>{{ leave.end_date }}</td>
-                                <td>{{ leave.get_leave_type_display }}</td>
-                                <td>
-                                    <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
-                                        {{ leave.status }}
-                                    </span>
-                                </td>
-                                {% if is_admin %}
-                                <td>
-                                    <form method="post" action="{% url 'delete_leave' leave.id %}">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
-                                    </form>
-                                </td>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th class="border-0">Employé</th>
+                                    <th class="border-0">Date</th>
+                                    <th class="border-0">Description</th>
+                                    <th class="border-0">Distance</th>
+                                    <th class="border-0">Montant (€)</th>
+                                    <th class="border-0">Statut</th>
+                                    {% if is_admin %}
+                                    <th class="border-0">Actions</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody id="kilometric_expense_reports_body">
+                                {% if kilometric_expenses %}
+                                    {% for expense in kilometric_expenses %}
+                                        <tr data-id="{{ expense.id }}">
+                                            <td>{{ expense.user.username }}</td>
+                                            <td>{{ expense.date }}</td>
+                                            <td>{{ expense.description|default:"Frais kilométrique" }}</td>
+                                            <td>{{ expense.distance }} km</td>
+                                            <td>{{ expense.amount }}</td>
+                                            <td>
+                                                <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                                    {{ expense.status }}
+                                                </span>
+                                            </td>
+                                            {% if is_admin %}
+                                            <td>
+                                                <form method="post" action="{% url 'delete_kilometric_expense' expense.id %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
+                                                </form>
+                                            </td>
+                                            {% endif %}
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr><td colspan="6" class="text-center">Aucune note de frais kilométriques enregistrée</td></tr>
                                 {% endif %}
-                            </tr>
-                        {% endfor %}
-                    {% else %}
-                        <tr><td colspan="6" class="text-center">Aucune demande de congé</td></tr>
-                    {% endif %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Section Les Notes de Frais -->
-    <div class="card shadow-lg mt-4">
-        <div class="card-body">
-            <h4>💸 Les Notes de Frais</h4>
-
-            <!-- Formulaire de filtrage pour les notes de frais -->
-            <form method="get" class="mb-4" id="expense_filter_form">
-                <div class="row">
-                    <div class="col-md-4">
-                        <label for="status_filter_expense">Filtrer par statut:</label>
-                        <select class="form-control" id="status_filter_expense" name="status_expense">
-                            <option value="">Tous</option>
-                            <option value="pending">En attente</option>
-                            <option value="approved">Approuvé</option>
-                            <option value="rejected">Rejeté</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="sort_by_expense">Trier par:</label>
-                        <select class="form-control" id="sort_by_expense" name="sort_expense">
-                            <option value="date_desc">Date (Récent à Ancien)</option>
-                            <option value="date_asc">Date (Ancien à Récent)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <button type="button" class="btn btn-primary mt-4" id="filter_expense">Filtrer</button>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </form>
-
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Employé</th>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th>Montant</th>
-                        <th>Statut</th>
-                        {% if is_admin %}
-                        <th>Actions</th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody id="expense_reports_body">
-                    {% if expense_reports %}
-                        {% for expense in expense_reports %}
-                            <tr data-id="{{ expense.id }}">
-                                <td>{{ expense.user.username }}</td>
-                                <td>{{ expense.date }}</td>
-                                <td>{{ expense.description }}</td>
-                                <td>{{ expense.amount }} €</td>
-                                <td>
-                                    <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
-                                        {{ expense.status }}
-                                    </span>
-                                </td>
-                                {% if is_admin %}
-                                <td>
-                                    <form method="post" action="{% url 'delete_expense' expense.id %}">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
-                                    </form>
-                                </td>
-                                {% endif %}
-                            </tr>
-                        {% endfor %}
-                    {% else %}
-                        <tr><td colspan="6" class="text-center">Aucune note de frais enregistrée</td></tr>
-                    {% endif %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Section Les Frais Kilométriques -->
-    <div class="card shadow-lg mt-4">
-        <div class="card-body">
-            <h4>🚗 Les Frais Kilométriques</h4>
-
-            <!-- Formulaire de filtrage pour les frais kilométriques -->
-            <form method="get" class="mb-4" id="kilometric_expense_filter_form">
-                <div class="row">
-                    <div class="col-md-4">
-                        <label for="status_filter_kilometric_expense">Filtrer par statut:</label>
-                        <select class="form-control" id="status_filter_kilometric_expense" name="status_kilometric_expense">
-                            <option value="">Tous</option>
-                            <option value="pending">En attente</option>
-                            <option value="approved">Approuvé</option>
-                            <option value="rejected">Rejeté</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="sort_by_kilometric_expense">Trier par:</label>
-                        <select class="form-control" id="sort_by_kilometric_expense" name="sort_kilometric_expense">
-                            <option value="date_desc">Date (Récent à Ancien)</option>
-                            <option value="date_asc">Date (Ancien à Récent)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <button type="button" class="btn btn-primary mt-4" id="filter_kilometric_expense">Filtrer</button>
-                    </div>
-                </div>
-            </form>
-
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Employé</th>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th>Distance</th>
-                        <th>Montant (€)</th>
-                        <th>Statut</th>
-                        {% if is_admin %}
-                        <th>Actions</th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody id="kilometric_expense_reports_body">
-                    {% if kilometric_expenses %}
-                        {% for expense in kilometric_expenses %}
-                            <tr data-id="{{ expense.id }}">
-                                <td>{{ expense.user.username }}</td>
-                                <td>{{ expense.date }}</td>
-                                <td>{{ expense.description|default:"Frais kilométrique" }}</td>
-                                <td>{{ expense.distance }} km</td>
-                                <td>{{ expense.amount }}</td>
-                                <td>
-                                    <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
-                                        {{ expense.status }}
-                                    </span>
-                                </td>
-                                {% if is_admin %}
-                                <td>
-                                    <form method="post" action="{% url 'delete_kilometric_expense' expense.id %}">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
-                                    </form>
-                                </td>
-                                {% endif %}
-                            </tr>
-                        {% endfor %}
-                    {% else %}
-                        <tr><td colspan="6" class="text-center">Aucune note de frais kilométriques enregistrée</td></tr>
-                    {% endif %}
-                </tbody>
-            </table>
+            </div>
         </div>
     </div>
     {% else %}
-    <!-- Section Mes Notes de Frais -->
-    <div class="card shadow-lg mt-4">
-        <div class="card-body">
-            <h4>💸 Mes Notes de Frais</h4>
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th>Montant</th>
-                        <th>Statut</th>
-                    </tr>
-                </thead>
-                <tbody id="my_expense_reports_body">
-                    {% if expense_reports %}
-                        {% for expense in expense_reports %}
-                            <tr data-id="{{ expense.id }}">
-                                <td>{{ expense.date }}</td>
-                                <td>{{ expense.description }}</td>
-                                <td>{{ expense.amount }} €</td>
-                                <td>
-                                    <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
-                                        {{ expense.status }}
-                                    </span>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    {% else %}
-                        <tr><td colspan="5" class="text-center">Aucune note de frais enregistrée</td></tr>
-                    {% endif %}
-                </tbody>
-            </table>
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <!-- Section Mes Notes de Frais -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden h-100">
+                <div class="card-header bg-gradient-success text-white p-4">
+                    <h4 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i> Mes Notes de Frais</h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th class="border-0">Date</th>
+                                    <th class="border-0">Description</th>
+                                    <th class="border-0">Montant</th>
+                                    <th class="border-0">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody id="my_expense_reports_body">
+                                {% if expense_reports %}
+                                    {% for expense in expense_reports %}
+                                        <tr data-id="{{ expense.id }}">
+                                            <td>{{ expense.date }}</td>
+                                            <td>{{ expense.description }}</td>
+                                            <td>{{ expense.amount }} €</td>
+                                            <td>
+                                                <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                                    {{ expense.status }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr><td colspan="5" class="text-center">Aucune note de frais enregistrée</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-
-    <!-- Section Mes Congés -->
-    <div class="card shadow-lg mt-4">
-        <div class="card-body">
-            <h4>🗓️ Mes Congés</h4>
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Date Début</th>
-                        <th>Date Fin</th>
-                        <th>Type</th>
-                        <th>Statut</th>
-                    </tr>
-                </thead>
-                <tbody id="my_leave_requests_body">
-                    {% if leave_requests %}
-                        {% for leave in leave_requests %}
-                            <tr data-id="{{ leave.id }}">
-                                <td>{{ leave.start_date }}</td>
-                                <td>{{ leave.end_date }}</td>
-                                <td>{{ leave.get_leave_type_display }}</td>
-                                <td>
-                                    <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
-                                        {{ leave.status }}
-                                    </span>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    {% else %}
-                        <tr><td colspan="5" class="text-center">Aucune demande de congé</td></tr>
-                    {% endif %}
-                </tbody>
-            </table>
+        
+        <div class="col-md-6 mb-4">
+            <!-- Section Mes Congés -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden h-100">
+                <div class="card-header bg-gradient-primary text-white p-4">
+                    <h4 class="mb-0"><i class="far fa-calendar-alt me-2"></i> Mes Congés</h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th class="border-0">Date Début</th>
+                                    <th class="border-0">Date Fin</th>
+                                    <th class="border-0">Type</th>
+                                    <th class="border-0">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody id="my_leave_requests_body">
+                                {% if leave_requests %}
+                                    {% for leave in leave_requests %}
+                                        <tr data-id="{{ leave.id }}">
+                                            <td>{{ leave.start_date }}</td>
+                                            <td>{{ leave.end_date }}</td>
+                                            <td>{{ leave.get_leave_type_display }}</td>
+                                            <td>
+                                                <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                                    {{ leave.status }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr><td colspan="5" class="text-center">Aucune demande de congé</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     {% endif %}
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Ajouter des animations et des effets modernes
     $(document).ready(function() {
-        $('#filter_leave').click(function() {
-            var selectedStatus = $('#status_filter_leave').val();
-            var sortBy = $('#sort_by_leave').val();
-
-            $.ajax({
-                url: "{% url 'dashboard_filtered' %}",
-                data: {
-                    status_leave: selectedStatus,
-                    sort_leave: sortBy
-                },
-                success: function(data) {
-                    $('#leave_requests_body').fadeOut(300, function() {
-                        $(this).html(data.leave_requests).fadeIn(300);
-                    });
-                }
-            });
+        // Animation d'entrée pour les cartes
+        $('.card').hide().each(function(index) {
+            $(this).delay(100 * index).fadeIn(500);
         });
-
-        $('#filter_expense').click(function() {
-            var selectedStatus = $('#status_filter_expense').val();
-            var sortBy = $('#sort_by_expense').val();
-
-            $.ajax({
-                url: "{% url 'dashboard_filtered' %}",
-                data: {
-                    status_expense: selectedStatus,
-                    sort_expense: sortBy
-                },
-                success: function(data) {
-                    $('#expense_reports_body').fadeOut(300, function() {
-                        $(this).html(data.expense_reports).fadeIn(300);
-                    });
-                }
-            });
+        
+        // Style moderne pour les badges de statut
+        $('span.badge').each(function() {
+            if ($(this).hasClass('bg-warning')) {
+                $(this).removeClass('bg-warning').addClass('bg-gradient-warning');
+            } else if ($(this).hasClass('bg-success')) {
+                $(this).removeClass('bg-success').addClass('bg-gradient-success');
+            } else if ($(this).hasClass('bg-danger')) {
+                $(this).removeClass('bg-danger').addClass('bg-gradient-danger');
+            }
+            $(this).addClass('rounded-pill px-3 py-2');
         });
-
-        $('#filter_kilometric_expense').click(function() {
-            var selectedStatus = $('#status_filter_kilometric_expense').val();
-            var sortBy = $('#sort_by_kilometric_expense').val();
-
-            $.ajax({
-                url: "{% url 'dashboard_filtered' %}",
-                data: {
-                    status_kilometric_expense: selectedStatus,
-                    sort_kilometric_expense: sortBy
-                },
-                success: function(data) {
-                    $('#kilometric_expense_reports_body').fadeOut(300, function() {
-                        $(this).html(data.kilometric_expense_reports).fadeIn(300);
-                    });
-                }
-            });
-        });
+        
+        // Style pour les boutons de suppression
+        $('.btn-outline-danger').addClass('rounded-pill');
     });
 </script>
+
+<!-- Ajouter les CSS personnalisés pour les fonds dégradés et autres styles modernes -->
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(45deg, #1cc88a, #13855c);
+    }
+    
+    .bg-gradient-info {
+        background: linear-gradient(45deg, #36b9cc, #258391);
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(45deg, #f6c23e, #dda20a);
+    }
+    
+    .bg-gradient-danger {
+        background: linear-gradient(45deg, #e74a3b, #be392d);
+    }
+    
+    .btn-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-success {
+        background: linear-gradient(45deg, #1cc88a, #13855c);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-info {
+        background: linear-gradient(45deg, #36b9cc, #258391);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-warning {
+        background: linear-gradient(45deg, #f6c23e, #dda20a);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-secondary {
+        background: linear-gradient(45deg, #858796, #60616f);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-primary:hover, .btn-gradient-success:hover, .btn-gradient-info:hover, 
+    .btn-gradient-warning:hover, .btn-gradient-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        color: white;
+    }
+    
+    .rounded-4 {
+        border-radius: 0.75rem !important;
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #5a5c69;
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    /* Animation pour les changements de statut */
+    .badge {
+        transition: all 0.3s ease;
+    }
+</style>
 {% endblock %}

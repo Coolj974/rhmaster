@@ -2,42 +2,133 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="mb-0 text-center">📊 Mes Frais Kilométriques</h2>
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Date</th>
-                    <th>Projet</th>
-                    <th>Départ</th>
-                    <th>Arrivée</th>
-                    <th>Distance (km)</th>
-                    <th>Montant (€)</th>
-                    <th>Statut</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for expense in expenses %}
-                <tr>
-                    <td>{{ expense.date }}</td>
-                    <td>{% if expense.project %} {{ expense.project }} {% else %} Aucun projet {% endif %}</td>
-                    <td>{{ expense.departure }}</td>
-                    <td>{{ expense.arrival }}</td>
-                    <td>{% if expense.distance %}{{ expense.distance|floatformat:2 }} km{% else %}N/A{% endif %}</td>
-                    <td>{{ expense.amount|floatformat:2 }} €</td>
-                    <td>
-                        <span class="badge bg-{% if expense.status == 'approved' %}success{% elif expense.status == 'pending' %}warning{% else %}danger{% endif %}">
-                            {{ expense.get_status_display }}
-                        </span>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7" class="text-center">Aucun frais kilométrique enregistré.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
+        <div class="card-header bg-gradient-info text-white p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0"><i class="fas fa-car me-2"></i> Mes Frais Kilométriques</h2>
+                <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-light rounded-pill">
+                    <i class="fas fa-plus-circle me-1"></i> Nouveau
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th class="border-0">Date</th>
+                            <th class="border-0">Projet</th>
+                            <th class="border-0">Départ</th>
+                            <th class="border-0">Arrivée</th>
+                            <th class="border-0">Distance</th>
+                            <th class="border-0">Montant</th>
+                            <th class="border-0">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in expenses %}
+                        <tr>
+                            <td>{{ expense.date }}</td>
+                            <td>{% if expense.project %} {{ expense.project }} {% else %} <span class="text-muted">Non spécifié</span> {% endif %}</td>
+                            <td><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ expense.departure }}</td>
+                            <td><i class="fas fa-flag-checkered text-success me-1"></i> {{ expense.arrival }}</td>
+                            <td>{% if expense.distance %}<strong>{{ expense.distance|floatformat:2 }}</strong> km{% else %}N/A{% endif %}</td>
+                            <td><strong>{{ expense.amount|floatformat:2 }} €</strong></td>
+                            <td>
+                                <span class="badge bg-{% if expense.status == 'approved' %}gradient-success{% elif expense.status == 'pending' %}gradient-warning{% else %}gradient-danger{% endif %} rounded-pill px-3 py-2">
+                                    {{ expense.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="d-flex flex-column align-items-center">
+                                    <i class="fas fa-route fa-3x mb-3 text-muted"></i>
+                                    <p class="lead">Aucun frais kilométrique enregistré.</p>
+                                    <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-gradient-info mt-2 rounded-pill">
+                                        <i class="fas fa-plus-circle me-2"></i> Ajouter un frais kilométrique
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Animation d'entrée pour la carte
+        const card = document.querySelector('.animate-fade-in');
+        if (card) {
+            card.style.animation = 'fadeIn 0.8s ease-in-out';
+        }
+    });
+</script>
+
+<style>
+    /* Styles pour les gradients et effets modernes */
+    .bg-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(45deg, #1cc88a, #13855c);
+    }
+    
+    .bg-gradient-info {
+        background: linear-gradient(45deg, #36b9cc, #258391);
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(45deg, #f6c23e, #dda20a);
+    }
+    
+    .bg-gradient-danger {
+        background: linear-gradient(45deg, #e74a3b, #be392d);
+    }
+    
+    .btn-gradient-info {
+        background: linear-gradient(45deg, #36b9cc, #258391);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-info:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        color: white;
+    }
+    
+    .rounded-4 {
+        border-radius: 0.75rem !important;
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #5a5c69;
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.8s ease-in-out;
+    }
+</style>
 {% endblock %}
