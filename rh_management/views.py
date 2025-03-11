@@ -78,19 +78,26 @@ def dashboard_view(request):
     new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
     new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
 
-    if request.user.is_superuser or request.user.groups.filter(name='HR').exists():
-        leave_requests = LeaveRequest.objects.all()
-        expense_reports = ExpenseReport.objects.all()
-        kilometric_expenses = KilometricExpense.objects.all()
+    # Déterminer clairement les rôles de l'utilisateur
+    is_superuser = request.user.is_superuser
+    is_hr = request.user.is_staff or request.user.groups.filter(name='HR').exists()
+    is_employee = request.user.groups.filter(name='Employé').exists() or not (is_superuser or is_hr)
+
+    if is_superuser or is_hr:
+        # Logique pour les admins et RH
+        leave_requests = LeaveRequest.objects.all().order_by('-created_at')[:10]
+        expense_reports = ExpenseReport.objects.all().order_by('-date')[:10]
+        kilometric_expenses = KilometricExpense.objects.all().order_by('-date')[:10]
     else:
-        leave_requests = LeaveRequest.objects.filter(user=request.user)
-        expense_reports = ExpenseReport.objects.filter(user=request.user)
-        kilometric_expenses = KilometricExpense.objects.filter(user=request.user)
+        # Logique pour les employés
+        leave_requests = LeaveRequest.objects.filter(user=request.user).order_by('-created_at')
+        expense_reports = ExpenseReport.objects.filter(user=request.user).order_by('-date')
+        kilometric_expenses = KilometricExpense.objects.filter(user=request.user).order_by('-date')
 
     context = {
-        "is_admin": request.user.is_superuser,
-        "is_hr": request.user.groups.filter(name='HR').exists(),
-        "is_employee": request.user.groups.filter(name='Employé').exists(),
+        "is_admin": is_superuser,
+        "is_hr": is_hr,
+        "is_employee": is_employee,
         "leave_requests": leave_requests,
         "expense_reports": expense_reports,
         "kilometric_expenses": kilometric_expenses,
@@ -368,20 +375,49 @@ def manage_users_view(request):
 
 @login_required
 @user_passes_test(lambda user: user.is_superuser)
-def edit_user(request, user_id):  # Renommé de edit_user_view à edit_user pour correspondre à l'import dans urls.py
-    """Gère la modification d'un utilisateur (Admin)."""
-    user = User.objects.get(id=user_id)
-
+def edit_user(request, user_id):
+    user_to_edit = get_object_or_404(User, id=user_id)
+    
     if request.method == "POST":
-        user.username = request.POST['username']
-        user.email = request.POST['email']
-        user.is_staff = 'is_staff' in request.POST
-        user.is_superuser = 'is_superuser' in request.POST
-        user.save()
-        messages.success(request, f"L'utilisateur {user.username} a été mis à jour avec succès.")
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        is_staff = request.POST.get('is_staff') == 'on'
+        is_superuser = request.POST.get('is_superuser') == 'on'
+        
+        # Vérifier si le nom d'utilisateur existe déjà pour un autre utilisateur
+        if User.objects.exclude(id=user_id).filter(username=username).exists():
+            messages.error(request, "Ce nom d'utilisateur est déjà utilisé.")
+            return redirect('edit_user', user_id=user_id)
+            
+        # Vérifier si l'email existe déjà pour un autre utilisateur
+        if User.objects.exclude(id=user_id).filter(email=email).exists():
+            messages.error(request, "Cet email est déjà utilisé.")
+            return redirect('edit_user', user_id=user_id)
+            
+        # Mettre à jour l'utilisateur
+        user_to_edit.username = username
+        user_to_edit.email = email
+        user_to_edit.is_staff = is_staff
+        user_to_edit.is_superuser = is_superuser
+        user_to_edit.save()
+        
+        # Gérer l'ajout/retrait du groupe HR
+        from django.contrib.auth.models import Group
+        hr_group, created = Group.objects.get_or_create(name='HR')
+        
+        if is_staff:
+            # S'assurer que l'utilisateur est dans le groupe HR
+            if not user_to_edit.groups.filter(name='HR').exists():
+                user_to_edit.groups.add(hr_group)
+        else:
+            # Retirer l'utilisateur du groupe HR s'il n'est plus staff
+            if user_to_edit.groups.filter(name='HR').exists():
+                user_to_edit.groups.remove(hr_group)
+        
+        messages.success(request, f"L'utilisateur {username} a été mis à jour avec succès.")
         return redirect('manage_users')
-
-    return render(request, 'rh_management/edit_user.html', {'user': user})
+    
+    return render(request, 'rh_management/edit_user.html', {'user': user_to_edit});
 
 @login_required
 @user_passes_test(lambda user: user.is_superuser)
