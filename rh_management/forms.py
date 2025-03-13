@@ -2,6 +2,7 @@ from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Fieldset, Field, Div
 from .models import ExpenseReport, KilometricExpense, LeaveRequest, NotificationEmail
+from django.contrib.auth.decorators import login_required
 
 class BaseForm(forms.ModelForm):
     """Base form class with common functionality"""

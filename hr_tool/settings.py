@@ -72,6 +72,7 @@ INSTALLED_APPS = [
 
     # Ajoutez ici votre application
     'rh_management',
+    'rh_management.templatetags',  # Ajoutez cette ligne pour reconnaître les templatetags
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -184,3 +185,6 @@ ERROR_404_TEMPLATE = 'errors/404.html'
 ERROR_500_TEMPLATE = 'errors/500.html'
 ERROR_403_TEMPLATE = 'errors/403.html'
 ERROR_400_TEMPLATE = 'errors/400.html'
+
+# Configurer Django pour rediriger automatiquement vers les URLs avec slash final
+APPEND_SLASH = True

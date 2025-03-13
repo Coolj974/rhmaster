@@ -203,3 +203,10 @@ class KilometricExpense(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.date} ({self.distance} km) - {self.amount:.2f} €"
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    is_employee = models.BooleanField(default=False)
+    is_stp = models.BooleanField(default=False)
+    is_supervisor = models.BooleanField(default=False)
+    # Les champs is_staff et is_superuser sont déjà dans le modèle User

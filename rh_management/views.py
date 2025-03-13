@@ -5,7 +5,7 @@ from django.http import HttpResponse, JsonResponse
 import pandas as pd
 from django.contrib.auth.models import User
 from .forms import LeaveRequestForm, ExpenseReportForm, KilometricExpenseForm
-from .models import LeaveRequest, ExpenseReport, KilometricExpense
+from .models import LeaveRequest, ExpenseReport, KilometricExpense, UserProfile
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
@@ -28,6 +28,8 @@ def is_admin(user):
     return user.is_superuser
 
 def is_rh(user):
+    """Vérifie si l'utilisateur est RH."""
+    # Amélioration pour détecter les RH soit par is_staff soit par appartenance au groupe HR
     return user.is_staff or user.groups.filter(name="HR").exists()
 
 def is_encadrant(user):
@@ -35,6 +37,18 @@ def is_encadrant(user):
 
 def is_stp(user):
     return user.groups.filter(name="STP").exists()
+
+# Fonctions d'autorisation améliorées
+def is_admin_or_hr(user):
+    """Vérifie si l'utilisateur est un admin ou un RH."""
+    return user.is_superuser or user.is_staff or user.groups.filter(name="HR").exists()
+
+def is_admin_hr_or_encadrant(user):
+    """Vérifie si l'utilisateur est un admin, un RH ou un encadrant."""
+    # Utiliser la fonction is_rh pour plus de cohérence
+    return (user.is_superuser or 
+            is_rh(user) or  # Utilisation de la fonction is_rh au lieu de la duplication de sa logique
+            user.groups.filter(name__in=["HR", "Encadrant"]).exists())
 
 ### 🌟 AUTHENTIFICATION ###
 
@@ -113,17 +127,18 @@ def dashboard_view(request):
 
     # Déterminer clairement les rôles de l'utilisateur
     is_superuser = request.user.is_superuser
-    is_hr = request.user.is_staff or request.user.groups.filter(name='HR').exists()
-    is_employee = request.user.groups.filter(name='Employé').exists() or not (is_superuser or is_hr)
-
+    is_hr = is_rh(request.user)  # Utilisation de la fonction is_rh
+    
     is_admin_flag = request.user.is_superuser
-    is_rh_flag = is_rh(request.user)
+    is_rh_flag = is_rh(request.user)  # Utilisation cohérente de la même fonction
     is_encadrant_flag = is_encadrant(request.user)
     is_stp_flag = is_stp(request.user)
-    is_employee_flag = request.user.groups.filter(name="Employé").exists() or not (is_admin_flag or is_rh_flag or is_encadrant_flag or is_stp_flag)
-
-    if is_admin_flag or is_rh_flag:
-        # Logique pour admins et RH
+    is_employee_flag = (request.user.groups.filter(name="Employé").exists() or 
+                       not (is_admin_flag or is_rh_flag or is_encadrant_flag or is_stp_flag))
+    
+    # Correction de la logique de détermination des demandes à afficher
+    if is_admin_flag or is_rh_flag or is_encadrant_flag:  # Ajout explicite de is_encadrant_flag
+        # Logique pour admins, RH et encadrants
         leave_requests = LeaveRequest.objects.all().order_by('-created_at')[:10]
         expense_reports = ExpenseReport.objects.all().order_by('-date')[:10]
         kilometric_expenses = KilometricExpense.objects.all().order_by('-date')[:10]
@@ -148,6 +163,79 @@ def dashboard_view(request):
     }
     return render(request, 'rh_management/dashboard.html', context)
 
+@login_required
+def some_view(request):
+    # Vérification des rôles standards
+    if request.user.is_staff:
+        # Accès fonctionnalités RH
+        pass
+        
+    if request.user.is_superuser:
+        # Accès administrateur
+        pass
+    
+    # Vérification des rôles personnalisés
+    try:
+        profile = request.user.profile
+        if profile.is_supervisor:
+            # Accès fonctionnalités superviseur
+            pass
+        
+        if profile.is_stp:
+            # Accès fonctionnalités STP
+            pass
+            
+        if profile.is_employee:
+            # Accès fonctionnalités employé
+            pass
+    except UserProfile.DoesNotExist:
+        # Gérer le cas où le profil n'existe pas encore
+        pass
+
+@login_required
+def edit_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    
+    if request.method == 'POST':
+        # Mise à jour des champs standard de User
+        user.username = request.POST.get('username')
+        user.email = request.POST.get('email')
+        
+        # Mise à jour des champs de rôles standards
+        user.is_staff = 'is_staff' in request.POST
+        user.is_superuser = 'is_superuser' in request.POST
+        user.save()
+        
+        # Mise à jour des rôles personnalisés
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        profile.is_employee = 'is_employee' in request.POST
+        profile.is_stp = 'is_stp' in request.POST
+        profile.is_supervisor = 'is_supervisor' in request.POST
+        profile.save()
+        
+        messages.success(request, "Utilisateur modifié avec succès.")
+        return redirect('manage_users')
+    
+    # Pour l'affichage du formulaire
+    try:
+        profile = user.profile
+        is_employee = profile.is_employee
+        is_stp = profile.is_stp
+        is_supervisor = profile.is_supervisor
+    except UserProfile.DoesNotExist:
+        is_employee = False
+        is_stp = False
+        is_supervisor = False
+    
+    context = {
+        'user': user,
+        'is_employee': is_employee,
+        'is_stp': is_stp,
+        'is_supervisor': is_supervisor,
+        'is_in_hr': user.is_staff,
+    }
+    
+    return render(request, 'rh_management/edit_user.html', context)
 
 @login_required
 @user_passes_test(is_admin_or_hr)
@@ -242,17 +330,17 @@ def leave_request_view(request):
 
     return render(request, 'rh_management/leave_request.html', {'form': form})
 
-# ✅ Gérer les congés en attente (RH)
+# ✅ Gérer les congés en attente (RH et Encadrants)
 @login_required
-@user_passes_test(is_hr)
+@user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def manage_leaves_view(request):
-    """Gère l'affichage des congés en attente pour les RH."""
+    """Gère l'affichage des congés en attente pour les RH et encadrants."""
     pending_leaves = LeaveRequest.objects.filter(status='pending')
     return render(request, 'rh_management/manage_leaves.html', {'pending_leaves': pending_leaves})
 
 # ✅ Approuver un congé
 @login_required
-@user_passes_test(is_hr)
+@user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def approve_leave(request, leave_id):
     """Approuve une demande de congé."""
     leave = get_object_or_404(LeaveRequest, id=leave_id)
@@ -271,7 +359,7 @@ def approve_leave(request, leave_id):
 
 # ✅ Rejeter un congé
 @login_required
-@user_passes_test(is_hr)
+@user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def reject_leave(request, leave_id):
     """Rejette une demande de congé."""
     leave = get_object_or_404(LeaveRequest, id=leave_id)
@@ -327,17 +415,17 @@ def my_expenses_view(request):
     expenses = ExpenseReport.objects.filter(user=request.user)
     return render(request, 'rh_management/my_expenses.html', {'expenses': expenses})
 
-# ✅ Gérer les notes de frais (RH)
+# ✅ Gérer les notes de frais (RH et Encadrants)
 @login_required
-@user_passes_test(is_hr)
+@user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def manage_expenses_view(request):
-    """Gère l'affichage des notes de frais en attente pour les RH."""
+    """Gère l'affichage des notes de frais en attente pour les RH et encadrants."""
     pending_expenses = ExpenseReport.objects.filter(status='pending')
     return render(request, 'rh_management/manage_expenses.html', {'pending_expenses': pending_expenses})
 
 # ✅ Approuver une note de frais
 @login_required
-@user_passes_test(is_hr)
+@user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def approve_expense(request, expense_id):
     """Approuve une note de frais."""
     expense = get_object_or_404(ExpenseReport, id=expense_id)
@@ -356,7 +444,7 @@ def approve_expense(request, expense_id):
 
 # ✅ Rejeter une note de frais
 @login_required
-@user_passes_test(is_hr)
+@user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def reject_expense(request, expense_id):
     """Rejette une note de frais."""
     expense = get_object_or_404(ExpenseReport, id=expense_id)
@@ -418,14 +506,16 @@ def manage_users_view(request):
 @user_passes_test(lambda user: user.is_superuser)
 def edit_user(request, user_id):
     user_to_edit = get_object_or_404(User, id=user_id)
+    from django.contrib.auth.models import Group
+    
+    # Récupérer tous les groupes disponibles
+    all_groups = Group.objects.all().order_by('name')
     
     if request.method == "POST":
         username = request.POST.get('username')
         email = request.POST.get('email')
         is_staff = request.POST.get('is_staff') == 'on'
         is_superuser = request.POST.get('is_superuser') == 'on'
-        is_encadrant = request.POST.get('is_encadrant') == 'on'
-        is_stp = request.POST.get('is_stp') == 'on'
         
         # Vérifier si le nom d'utilisateur existe déjà pour un autre utilisateur
         if User.objects.exclude(id=user_id).filter(username=username).exists():
@@ -443,43 +533,35 @@ def edit_user(request, user_id):
         user_to_edit.is_superuser = is_superuser
         user_to_edit.save()
         
-        from django.contrib.auth.models import Group
-        # Mise à jour du groupe HR
-        hr_group, _ = Group.objects.get_or_create(name='HR')
+        # Gestion des groupes dynamique
+        # D'abord, supprimer tous les groupes existants
+        user_to_edit.groups.clear()
+        
+        # Ensuite, ajouter les groupes sélectionnés
+        for group in all_groups:
+            group_field = f"group_{group.id}"
+            if request.POST.get(group_field) == 'on':
+                user_to_edit.groups.add(group)
+                print(f"DEBUG - Added {user_to_edit.username} to {group.name} group")
+        
+        # Gestion spéciale pour HR si is_staff est activé
         if is_staff:
-            if not user_to_edit.groups.filter(name='HR').exists():
-                user_to_edit.groups.add(hr_group)
-        else:
-            if user_to_edit.groups.filter(name='HR').exists():
-                user_to_edit.groups.remove(hr_group)
-                
-        # Mise à jour du groupe Encadrant
-        encadrant_group, _ = Group.objects.get_or_create(name='Encadrant')
-        if is_encadrant:
-            if not user_to_edit.groups.filter(name='Encadrant').exists():
-                user_to_edit.groups.add(encadrant_group)
-        else:
-            if user_to_edit.groups.filter(name='Encadrant').exists():
-                user_to_edit.groups.remove(encadrant_group)
-                
-        # Mise à jour du groupe STP
-        stp_group, _ = Group.objects.get_or_create(name='STP')
-        if is_stp:
-            if not user_to_edit.groups.filter(name='STP').exists():
-                user_to_edit.groups.add(stp_group)
-        else:
-            if user_to_edit.groups.filter(name='STP').exists():
-                user_to_edit.groups.remove(stp_group)
-                
+            hr_group, _ = Group.objects.get_or_create(name='HR')
+            user_to_edit.groups.add(hr_group)
+        
         messages.success(request, f"L'utilisateur {username} a été mis à jour avec succès.")
         return redirect('manage_users')
     
     # Passage des informations de groupe au template
+    user_groups = user_to_edit.groups.all()
+    
     context = {
-         'user': user_to_edit,
-         'is_in_hr': user_to_edit.groups.filter(name="HR").exists(),
-         'is_encadrant': user_to_edit.groups.filter(name="Encadrant").exists(),
-         'is_stp': user_to_edit.groups.filter(name="STP").exists()
+        'user': user_to_edit,
+        'all_groups': all_groups,
+        'user_groups': user_groups,
+        'is_in_hr': user_to_edit.groups.filter(name="HR").exists(),
+        'is_stp': user_to_edit.groups.filter(name="STP").exists(),
+        'is_encadrant': user_to_edit.groups.filter(name="Encadrant").exists(),
     }
     return render(request, 'rh_management/edit_user.html', context)
 
@@ -592,16 +674,16 @@ def export_expenses_pdf(request):
     return response
 
 @login_required
-@user_passes_test(is_admin_or_hr)
+@user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def manage_kilometric_expenses(request):
-    """Affiche tous les frais kilométriques pour validation (Admin/RH)."""
+    """Affiche tous les frais kilométriques pour validation (Admin/RH/Encadrants)."""
     expenses = KilometricExpense.objects.all().order_by("-date")
     return render(request, "rh_management/manage_kilometric_expenses.html", {"expenses": expenses})
 
 @login_required
-@user_passes_test(is_admin_or_hr)
+@user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def approve_kilometric_expense(request, expense_id):
-    """Approuve un frais kilométrique (Admin/RH)."""
+    """Approuve un frais kilométrique (Admin/RH/Encadrants)."""
     expense = get_object_or_404(KilometricExpense, id=expense_id)
     expense.status = "approved"
     expense.save()
@@ -617,9 +699,9 @@ def approve_kilometric_expense(request, expense_id):
 
 
 @login_required
-@user_passes_test(is_admin_or_hr)
+@user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def reject_kilometric_expense(request, expense_id):
-    """Rejette un frais kilométrique (Admin/RH)."""
+    """Rejette un frais kilométrique (Admin/RH/Encadrants)."""
     expense = get_object_or_404(KilometricExpense, id=expense_id)
     expense.status = "rejected"
     expense.save()
@@ -635,9 +717,9 @@ def reject_kilometric_expense(request, expense_id):
 
 
 @login_required
-@user_passes_test(is_admin_or_hr)
+@user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def edit_kilometric_expense(request, expense_id):
-    """Modifie un frais kilométrique (Admin/RH)."""
+    """Modifie un frais kilométrique (Admin/RH/Encadrants)."""
     expense = get_object_or_404(KilometricExpense, id=expense_id)
 
     if request.method == "POST":
@@ -730,19 +812,64 @@ def change_password(request):
             messages.error(request, "Les nouveaux mots de passe ne correspondent pas.")
             return redirect('profile')
             
-        # Vérification de la complexité du mot de passe (à adapter selon vos besoins)
-        if len(new_password) < 8:
-            messages.error(request, "Le mot de passe doit contenir au moins 8 caractères.")
-            return redirect('profile')
-            
-        # Modification du mot de passe
+        # Mettre à jour le mot de passe
         user.set_password(new_password)
         user.save()
         
-        # Mise à jour de la session pour éviter la déconnexion
+        # Mettre à jour la session pour éviter la déconnexion
         update_session_auth_hash(request, user)
         
-        messages.success(request, "Votre mot de passe a été modifié avec succès!")
+        messages.success(request, "Votre mot de passe a été changé avec succès!")
         return redirect('profile')
     
     return redirect('profile')
+
+### 🌟 GESTION DES RÔLES (ADMIN) ###
+@login_required
+@user_passes_test(lambda user: user.is_superuser)
+def manage_roles_view(request):
+    """Gère l'affichage et la création de rôles (Admin)."""
+    from django.contrib.auth.models import Group
+    
+    # Récupération de tous les groupes
+    roles = Group.objects.all().order_by('name')
+    
+    if request.method == "POST":
+        role_name = request.POST.get('role_name')
+        if role_name:
+            # Vérifier que le rôle n'existe pas déjà
+            if Group.objects.filter(name=role_name).exists():
+                messages.error(request, f"Le rôle '{role_name}' existe déjà.")
+            else:
+                # Créer le nouveau rôle
+                Group.objects.create(name=role_name)
+                messages.success(request, f"Le rôle '{role_name}' a été créé avec succès.")
+                return redirect('manage_roles')
+        else:
+            messages.error(request, "Le nom du rôle ne peut pas être vide.")
+    
+    return render(request, 'rh_management/manage_roles.html', {'roles': roles})
+
+@login_required
+@user_passes_test(lambda user: user.is_superuser)
+def delete_role(request, role_id):
+    """Supprime un rôle existant (Admin)."""
+    from django.contrib.auth.models import Group
+    
+    role = get_object_or_404(Group, id=role_id)
+    
+    if request.method == "POST":
+        role_name = role.name
+        
+        # Vérifier si le rôle est un rôle système qu'on ne veut pas supprimer
+        system_roles = ['HR', 'Encadrant', 'STP', 'Employé']
+        if role_name in system_roles:
+            messages.error(request, f"Le rôle '{role_name}' est un rôle système et ne peut pas être supprimé.")
+            return redirect('manage_roles')
+        
+        # Supprimer le rôle
+        role.delete()
+        messages.success(request, f"Le rôle '{role_name}' a été supprimé avec succès.")
+        return redirect('manage_roles')
+    
+    return render(request, 'rh_management/delete_role.html', {'role': role})
