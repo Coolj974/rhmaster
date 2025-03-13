@@ -8,131 +8,179 @@
             <h2 class="mb-0 text-center"><i class="fas fa-car me-2"></i> Déclaration d'un Frais Kilométrique</h2>
         </div>
         <div class="card-body p-4">
+            <!-- Guide d'utilisation -->
+            <div class="alert alert-light border-left-primary shadow-sm mb-4">
+                <div class="d-flex">
+                    <div class="me-3">
+                        <i class="fas fa-info-circle fa-2x text-primary"></i>
+                    </div>
+                    <div>
+                        <h5 class="alert-heading">Comment déclarer vos frais kilométriques</h5>
+                        <p class="mb-0">Sélectionnez votre itinéraire sur la carte ou renseignez les adresses directement. Le calcul se fera automatiquement.</p>
+                    </div>
+                </div>
+            </div>
+            
             <form id="kilometric-expense-form" method="post" class="needs-validation" novalidate>
                 {% csrf_token %}
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label for="id_date" class="form-label fw-bold">Date</label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-light border-0"><i class="fas fa-calendar-alt"></i></span>
-                            {{ form.date }}
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="project" class="form-label fw-bold">Projet associé</label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-light border-0"><i class="fas fa-project-diagram"></i></span>
-                            <input type="text" id="project" name="project" class="form-control form-control-lg shadow-sm" placeholder="Ex: Audit Sécurité 2025" required>
-                            <div class="invalid-feedback">
-                                Veuillez entrer un projet associé.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label for="id_vehicle_type" class="form-label fw-bold">Type de véhicule</label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-light border-0"><i class="fas fa-car"></i></span>
-                            {{ form.vehicle_type }}
-                        </div>
-                        <div class="form-text text-muted" id="basic-addon4">Ex: Voiture, vélo</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="id_fiscal_power" class="form-label fw-bold">Puissance fiscale</label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-light border-0"><i class="fas fa-tachometer-alt"></i></span>
-                            {{ form.fiscal_power }}
-                        </div>
-                        <div class="form-text text-muted" id="basic-addon4">Ex: 6 CV</div>
-                    </div>
-                </div>
-
-                <div class="card mb-4 border-0 shadow-sm rounded-3 bg-light">
-                    <div class="card-header bg-gradient-info text-white">
-                        <h5 class="mb-0"><i class="fas fa-route me-2"></i>Itinéraire</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <label for="departure" class="form-label fw-bold">Départ</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text bg-white border-0"><i class="fas fa-map-marker-alt text-danger"></i></span>
-                                    <input type="text" id="departure" name="departure" class="form-control form-control-lg shadow-sm" required>
-                                    <div class="invalid-feedback">
-                                        Veuillez entrer un lieu de départ.
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="arrival" class="form-label fw-bold">Arrivée</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text bg-white border-0"><i class="fas fa-flag-checkered text-success"></i></span>
-                                    <input type="text" id="arrival" name="arrival" class="form-control form-control-lg shadow-sm" required>
-                                    <div class="invalid-feedback">
-                                        Veuillez entrer un lieu d'arrivée.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <input type="hidden" id="departure_lat" name="departure_lat" required>
-                        <input type="hidden" id="departure_lng" name="departure_lng" required>
-                        <input type="hidden" id="arrival_lat" name="arrival_lat" required>
-                        <input type="hidden" id="arrival_lng" name="arrival_lng" required>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="aller_retour">
-                                    <label class="form-check-label" for="aller_retour">
-                                        <i class="fas fa-exchange-alt me-2"></i>Aller-retour
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <label for="distance" class="form-label fw-bold">Distance (km)</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text bg-light border-0"><i class="fas fa-road"></i></span>
-                                    <input type="text" id="distance" name="distance" class="form-control form-control-lg shadow-sm" readonly required>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row mb-4">
-                    <div class="col-md-12">
-                        <label for="notification_emails" class="form-label fw-bold">Emails de notification</label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-light border-0"><i class="fas fa-envelope"></i></span>
-                            {{ form.notification_emails }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label for="reimbursement" class="form-label fw-bold">Montant du remboursement (€)</label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-light border-0"><i class="fas fa-euro-sign"></i></span>
-                            <input type="text" id="reimbursement" name="reimbursement" class="form-control form-control-lg fw-bold shadow-sm" readonly required>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card border-0 shadow-lg rounded-3 overflow-hidden mb-4">
-                    <div class="card-header bg-gradient-secondary text-white p-2">
-                        <h5 class="mb-0"><i class="fas fa-map me-2"></i>Carte interactive</h5>
-                    </div>
-                    <div id="map" style="height: 400px;" class="leaflet-container"></div>
-                </div>
                 
-                <div class="text-center">
-                    <button type="submit" class="btn btn-gradient-primary btn-lg px-5 py-3 rounded-pill shadow-sm">
-                        <i class="fas fa-paper-plane me-2"></i> Soumettre ma demande
-                    </button>
+                <div class="row">
+                    <div class="col-lg-4">
+                        <!-- Panneau d'information du véhicule -->
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-gradient-info text-white py-3">
+                                <h5 class="mb-0"><i class="fas fa-car-side me-2"></i>Information véhicule</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="mb-3">
+                                    <label for="id_date" class="form-label fw-bold">Date <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0"><i class="fas fa-calendar-alt"></i></span>
+                                        {{ form.date }}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_vehicle_type" class="form-label fw-bold">Type de véhicule <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0"><i class="fas fa-car"></i></span>
+                                        {{ form.vehicle_type }}
+                                    </div>
+                                    <div class="form-text text-muted">Le taux de remboursement dépend du type de véhicule</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_fiscal_power" class="form-label fw-bold">Puissance fiscale <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0"><i class="fas fa-tachometer-alt"></i></span>
+                                        {{ form.fiscal_power }}
+                                    </div>
+                                    <div class="form-text text-muted">Ex: 6 CV pour une voiture moyenne</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="project" class="form-label fw-bold">Projet associé <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0"><i class="fas fa-project-diagram"></i></span>
+                                        <input type="text" id="project" name="project" class="form-control shadow-sm" placeholder="Ex: Audit Sécurité 2025" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Panneau de remboursement -->
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-gradient-success text-white py-3">
+                                <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Remboursement</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="mb-3">
+                                    <label for="distance" class="form-label fw-bold">Distance (km)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0"><i class="fas fa-road"></i></span>
+                                        <input type="text" id="distance" name="distance" class="form-control shadow-sm" readonly required>
+                                    </div>
+                                    <div class="form-text text-muted">Calculée automatiquement selon l'itinéraire</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="aller_retour">
+                                        <label class="form-check-label fw-bold" for="aller_retour">
+                                            <i class="fas fa-exchange-alt me-2"></i>Aller-retour
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="reimbursement" class="form-label fw-bold">Montant (€)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0"><i class="fas fa-euro-sign"></i></span>
+                                        <input type="text" id="reimbursement" name="reimbursement" class="form-control fw-bold shadow-sm fs-4 text-success" readonly required>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Le montant est calculé selon le barème fiscal en vigueur.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Panneau de notification -->
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-gradient-secondary text-white py-3">
+                                <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Notifications</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="mb-0">
+                                    <label for="notification_emails" class="form-label fw-bold">Emails de notification</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0"><i class="fas fa-envelope"></i></span>
+                                        {{ form.notification_emails }}
+                                    </div>
+                                    <div class="form-text text-muted">Séparés par des virgules</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-8">
+                        <!-- Panneau de l'itinéraire -->
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-gradient-primary text-white py-3">
+                                <h5 class="mb-0"><i class="fas fa-route me-2"></i>Itinéraire</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label for="departure" class="form-label fw-bold">Départ <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white border-0"><i class="fas fa-map-marker-alt text-danger"></i></span>
+                                            <input type="text" id="departure" name="departure" class="form-control shadow-sm" placeholder="Cliquez sur la carte ou saisissez l'adresse" required>
+                                        </div>
+                                        <div class="form-text">Sélectionnez sur la carte ou saisissez l'adresse</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="arrival" class="form-label fw-bold">Arrivée <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white border-0"><i class="fas fa-flag-checkered text-success"></i></span>
+                                            <input type="text" id="arrival" name="arrival" class="form-control shadow-sm" placeholder="Cliquez sur la carte ou saisissez l'adresse" required>
+                                        </div>
+                                        <div class="form-text">Sélectionnez un deuxième point sur la carte</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mb-3 border-0">
+                                    <div class="card-header bg-light py-2">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span><i class="fas fa-map me-2"></i>Carte interactive</span>
+                                            <button type="button" id="clearMap" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-trash-alt me-1"></i>Effacer
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="map" style="height: 400px;" class="leaflet-container rounded-bottom"></div>
+                                </div>
+                                
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <span id="map-instructions">Cliquez d'abord sur votre point de départ, puis sur votre destination.</span>
+                                </div>
+                                
+                                <input type="hidden" id="departure_lat" name="departure_lat" required>
+                                <input type="hidden" id="departure_lng" name="departure_lng" required>
+                                <input type="hidden" id="arrival_lat" name="arrival_lat" required>
+                                <input type="hidden" id="arrival_lng" name="arrival_lng" required>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-gradient-primary btn-lg px-5 py-3 rounded-pill shadow-sm">
+                                <i class="fas fa-paper-plane me-2"></i> Soumettre ma demande
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -153,7 +201,10 @@
         const reimbursementField = document.getElementById("reimbursement");
         const vehicleTypeField = document.getElementById("id_vehicle_type");
         const fiscalPowerField = document.getElementById("id_fiscal_power");
-
+        const clearMapBtn = document.getElementById("clearMap");
+        const mapInstructions = document.getElementById("map-instructions");
+        
+        // Tableau des taux de remboursement par type de véhicule et puissance fiscale
         const reimbursementRates = {
             'car': {
                 3: [[0.529, 5000], [0.316, 20000, 1065], [0.37, Infinity]],
@@ -196,8 +247,10 @@
             
             if (this.checked) {
                 distanceField.value = (distanceInitiale * 2).toFixed(2); // Double la distance
+                mapInstructions.innerHTML = "Distance doublée pour l'aller-retour";
             } else {
                 distanceField.value = distanceInitiale.toFixed(2); // Remet la distance normale
+                mapInstructions.innerHTML = "Distance simple pour l'aller simple";
             }
             updateReimbursement();
         });
@@ -210,8 +263,23 @@
             updateReimbursement();
         });
 
-        vehicleTypeField.addEventListener("change", updateReimbursement);
-        fiscalPowerField.addEventListener("change", updateReimbursement);
+        vehicleTypeField.addEventListener("change", function() {
+            highlightSelection(this);
+            updateReimbursement();
+        });
+        
+        fiscalPowerField.addEventListener("change", function() {
+            highlightSelection(this);
+            updateReimbursement();
+        });
+        
+        // Animation de mise en évidence pour les champs de sélection
+        function highlightSelection(element) {
+            element.classList.add('changed');
+            setTimeout(() => {
+                element.classList.remove('changed');
+            }, 1000);
+        }
 
         function updateReimbursement() {
             const distance = parseFloat(distanceField.value) || 0;
@@ -245,6 +313,93 @@
                 console.log("Invalid vehicle type or fiscal power");
                 reimbursementField.value = "0.00";
             }
+        }
+
+        // Configuration de la carte
+        let map = L.map('map').setView([-21.1151, 55.5364], 10); // Centré sur l'île de la Réunion
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        let departureMarker, arrivalMarker;
+        let routeLayer = null;
+        const openRouteServiceApiKey = "5b3ce3597851110001cf6248b85e99a3c95448b8a83d306fd7b84056"; // Remplace par ta clé API
+
+        // Option de recherche par saisie d'adresse
+        document.getElementById('departure').addEventListener('change', function() {
+            if(this.value && !departureMarker) {
+                geocodeAddress(this.value, 'departure');
+            }
+        });
+        
+        document.getElementById('arrival').addEventListener('change', function() {
+            if(this.value && !arrivalMarker && departureMarker) {
+                geocodeAddress(this.value, 'arrival');
+            }
+        });
+        
+        // Recherche d'adresse par saisie
+        function geocodeAddress(address, type) {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`)
+                .then(response => response.json())
+                .then(data => {
+                    if(data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lng = parseFloat(data[0].lon);
+                        updateMarker(lat, lng, type);
+                    } else {
+                        alert("Adresse non trouvée, veuillez essayer une autre formulation.");
+                    }
+                })
+                .catch(error => console.error("Erreur de géocodage :", error));
+        }
+
+        function updateMarker(lat, lng, type) {
+            if (type === 'departure') {
+                if (departureMarker) map.removeLayer(departureMarker);
+                departureMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div class="marker-pin marker-pin-start"><i class="fas fa-map-marker-alt"></i></div>`,
+                        iconSize: [30, 42],
+                        iconAnchor: [15, 42]
+                    })
+                }).addTo(map).bindPopup("Départ").openPopup();
+                document.getElementById("departure_lat").value = lat;
+                document.getElementById("departure_lng").value = lng;
+                reverseGeocode(lat, lng, "departure");
+                mapInstructions.innerHTML = "Maintenant, cliquez sur votre point d'arrivée";
+            } else {
+                if (arrivalMarker) map.removeLayer(arrivalMarker);
+                arrivalMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div class="marker-pin marker-pin-end"><i class="fas fa-flag-checkered"></i></div>`,
+                        iconSize: [30, 42],
+                        iconAnchor: [15, 42]
+                    })
+                }).addTo(map).bindPopup("Arrivée").openPopup();
+                document.getElementById("arrival_lat").value = lat;
+                document.getElementById("arrival_lng").value = lng;
+                reverseGeocode(lat, lng, "arrival");
+                mapInstructions.innerHTML = "Itinéraire calculé! Cochez 'Aller-retour' si nécessaire";
+            }
+            calculateRoute();
+        }
+
+        function reverseGeocode(lat, lng, type) {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                .then(response => response.json())
+                .then(data => {
+                    let address = data.display_name;
+                    if (type === "departure") {
+                        document.getElementById("departure").value = address;
+                    } else {
+                        document.getElementById("arrival").value = address;
+                    }
+                })
+                .catch(error => console.error("Erreur de géocodage :", error));
         }
 
         function calculateRoute() {
@@ -293,46 +448,35 @@
             }
         }
 
-        let map = L.map('map').setView([-21.1151, 55.5364], 10); // Centré sur l'île de la Réunion
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        let departureMarker, arrivalMarker;
-        let routeLayer = null;
-        const openRouteServiceApiKey = "5b3ce3597851110001cf6248b85e99a3c95448b8a83d306fd7b84056"; // Remplace par ta clé API
-
-        function updateMarker(lat, lng, type) {
-            if (type === 'departure') {
-                if (departureMarker) map.removeLayer(departureMarker);
-                departureMarker = L.marker([lat, lng]).addTo(map).bindPopup("Départ").openPopup();
-                document.getElementById("departure_lat").value = lat;
-                document.getElementById("departure_lng").value = lng;
-                reverseGeocode(lat, lng, "departure");
-            } else {
-                if (arrivalMarker) map.removeLayer(arrivalMarker);
-                arrivalMarker = L.marker([lat, lng]).addTo(map).bindPopup("Arrivée").openPopup();
-                document.getElementById("arrival_lat").value = lat;
-                document.getElementById("arrival_lng").value = lng;
-                reverseGeocode(lat, lng, "arrival");
+        // Réinitialiser la carte
+        clearMapBtn.addEventListener('click', function() {
+            if (departureMarker) {
+                map.removeLayer(departureMarker);
+                departureMarker = null;
+                document.getElementById("departure").value = "";
+                document.getElementById("departure_lat").value = "";
+                document.getElementById("departure_lng").value = "";
             }
-            calculateRoute();
-        }
-
-        function reverseGeocode(lat, lng, type) {
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-                .then(response => response.json())
-                .then(data => {
-                    let address = data.display_name;
-                    if (type === "departure") {
-                        document.getElementById("departure").value = address;
-                    } else {
-                        document.getElementById("arrival").value = address;
-                    }
-                })
-                .catch(error => console.error("Erreur de géocodage :", error));
-        }
+            
+            if (arrivalMarker) {
+                map.removeLayer(arrivalMarker);
+                arrivalMarker = null;
+                document.getElementById("arrival").value = "";
+                document.getElementById("arrival_lat").value = "";
+                document.getElementById("arrival_lng").value = "";
+            }
+            
+            if (routeLayer) {
+                map.removeLayer(routeLayer);
+                routeLayer = null;
+            }
+            
+            distanceField.value = "0.00";
+            reimbursementField.value = "0.00";
+            distanceInitiale = 0;
+            
+            mapInstructions.innerHTML = "Cliquez d'abord sur votre point de départ, puis sur votre destination.";
+        });
 
         map.on('click', function(e) {
             if (!departureMarker) {
@@ -342,18 +486,49 @@
             }
         });
 
+        // Gestion de la validation du formulaire
         form.addEventListener("submit", function(event) {
             if (!form.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
+                
+                // Afficher un message pour les champs manquants
+                const requiredFields = form.querySelectorAll('[required]');
+                requiredFields.forEach(field => {
+                    if (!field.value) {
+                        field.classList.add('is-invalid');
+                        if (field.id === 'departure_lat' || field.id === 'arrival_lat') {
+                            mapInstructions.innerHTML = '<strong class="text-danger">Veuillez sélectionner les points de départ et d\'arrivée sur la carte</strong>';
+                        }
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+            } else {
+                // Animation de soumission
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Traitement...';
+                submitBtn.disabled = true;
             }
             form.classList.add("was-validated");
+        });
+        
+        // Animation pour les formulaires
+        const formInputs = document.querySelectorAll('.form-control, .form-select');
+        formInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.closest('.mb-3')?.classList.add('input-focus');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.closest('.mb-3')?.classList.remove('input-focus');
+            });
         });
     });
 </script>
 
 <style>
-    /* Styles pour les gradients et effets modernes */
+    /* Styles de base */
     .bg-gradient-primary {
         background: linear-gradient(45deg, #4e73df, #224abe);
     }
@@ -391,6 +566,7 @@
         color: white;
     }
     
+    /* Interface utilisateur améliorée */
     .rounded-4 {
         border-radius: 0.75rem !important;
     }
@@ -415,6 +591,7 @@
         margin-top: 0.25em;
     }
     
+    /* Animations et effets visuels */
     .animate-fade-in {
         animation: fadeIn 0.8s ease-in-out;
     }
@@ -424,17 +601,79 @@
         to { opacity: 1; transform: translateY(0); }
     }
     
-    .leaflet-container {
-        border-radius: 0 0 0.5rem 0.5rem;
+    .border-left-primary {
+        border-left: 4px solid #4e73df;
     }
     
-    /* Amélioration pour les cartes internes */
-    .card .card {
+    /* Style pour la carte */
+    .leaflet-container {
+        border-radius: 0 0 0.5rem 0.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    /* Styles des marqueurs personnalisés */
+    .marker-pin {
+        width: 30px;
+        height: 30px;
+        border-radius: 50% 50% 50% 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transform: rotate(-45deg);
+        color: white;
+    }
+    
+    .marker-pin i {
+        transform: rotate(45deg);
+        font-size: 16px;
+    }
+    
+    .marker-pin-start {
+        background: #e74a3b;
+    }
+    
+    .marker-pin-end {
+        background: #1cc88a;
+    }
+    
+    /* Effets d'interaction */
+    .card {
         transition: all 0.3s ease;
     }
     
-    .card .card:hover {
+    .card:hover {
         transform: translateY(-5px);
+    }
+    
+    .input-focus {
+        transform: translateY(-2px);
+        transition: transform 0.3s;
+    }
+    
+    .changed {
+        animation: pulse 1s ease;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(78, 115, 223, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(78, 115, 223, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(78, 115, 223, 0); }
+    }
+    
+    /* Amélioration des alertes */
+    .alert {
+        border-radius: 0.5rem;
+    }
+    
+    /* Style pour mobile */
+    @media (max-width: 768px) {
+        .card:hover {
+            transform: none;
+        }
+        
+        #map {
+            height: 300px;
+        }
     }
 </style>
 {% endblock %}

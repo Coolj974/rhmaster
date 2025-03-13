@@ -12,47 +12,185 @@
             </div>
         </div>
         <div class="card-body p-4">
+            <!-- Filtres et recherche -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-success active" id="filter-all">
+                            <i class="fas fa-list-ul me-1"></i> Toutes
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" id="filter-pending">
+                            <i class="fas fa-clock me-1"></i> En attente
+                        </button>
+                        <button type="button" class="btn btn-outline-success" id="filter-approved">
+                            <i class="fas fa-check me-1"></i> Approuvées
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" id="filter-rejected">
+                            <i class="fas fa-times me-1"></i> Refusées
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="search-input" placeholder="Rechercher...">
+                        <button class="btn btn-success" type="button" id="search-button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statistiques rapides -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-gradient-warning text-white shadow-sm rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">En attente</h6>
+                                    <h3 class="mb-0">{{ pending_expenses|length|default:"0" }}</h3>
+                                </div>
+                                <i class="fas fa-hourglass-half fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-gradient-success text-white shadow-sm rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Approuvées</h6>
+                                    <h3 class="mb-0">{{ approved_count|default:"0" }}</h3>
+                                </div>
+                                <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-gradient-danger text-white shadow-sm rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb0">Refusées</h6>
+                                    <h3 class="mb-0">{{ rejected_count|default:"0" }}</h3>
+                                </div>
+                                <i class="fas fa-times-circle fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-gradient-info text-white shadow-sm rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Total ce mois</h6>
+                                    <h3 class="mb-0">{{ total_amount|default:"0" }} €</h3>
+                                </div>
+                                <i class="fas fa-euro-sign fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tableau des notes de frais avec badges d'état améliorés -->
             {% if pending_expenses %}
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
+                <table class="table table-hover align-middle datatable">
+                    <thead class="bg-light">
                         <tr>
-                            <th class="border-0">Employé</th>
-                            <th class="border-0">Date</th>
-                            <th class="border-0">Description</th>
-                            <th class="border-0">Montant</th>
-                            <th class="border-0">Statut</th>
-                            <th class="border-0">Pièce justificative</th>
-                            <th class="border-0">Actions</th>
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user me-2 text-success"></i>Employé
+                                </div>
+                            </th>
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar me-2 text-success"></i>Date
+                                </div>
+                            </th>
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-file-alt me-2 text-success"></i>Description
+                                </div>
+                            </th>
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-coins me-2 text-success"></i>Montant
+                                </div>
+                            </th>
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-tag me-2 text-success"></i>Statut
+                                </div>
+                            </th>
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-receipt me-2 text-success"></i>Justificatif
+                                </div>
+                            </th>
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-cog me-2 text-success"></i>Actions
+                                </div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for expense in pending_expenses %}
-                        <tr>
+                        <tr class="expense-row" data-status="{{ expense.status }}">
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="avatar-circle bg-gradient-secondary text-white me-2">
                                         {{ expense.user.username|first|upper }}
                                     </div>
-                                    <span class="fw-bold">{{ expense.user.username }}</span>
+                                    <div>
+                                        <span class="fw-bold d-block">{{ expense.user.get_full_name|default:expense.user.username }}</span>
+                                        <small class="text-muted">Soumis le {{ expense.created_at|date:"d/m/Y"|default:expense.date }}</small>
+                                    </div>
                                 </div>
                             </td>
-                            <td><i class="fas fa-calendar-day text-muted me-1"></i> {{ expense.date }}</td>
                             <td>
-                                <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ expense.description }}">
-                                    {{ expense.description }}
+                                <span class="badge bg-light text-dark rounded-pill border">
+                                    <i class="fas fa-calendar-day text-muted me-1"></i> {{ expense.date|date:"d/m/Y" }}
                                 </span>
                             </td>
-                            <td><strong>{{ expense.amount }}</strong> <span class="text-muted">€</span></td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="popover" 
+                                       data-bs-placement="top" title="Description complète" 
+                                       data-bs-content="{{ expense.description }}">
+                                    <span class="text-truncate d-inline-block" style="max-width: 150px;">
+                                        {{ expense.description }}
+                                    </span>
+                                    <i class="fas fa-info-circle ms-1"></i>
+                                </button>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold fs-5">{{ expense.amount }} €</span>
+                                    {% if expense.vat %}
+                                    <small class="text-muted">TVA: {{ expense.vat }}%</small>
+                                    {% endif %}
+                                </div>
+                            </td>
                             <td>
                                 <span class="badge bg-gradient-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %} rounded-pill px-3 py-2">
-                                    {% if expense.status == 'approved' %}Approuvé{% elif expense.status == 'rejected' %}Refusé{% else %}En attente{% endif %}
+                                    {% if expense.status == 'approved' %}
+                                        <i class="fas fa-check-circle me-1"></i> Approuvé
+                                    {% elif expense.status == 'rejected' %}
+                                        <i class="fas fa-times-circle me-1"></i> Refusé
+                                    {% else %}
+                                        <i class="fas fa-clock me-1"></i> En attente
+                                    {% endif %}
                                 </span>
                             </td>
                             <td>
                                 {% if expense.receipt %}
                                     <a href="{{ expense.receipt.url }}" target="_blank" class="btn btn-gradient-info btn-sm rounded-pill shadow-sm">
-                                        <i class="fas fa-file-download me-1"></i> Voir
+                                        <i class="fas fa-file-download me-1"></i> Voir le justificatif
                                     </a>
                                 {% else %}
                                     <span class="badge bg-gradient-danger rounded-pill px-3">
@@ -63,18 +201,31 @@
                             <td>
                                 <div class="d-flex gap-2 flex-wrap">
                                     {% if expense.status == "pending" %}
-                                        <a href="{% url 'approve_expense' expense.id %}" class="btn btn-gradient-success btn-sm rounded-pill shadow-sm">
+                                        <button class="btn btn-gradient-success btn-sm rounded-pill shadow-sm approve-btn" 
+                                                data-expense-id="{{ expense.id }}" data-bs-toggle="modal" data-bs-target="#approveModal">
                                             <i class="fas fa-check me-1"></i> Approuver
-                                        </a>
-                                        <a href="{% url 'reject_expense' expense.id %}" class="btn btn-gradient-danger btn-sm rounded-pill shadow-sm">
+                                        </button>
+                                        <button class="btn btn-gradient-danger btn-sm rounded-pill shadow-sm reject-btn"
+                                                data-expense-id="{{ expense.id }}" data-bs-toggle="modal" data-bs-target="#rejectModal">
                                             <i class="fas fa-times me-1"></i> Rejeter
-                                        </a>
+                                        </button>
                                     {% endif %}
                                     {% if expense.status == "approved" %}
                                         <a href="{% url 'export_expense' expense.id %}" class="btn btn-gradient-primary btn-sm rounded-pill shadow-sm">
                                             <i class="fas fa-file-excel me-1"></i> Exporter
                                         </a>
                                     {% endif %}
+                                    <button class="btn btn-outline-secondary btn-sm rounded-pill details-btn" 
+                                            data-bs-toggle="modal" data-bs-target="#detailsModal"
+                                            data-expense-id="{{ expense.id }}"
+                                            data-description="{{ expense.description }}"
+                                            data-amount="{{ expense.amount }}"
+                                            data-date="{{ expense.date }}"
+                                            data-user="{{ expense.user.get_full_name|default:expense.user.username }}"
+                                            data-project="{{ expense.project|default:'' }}"
+                                            data-location="{{ expense.location|default:'' }}">
+                                        <i class="fas fa-eye me-1"></i> Détails
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -85,14 +236,121 @@
             {% else %}
                 <div class="text-center py-5">
                     <div class="d-flex flex-column align-items-center">
-                        <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
-                        <p class="lead">Aucune note de frais en attente de validation</p>
+                        <div class="empty-state mb-3">
+                            <i class="fas fa-check-circle fa-5x text-success"></i>
+                        </div>
+                        <h4>Tout est à jour</h4>
+                        <p class="text-muted">Aucune note de frais en attente de validation</p>
                         <a href="{% url 'dashboard' %}" class="btn btn-gradient-primary mt-2 rounded-pill">
                             <i class="fas fa-home me-2"></i> Retour au tableau de bord
                         </a>
                     </div>
                 </div>
             {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'approbation -->
+<div class="modal fade" id="approveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow">
+            <form action="" method="post" id="approve-form">
+                {% csrf_token %}
+                <div class="modal-header bg-gradient-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i>Approuver la note de frais</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p>Vous êtes sur le point d'approuver cette note de frais.</p>
+                    <div class="form-group mb-3">
+                        <label for="approve-comment" class="form-label">Commentaire (optionnel)</label>
+                        <textarea class="form-control" id="approve-comment" name="comment" rows="3" 
+                                  placeholder="Ajouter un commentaire pour l'employé..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-gradient-success rounded-pill">
+                        <i class="fas fa-check me-1"></i> Confirmer l'approbation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de rejet -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow">
+            <form action="" method="post" id="reject-form">
+                {% csrf_token %}
+                <div class="modal-header bg-gradient-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-times-circle me-2"></i>Rejeter la note de frais</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p>Vous êtes sur le point de rejeter cette note de frais.</p>
+                    <div class="form-group mb-3">
+                        <label for="reject-reason" class="form-label">Motif du rejet <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="reject-reason" name="reason" rows="3" required
+                                  placeholder="Expliquez le motif du rejet..."></textarea>
+                        <div class="form-text">Cette information sera communiquée à l'employé.</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-gradient-danger rounded-pill">
+                        <i class="fas fa-times me-1"></i> Confirmer le rejet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de détails -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 shadow">
+            <div class="modal-header bg-gradient-info text-white">
+                <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Détails de la note de frais</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3"><i class="fas fa-user-circle me-2"></i>Informations générales</h5>
+                                <p><strong>Employé:</strong> <span id="detail-user"></span></p>
+                                <p><strong>Date:</strong> <span id="detail-date"></span></p>
+                                <p><strong>Montant:</strong> <span id="detail-amount"></span> €</p>
+                                <p><strong>Projet:</strong> <span id="detail-project"></span></p>
+                                <p><strong>Localisation:</strong> <span id="detail-location"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3"><i class="fas fa-file-alt me-2"></i>Description</h5>
+                                <div class="p-3 bg-light rounded">
+                                    <p id="detail-description" class="mb-0"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <div id="detail-receipt-container"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Fermer</button>
+            </div>
         </div>
     </div>
 </div>
@@ -104,11 +362,100 @@
         if (card) {
             card.style.animation = 'fadeIn 0.8s ease-in-out';
         }
+        
+        // Activation des popovers
+        const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
+        [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
+        
+        // Filtrage par statut
+        document.querySelectorAll('#filter-all, #filter-pending, #filter-approved, #filter-rejected').forEach(button => {
+            button.addEventListener('click', function() {
+                // Retirer la classe active de tous les boutons
+                document.querySelectorAll('#filter-all, #filter-pending, #filter-approved, #filter-rejected').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Ajouter la classe active au bouton cliqué
+                this.classList.add('active');
+                
+                // Filtrer les lignes du tableau
+                const filterStatus = this.id.replace('filter-', '');
+                const rows = document.querySelectorAll('.expense-row');
+                
+                rows.forEach(row => {
+                    if (filterStatus === 'all' || row.dataset.status === filterStatus) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Recherche 
+        document.getElementById('search-button').addEventListener('click', searchExpense);
+        document.getElementById('search-input').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                searchExpense();
+            }
+        });
+        
+        function searchExpense() {
+            const searchValue = document.getElementById('search-input').value.toLowerCase();
+            const rows = document.querySelectorAll('.expense-row');
+            
+            rows.forEach(row => {
+                const rowText = row.textContent.toLowerCase();
+                if (rowText.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        // Gestion des modales d'approbation et de rejet
+        document.querySelectorAll('.approve-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const expenseId = this.dataset.expenseId;
+                document.getElementById('approve-form').action = `{% url 'approve_expense' 0 %}`.replace('0', expenseId);
+            });
+        });
+        
+        document.querySelectorAll('.reject-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const expenseId = this.dataset.expenseId;
+                document.getElementById('reject-form').action = `{% url 'reject_expense' 0 %}`.replace('0', expenseId);
+            });
+        });
+        
+        // Gestion modale de détails
+        document.querySelectorAll('.details-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                document.getElementById('detail-user').textContent = this.dataset.user;
+                document.getElementById('detail-date').textContent = this.dataset.date;
+                document.getElementById('detail-amount').textContent = this.dataset.amount;
+                document.getElementById('detail-description').textContent = this.dataset.description;
+                document.getElementById('detail-project').textContent = this.dataset.project || 'Non spécifié';
+                document.getElementById('detail-location').textContent = this.dataset.location || 'Non spécifié';
+            });
+        });
+        
+        // Animation pour les cartes de statistiques
+        document.querySelectorAll('.card.bg-gradient-warning, .card.bg-gradient-success, .card.bg-gradient-danger, .card.bg-gradient-info').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.classList.add('card-hover');
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.classList.remove('card-hover');
+            });
+        });
     });
 </script>
 
 <style>
-    /* Styles pour les gradients et effets modernes */
+    /* Styles de base */
     .bg-gradient-primary {
         background: linear-gradient(45deg, #4e73df, #224abe);
     }
@@ -133,54 +480,44 @@
         background: linear-gradient(45deg, #858796, #60616f);
     }
     
-    .btn-gradient-success {
-        background: linear-gradient(45deg, #1cc88a, #13855c);
-        color: white;
-        border: none;
-        transition: all 0.3s;
-    }
-    
-    .btn-gradient-danger {
-        background: linear-gradient(45deg, #e74a3b, #be392d);
-        color: white;
-        border: none;
-        transition: all 0.3s;
-    }
-    
-    .btn-gradient-info {
-        background: linear-gradient(45deg, #36b9cc, #258391);
-        color: white;
-        border: none;
-        transition: all 0.3s;
-    }
-    
+    /* Styles des boutons */
+    .btn-gradient-success,
+    .btn-gradient-danger,
+    .btn-gradient-info,
     .btn-gradient-primary {
-        background: linear-gradient(45deg, #4e73df, #224abe);
         color: white;
         border: none;
         transition: all 0.3s;
     }
     
-    .btn-gradient-success:hover, .btn-gradient-danger:hover,
-    .btn-gradient-info:hover, .btn-gradient-primary:hover {
+    .btn-gradient-success { background: linear-gradient(45deg, #1cc88a, #13855c); }
+    .btn-gradient-danger { background: linear-gradient(45deg, #e74a3b, #be392d); }
+    .btn-gradient-info { background: linear-gradient(45deg, #36b9cc, #258391); }
+    .btn-gradient-primary { background: linear-gradient(45deg, #4e73df, #224abe); }
+    
+    .btn-gradient-success:hover,
+    .btn-gradient-danger:hover,
+    .btn-gradient-info:hover,
+    .btn-gradient-primary:hover {
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         color: white;
     }
     
+    /* Animation et styles visuels */
     .rounded-4 {
         border-radius: 0.75rem !important;
     }
     
     .avatar-circle {
-        width: 32px;
-        height: 32px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         display: flex;
         justify-content: center;
         align-items: center;
         font-weight: bold;
-        font-size: 14px;
+        font-size: 16px;
     }
     
     .table th {
@@ -193,7 +530,7 @@
     }
     
     .table tbody tr:hover {
-        background-color: rgba(78, 115, 223, 0.05);
+        background-color: rgba(28, 200, 138, 0.05);
     }
     
     @keyframes fadeIn {
@@ -203,6 +540,31 @@
     
     .animate-fade-in {
         animation: fadeIn 0.8s ease-in-out;
+    }
+    
+    .card-hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+    
+    .empty-state {
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+    }
+    
+    /* Style pour les modals */
+    .modal-content {
+        border: none;
+    }
+    
+    .modal .btn-close-white {
+        filter: brightness(0) invert(1);
     }
 </style>
 {% endblock %}

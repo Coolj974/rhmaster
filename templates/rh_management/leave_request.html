@@ -1,23 +1,429 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
 
 {% block content %}
 <div class="container mt-5">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h2 class="mb-0 text-center"><i class="fas fa-plane-departure"></i> Demande de congé</h2>      
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
+        <div class="card-header bg-gradient-primary text-white p-4">
+            <h2 class="mb-0 text-center"><i class="fas fa-plane-departure me-2"></i> Demande de Congé</h2>      
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
+            <!-- Guide d'utilisation -->
+            <div class="alert alert-light border-left-primary shadow-sm mb-4">
+                <div class="d-flex">
+                    <div class="me-3">
+                        <i class="fas fa-info-circle fa-2x text-primary"></i>
+                    </div>
+                    <div>
+                        <h5 class="alert-heading">Comment soumettre votre demande de congé</h5>
+                        <p class="mb-0">Renseignez les dates, le type de congé et le motif. Un justificatif peut être nécessaire pour certains types de congés.</p>
+                    </div>
+                </div>
+            </div>
+
             <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                 {% csrf_token %}
-                {{ form|crispy }}
-                <div class="d-grid mt-4">
-                    <button type="submit" id="submit_leave" class="btn btn-success btn-lg">📩 Soumettre la demande</button>
+                
+                <div class="row">
+                    <div class="col-lg-6">
+                        <!-- Panneau période de congé -->
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-gradient-info text-white py-3">
+                                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Période de congé</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.start_date.id_for_label }}" class="form-label fw-bold">Date de début <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0"><i class="fas fa-calendar-day"></i></span>
+                                        {{ form.start_date }}
+                                    </div>
+                                    {% if form.start_date.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.start_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.end_date.id_for_label }}" class="form-label fw-bold">Date de fin <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0"><i class="fas fa-calendar-check"></i></span>
+                                        {{ form.end_date }}
+                                    </div>
+                                    {% if form.end_date.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.end_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.leave_type.id_for_label }}" class="form-label fw-bold">Type de congé <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0"><i class="fas fa-tags"></i></span>
+                                        {{ form.leave_type }}
+                                    </div>
+                                    {% if form.leave_type.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.leave_type.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text text-muted">Sélectionnez le type de congé le plus approprié</div>
+                                </div>
+                                
+                                <div class="alert alert-info mb-0" id="leave_duration_alert" style="display:none;">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-hourglass-half fa-2x me-3"></i>
+                                        <div>
+                                            <h6 class="alert-heading mb-0">Durée du congé</h6>
+                                            <span id="leave_duration_text"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Solde de congés -->
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-gradient-success text-white py-3">
+                                <h5 class="mb-0"><i class="fas fa-balance-scale me-2"></i>Votre solde</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="p-3">
+                                            <h6 class="mb-1">Congés acquis</h6>
+                                            <div class="display-6 fw-bold text-success">{{ leave_balance.acquired|default:"0" }}</div>
+                                            <small class="text-muted">jours</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-3">
+                                            <h6 class="mb-1">Congés pris</h6>
+                                            <div class="display-6 fw-bold text-danger">{{ leave_balance.taken|default:"0" }}</div>
+                                            <small class="text-muted">jours</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-3">
+                                            <h6 class="mb-1">Solde actuel</h6>
+                                            <div class="display-6 fw-bold text-primary">{{ leave_balance.remaining|default:"0" }}</div>
+                                            <small class="text-muted">jours</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <!-- Panneau des détails -->
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-gradient-secondary text-white py-3">
+                                <h5 class="mb-0"><i class="fas fa-comment-alt me-2"></i>Motif et justificatif</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.reason.id_for_label }}" class="form-label fw-bold">Motif du congé</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0"><i class="fas fa-comment"></i></span>
+                                        {{ form.reason }}
+                                    </div>
+                                    {% if form.reason.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.reason.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text text-muted">Décrivez brièvement la raison de votre congé</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.attachment.id_for_label }}" class="form-label fw-bold">Pièce justificative</label>
+                                    <div class="dropzone-container p-4 border border-dashed border-primary rounded-4 text-center">
+                                        {{ form.attachment }}
+                                        <div class="mt-2 text-muted">
+                                            <small>Formats acceptés: PDF, JPG, PNG. Taille max: 10 Mo</small>
+                                        </div>
+                                    </div>
+                                    {% if form.attachment.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.attachment.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Un justificatif est <strong>obligatoire</strong> pour les congés maladie et peut être demandé pour certains congés spéciaux.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panneau de notification -->
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-gradient-warning text-white py-3">
+                                <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Notifications</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="notify_manager" name="notify_manager" checked>
+                                    <label class="form-check-label" for="notify_manager">
+                                        <i class="fas fa-user-tie me-2"></i>Notifier mon manager
+                                    </label>
+                                </div>
+                                <div class="form-text text-muted mb-3">
+                                    Un email sera automatiquement envoyé à votre responsable.
+                                </div>
+                                
+                                <div id="leave_warning" class="alert alert-danger mb-0" style="display:none;"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="leave_warning" class="alert alert-warning mt-3" style="display:none;">
-                </div>   
+                
+                <!-- Boutons d'action -->
+                <div class="d-flex justify-content-center gap-3 mt-4">
+                    <button type="button" class="btn btn-light btn-lg px-5 py-3 rounded-pill shadow-sm" onclick="window.history.back();">
+                        <i class="fas fa-arrow-left me-2"></i> Annuler
+                    </button>
+                    <button type="submit" id="submit_leave" class="btn btn-gradient-primary btn-lg px-5 py-3 rounded-pill shadow-sm">
+                        <i class="fas fa-paper-plane me-2"></i> Soumettre ma demande
+                    </button>
+                </div>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animation d'entrée pour la carte
+        document.querySelector('.card').classList.add('animate-fade-in');
+        
+        const startDateInput = document.querySelector('input[name="start_date"]');
+        const endDateInput = document.querySelector('input[name="end_date"]');
+        const leaveTypeSelect = document.querySelector('select[name="leave_type"]');
+        const durationAlert = document.getElementById('leave_duration_alert');
+        const durationText = document.getElementById('leave_duration_text');
+        const warningAlert = document.getElementById('leave_warning');
+        const submitBtn = document.getElementById('submit_leave');
+        
+        // Mise en évidence pour les champs de sélection
+        const attachmentField = document.querySelector('input[type="file"]');
+        
+        if(startDateInput && endDateInput) {
+            startDateInput.addEventListener('change', updateDuration);
+            endDateInput.addEventListener('change', updateDuration);
+        }
+
+        if(leaveTypeSelect) {
+            leaveTypeSelect.addEventListener('change', function() {
+                highlightSelection(this);
+                
+                // Afficher un message spécifique pour certains types de congés
+                if(this.value === 'sick') {
+                    warningAlert.innerHTML = '<i class="fas fa-file-medical me-2"></i> Un certificat médical est obligatoire pour les congés maladie.';
+                    warningAlert.style.display = 'block';
+                } else if(this.value === 'family') {
+                    warningAlert.innerHTML = '<i class="fas fa-id-card me-2"></i> Un justificatif officiel peut être demandé pour les congés familiaux.';
+                    warningAlert.style.display = 'block';
+                } else {
+                    warningAlert.style.display = 'none';
+                }
+                
+                updateLeaveBadges(this.value);
+            });
+        }
+        
+        // Animation de mise en évidence pour les champs de sélection
+        function highlightSelection(element) {
+            element.classList.add('changed');
+            setTimeout(() => {
+                element.classList.remove('changed');
+            }, 1000);
+        }
+        
+        // Mettre à jour les badges selon le type de congé
+        function updateLeaveBadges(leaveType) {
+            const leaveTypeClasses = {
+                'annual': 'bg-info',
+                'sick': 'bg-warning',
+                'family': 'bg-success',
+                'unpaid': 'bg-secondary'
+            };
+            
+            // Réinitialiser tous les badges
+            document.querySelectorAll('.badge-leave-type').forEach(badge => {
+                badge.className = 'badge rounded-pill px-3 py-2 badge-leave-type';
+                
+                // Ajouter la classe appropriée
+                if(leaveTypeClasses[leaveType]) {
+                    badge.classList.add(leaveTypeClasses[leaveType]);
+                } else {
+                    badge.classList.add('bg-secondary');
+                }
+            });
+        }
+        
+        function updateDuration() {
+            if(startDateInput.value && endDateInput.value) {
+                const start = new Date(startDateInput.value);
+                const end = new Date(endDateInput.value);
+                
+                if(start > end) {
+                    warningAlert.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i> La date de fin doit être postérieure à la date de début';
+                    warningAlert.style.display = 'block';
+                    submitBtn.disabled = true;
+                    durationAlert.style.display = 'none';
+                } else {
+                    // Calculer la durée en jours ouvrables (excluant les week-ends)
+                    let count = 0;
+                    let current = new Date(start);
+                    
+                    while (current <= end) {
+                        // 0 = Dimanche, 6 = Samedi
+                        const dayOfWeek = current.getDay();
+                        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                            count++;
+                        }
+                        current.setDate(current.getDate() + 1);
+                    }
+                    
+                    durationText.textContent = count + ' jour(s) ouvrés';
+                    durationAlert.style.display = 'block';
+                    warningAlert.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            }
+        }
+        
+        // Amélioration de l'affichage du champ de téléchargement
+        if (attachmentField) {
+            attachmentField.addEventListener('change', function(e) {
+                if (this.files.length > 0) {
+                    let container = this.closest('.dropzone-container');
+                    container.classList.add('has-file');
+                    
+                    let fileInfo = document.createElement('div');
+                    fileInfo.className = 'file-info mt-3';
+                    fileInfo.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Fichier sélectionné: <strong>${this.files[0].name}</strong>
+                        </div>
+                    `;
+                    
+                    let existingInfo = container.querySelector('.file-info');
+                    if (existingInfo) {
+                        container.replaceChild(fileInfo, existingInfo);
+                    } else {
+                        container.appendChild(fileInfo);
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+<style>
+    /* Styles de base */
+    .bg-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(45deg, #1cc88a, #13855c);
+    }
+    
+    .bg-gradient-info {
+        background: linear-gradient(45deg, #36b9cc, #258391);
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(45deg, #f6c23e, #dda20a);
+    }
+    
+    .bg-gradient-danger {
+        background: linear-gradient(45deg, #e74a3b, #be392d);
+    }
+    
+    .bg-gradient-secondary {
+        background: linear-gradient(45deg, #5a5c69, #373840);
+    }
+    
+    .btn-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-gradient-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        color: white;
+    }
+    
+    /* Interface utilisateur améliorée */
+    .rounded-4 {
+        border-radius: 0.75rem !important;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .input-group-text {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    
+    /* Style pour la zone de dépôt de fichiers */
+    .dropzone-container {
+        transition: all 0.3s;
+        min-height: 150px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .dropzone-container:hover {
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    .dropzone-container.has-file {
+        background-color: rgba(78, 115, 223, 0.1);
+    }
+    
+    .border-dashed {
+        border-style: dashed !important;
+    }
+    
+    /* Animations et effets */
+    .animate-fade-in {
+        animation: fadeIn 0.8s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .changed {
+        animation: pulse 1s ease;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(78, 115, 223, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(78, 115, 223, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(78, 115, 223, 0); }
+    }
+    
+    /* Style des alertes personnalisées */
+    .border-left-primary {
+        border-left: 4px solid #4e73df;
+    }
+    
+    /* Style pour les badges */
+    .badge {
+        font-weight: 600;
+    }
+</style>
 {% endblock %}

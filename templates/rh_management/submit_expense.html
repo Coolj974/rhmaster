@@ -3,133 +3,267 @@
 
 {% block content %}
 <div class="container mt-5">
-    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5">
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
         <div class="card-header bg-gradient-success text-white p-4">
             <h2 class="mb-0 text-center"><i class="fas fa-money-bill-wave me-2"></i> Nouvelle Note de Frais</h2>
         </div>
         <div class="card-body p-4">
+            <!-- Guide d'utilisation -->
+            <div class="alert alert-light border-left-success shadow-sm mb-4">
+                <div class="d-flex">
+                    <div class="me-3">
+                        <i class="fas fa-info-circle fa-2x text-success"></i>
+                    </div>
+                    <div>
+                        <h5 class="alert-heading">Comment soumettre une note de frais</h5>
+                        <p class="mb-0">Remplissez les informations demandées et joignez un justificatif pour accélérer la validation.</p>
+                    </div>
+                </div>
+            </div>
+
             <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                 {% csrf_token %}
                 
-                <div class="row">
-                    <div class="col-12 mb-4">
-                        <!-- Date, Description, Montant, etc. -->
-                        {% for field in form %}
-                            {% if field.name != 'receipt' and field.name != 'notification_emails' %}
-                                <div class="mb-4">
-                                    <label for="{{ field.id_for_label }}" class="form-label fw-bold">
-                                        {% if field.name == 'date' %}
-                                            <h6 class="mb-0">Date</h6>
-                                        {% elif field.name == 'description' %}
-                                            <h6 class="mb-0">Description</h6>
-                                        {% elif field.name == 'amount' %}
-                                            <h6 class="mb-0">Montant</h6>
-                                        {% elif field.name == 'vat' %}
-                                            <h6 class="mb-0">TVA</h6>
-                                        {% elif field.name == 'project' %}
-                                            <h6 class="mb-0">Projet</h6>
-                                        {% elif field.name == 'location' %}
-                                            <h6 class="mb-0">Localisation</h6>
-                                        {% elif field.name == 'refacturable' %}
-                                            <h6 class="mb-0">Refacturable</h6>
-                                        {% else %}
-                                            <h6 class="mb-0">{{ field.label }}</h6>
-                                        {% endif %}
-                                    </label>
-                                    <div class="input-group input-group-lg">
-                                        <span class="input-group-text bg-light border-0">
-                                            {% if field.name == 'date' %}
-                                                <i class="fas fa-calendar-alt"></i>
-                                            {% elif field.name == 'description' %}
-                                                <i class="fas fa-file-alt"></i>
-                                            {% elif field.name == 'amount' %}
-                                                <i class="fas fa-coins"></i>
-                                            {% elif field.name == 'vat' %}
-                                                <i class="fas fa-percentage"></i>
-                                            {% elif field.name == 'project' %}
-                                                <i class="fas fa-project-diagram"></i>
-                                            {% elif field.name == 'location' %}
-                                                <i class="fas fa-map-marker-alt"></i>
-                                            {% elif field.name == 'refacturable' %}
-                                                <i class="fas fa-redo-alt"></i>
-                                            {% else %}
-                                                <i class="fas fa-info-circle"></i>
-                                            {% endif %}
-                                        </span>
-                                        {{ field }}
-                                    </div>
-                                    {% if field.help_text %}
-                                        <small class="form-text text-muted">{{ field.help_text }}</small>
-                                    {% endif %}
-                                    {% if field.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {% for error in field.errors %}
-                                                {{ error }}
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            {% endif %}
-                        {% endfor %}
+                <!-- Organisation en onglets pour une meilleure ergonomie -->
+                <ul class="nav nav-tabs mb-4" id="expenseTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active px-4 py-3" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-selected="true">
+                            <i class="fas fa-file-invoice me-2"></i>Détails
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 py-3" id="receipt-tab" data-bs-toggle="tab" data-bs-target="#receipt" type="button" role="tab" aria-selected="false">
+                            <i class="fas fa-receipt me-2"></i>Justificatif
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 py-3" id="notifications-tab" data-bs-toggle="tab" data-bs-target="#notifications" type="button" role="tab" aria-selected="false">
+                            <i class="fas fa-bell me-2"></i>Notifications
+                        </button>
+                    </li>
+                </ul>
 
-                        <!-- Bloc Facture -->
-                        <div class="card mb-4 border-0 shadow-sm rounded-4 bg-light">
-                            <div class="card-header bg-gradient-success text-white py-2 px-3">
-                                <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Justificatif de dépense</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="{{ form.receipt.id_for_label }}" class="form-label fw-bold">
-                                        <h6 class="mb-0">Joindre une facture</h6>
+                <div class="tab-content p-3 bg-white rounded-bottom shadow-sm" id="expenseTabContent">
+                    <!-- Onglet Détails -->
+                    <div class="tab-pane fade show active" id="details" role="tabpanel">
+                        <div class="row g-4">
+                            <!-- Informations principales -->
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label for="{{ form.date.id_for_label }}" class="form-label fw-bold">
+                                        Date <span class="text-danger">*</span>
                                     </label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-white border-0">
-                                            <i class="fas fa-file-invoice text-success"></i>
+                                        <span class="input-group-text bg-light border-0">
+                                            <i class="fas fa-calendar-alt"></i>
                                         </span>
-                                        {{ form.receipt }}
+                                        {{ form.date }}
                                     </div>
-                                    <small class="form-text text-muted mt-2">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Formats acceptés: PDF, JPG, PNG. Taille max: 10 Mo. La facture est fortement recommandée pour accélérer la validation.
-                                    </small>
-                                    {% if form.receipt.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {% for error in form.receipt.errors %}
-                                                {{ error }}
-                                            {% endfor %}
-                                        </div>
+                                    {% if form.date.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.date.errors }}</div>
                                     {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.amount.id_for_label }}" class="form-label fw-bold">
+                                        Montant <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0">
+                                            <i class="fas fa-coins"></i>
+                                        </span>
+                                        {{ form.amount }}
+                                        <span class="input-group-text bg-light border-0">€</span>
+                                    </div>
+                                    {% if form.amount.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.amount.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.vat.id_for_label }}" class="form-label fw-bold">
+                                        TVA
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0">
+                                            <i class="fas fa-percentage"></i>
+                                        </span>
+                                        {{ form.vat }}
+                                    </div>
+                                    {% if form.vat.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.vat.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Informations secondaires -->
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label for="{{ form.category.id_for_label }}" class="form-label fw-bold">
+                                        Catégorie <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0">
+                                            <i class="fas fa-tag"></i>
+                                        </span>
+                                        <select name="category" id="{{ form.category.id_for_label }}" class="form-select">
+                                            <option value="">-- Sélectionner --</option>
+                                            <option value="transport">Transport</option>
+                                            <option value="accommodation">Hébergement</option>
+                                            <option value="meals">Repas</option>
+                                            <option value="supplies">Fournitures</option>
+                                            <option value="other">Autre</option>
+                                        </select>
+                                    </div>
+                                    {% if form.category.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.category.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.project.id_for_label }}" class="form-label fw-bold">
+                                        Projet <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0">
+                                            <i class="fas fa-project-diagram"></i>
+                                        </span>
+                                        {{ form.project }}
+                                    </div>
+                                    {% if form.project.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.project.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.location.id_for_label }}" class="form-label fw-bold">
+                                        Localisation
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </span>
+                                        {{ form.location }}
+                                    </div>
+                                    {% if form.location.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.location.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Description (pleine largeur) -->
+                            <div class="col-12">
+                                <div class="mb-4">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label fw-bold">
+                                        Description <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0">
+                                            <i class="fas fa-file-alt"></i>
+                                        </span>
+                                        {{ form.description }}
+                                    </div>
+                                    {% if form.description.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.description.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Décrivez brièvement la nature des dépenses</div>
+                                </div>
+                                
+                                <div class="form-check form-switch mb-4">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="{{ form.refacturable.id_for_label }}" name="refacturable" {% if form.refacturable.value %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="{{ form.refacturable.id_for_label }}">
+                                        <i class="fas fa-redo-alt me-2"></i>Refacturable au client
+                                    </label>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Notifications -->
-                        <div class="mb-4">
-                            <label for="{{ form.notification_emails.id_for_label }}" class="form-label fw-bold">
-                                <i class="fas fa-envelope me-2"></i>{{ form.notification_emails.label }}
-                            </label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-light border-0">
-                                    <i class="fas fa-envelope"></i>
-                                </span>
-                                {{ form.notification_emails }}
-                            </div>
-                            {% if form.notification_emails.help_text %}
-                                <small class="form-text text-muted">{{ form.notification_emails.help_text }}</small>
-                            {% endif %}
-                            {% if form.notification_emails.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.notification_emails.errors %}
-                                        {{ error }}
-                                    {% endfor %}
+                    </div>
+
+                    <!-- Onglet Justificatif -->
+                    <div class="tab-pane fade" id="receipt" role="tabpanel">
+                        <div class="card border-0 shadow-sm rounded-4 bg-light">
+                            <div class="card-body p-4">
+                                <div class="text-center mb-4">
+                                    <i class="fas fa-file-upload fa-4x text-success mb-3"></i>
+                                    <h5>Joindre un justificatif</h5>
+                                    <p class="text-muted">Formats acceptés: PDF, JPG, PNG. Taille max: 10 Mo</p>
                                 </div>
-                            {% endif %}
+                                
+                                <div class="dropzone-container p-5 border border-dashed border-success rounded-4 text-center">
+                                    {{ form.receipt }}
+                                    <div class="mt-3">
+                                        <span class="btn btn-outline-success">
+                                            <i class="fas fa-cloud-upload-alt me-2"></i>Sélectionner un fichier
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info mt-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Le justificatif est fortement recommandé pour accélérer la validation de votre demande.
+                                </div>
+                                
+                                {% if form.receipt.errors %}
+                                    <div class="alert alert-danger mt-3">
+                                        {% for error in form.receipt.errors %}
+                                            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Onglet Notifications -->
+                    <div class="tab-pane fade" id="notifications" role="tabpanel">
+                        <div class="card border-0 shadow-sm rounded-4">
+                            <div class="card-body p-4">
+                                <div class="alert alert-light mb-4">
+                                    <i class="fas fa-bell me-2"></i>
+                                    Renseignez les adresses email des personnes à notifier lors de la validation de votre note de frais.
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.notification_emails.id_for_label }}" class="form-label fw-bold">
+                                        Emails de notification
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0">
+                                            <i class="fas fa-envelope"></i>
+                                        </span>
+                                        {{ form.notification_emails }}
+                                    </div>
+                                    <div class="form-text">Séparez les adresses email par des virgules</div>
+                                </div>
+                                
+                                <div class="alert alert-success">
+                                    <div class="d-flex">
+                                        <div class="me-3">
+                                            <i class="fas fa-check-circle fa-2x"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="alert-heading">Tout est prêt !</h5>
+                                            <p class="mb-0">Votre note de frais est prête à être soumise. Cliquez sur "Soumettre" pour continuer.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="text-center mt-4">
-                    <button type="submit" class="btn btn-gradient-success btn-lg px-5 py-3 rounded-pill shadow-sm">
+                <div class="progress mt-4" style="height: 4px;">
+                    <div id="formProgress" class="progress-bar bg-success" role="progressbar" style="width: 33%"></div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" id="prevBtn" class="btn btn-light btn-lg px-4" disabled>
+                        <i class="fas fa-arrow-left me-2"></i> Précédent
+                    </button>
+                    <button type="button" id="nextBtn" class="btn btn-gradient-success btn-lg px-4">
+                        Suivant <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                    <button type="submit" id="submitBtn" class="btn btn-gradient-success btn-lg px-5 py-3 rounded-pill shadow-sm" style="display: none;">
                         <i class="fas fa-check-circle me-2"></i> Soumettre ma note de frais
                     </button>
                 </div>
@@ -140,65 +274,137 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Animation d'entrée pour la carte
+        // Animation d'entrée
         document.querySelector('.card').classList.add('animate-fade-in');
         
-        // Animer le bouton de soumission
-        const submitButton = document.querySelector('button[type="submit"]');
+        // Gestion des onglets et de la navigation
+        let currentTab = 0;
+        const tabs = ['details-tab', 'receipt-tab', 'notifications-tab'];
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const submitBtn = document.getElementById('submitBtn');
         
-        submitButton.addEventListener('mouseenter', function() {
-            this.querySelector('i').classList.add('fa-shake');
+        // Fonction pour naviguer entre les onglets
+        function navigateTab(direction) {
+            // Validation simple avant de passer à l'onglet suivant
+            if (direction > 0 && currentTab === 0) {
+                const requiredFields = ['date', 'amount', 'project', 'description'];
+                let isValid = true;
+                
+                requiredFields.forEach(field => {
+                    const input = document.querySelector(`[name="${field}"]`);
+                    if (!input.value.trim()) {
+                        input.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        input.classList.remove('is-invalid');
+                    }
+                });
+                
+                if (!isValid) {
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'alert alert-danger mt-3 animate-fade-in';
+                    errorMsg.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Veuillez remplir tous les champs obligatoires avant de continuer.';
+                    
+                    // Supprimer l'ancien message s'il existe
+                    const oldMsg = document.querySelector('#details .alert-danger');
+                    if (oldMsg) oldMsg.remove();
+                    
+                    document.querySelector('#details').appendChild(errorMsg);
+                    return;
+                }
+            }
+            
+            currentTab += direction;
+            
+            // Mise à jour des boutons
+            prevBtn.disabled = currentTab === 0;
+            if (currentTab === tabs.length - 1) {
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'block';
+            } else {
+                nextBtn.style.display = 'block';
+                submitBtn.style.display = 'none';
+            }
+            
+            // Activation de l'onglet
+            document.getElementById(tabs[currentTab]).click();
+            
+            // Mise à jour de la barre de progression
+            document.getElementById('formProgress').style.width = ((currentTab + 1) * 100 / tabs.length) + '%';
+        }
+        
+        // Écouteurs d'événements pour les boutons
+        nextBtn.addEventListener('click', () => navigateTab(1));
+        prevBtn.addEventListener('click', () => navigateTab(-1));
+        
+        // Animation du bouton de soumission
+        submitBtn.addEventListener('mouseenter', function() {
+            this.querySelector('i').classList.add('fa-beat');
         });
         
-        submitButton.addEventListener('mouseleave', function() {
-            this.querySelector('i').classList.remove('fa-shake');
+        submitBtn.addEventListener('mouseleave', function() {
+            this.querySelector('i').classList.remove('fa-beat');
         });
         
-        // Ajouter un indicateur de chargement lors de la soumission
+        // Indicateur de chargement lors de la soumission
         document.querySelector('form').addEventListener('submit', function() {
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Traitement...';
-            submitButton.disabled = true;
-            submitButton.classList.add('processing');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Traitement...';
+            submitBtn.disabled = true;
+            submitBtn.classList.add('processing');
         });
         
-        // Animation lors du focus sur les champs
-        const inputFields = document.querySelectorAll('.form-control, .form-select');
-        inputFields.forEach(field => {
-            field.addEventListener('focus', function() {
-                this.closest('.mb-4').classList.add('input-focused');
+        // Animation des champs de formulaire
+        const formInputs = document.querySelectorAll('.form-control, .form-select');
+        formInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.closest('.mb-4')?.classList.add('input-focused');
             });
             
-            field.addEventListener('blur', function() {
-                this.closest('.mb-4').classList.remove('input-focused');
+            input.addEventListener('blur', function() {
+                this.closest('.mb-4')?.classList.remove('input-focused');
             });
         });
+        
+        // Amélioration de l'affichage du champ de téléchargement
+        const receiptField = document.querySelector('input[type="file"]');
+        if (receiptField) {
+            receiptField.addEventListener('change', function(e) {
+                if (this.files.length > 0) {
+                    let container = this.closest('.dropzone-container');
+                    container.classList.add('has-file');
+                    
+                    let fileInfo = document.createElement('div');
+                    fileInfo.className = 'file-info mt-3';
+                    fileInfo.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Fichier sélectionné: <strong>${this.files[0].name}</strong>
+                        </div>
+                    `;
+                    
+                    let existingInfo = container.querySelector('.file-info');
+                    if (existingInfo) {
+                        container.replaceChild(fileInfo, existingInfo);
+                    } else {
+                        container.appendChild(fileInfo);
+                    }
+                }
+            });
+            
+            // Cacher le champ de fichier natif et utiliser le bouton personnalisé
+            receiptField.style.display = 'none';
+            document.querySelector('.dropzone-container .btn').addEventListener('click', function() {
+                receiptField.click();
+            });
+        }
     });
 </script>
 
 <style>
-    /* Styles pour les gradients et effets modernes */
-    .bg-gradient-primary {
-        background: linear-gradient(45deg, #4e73df, #224abe);
-    }
-    
+    /* Styles de base */
     .bg-gradient-success {
         background: linear-gradient(45deg, #1cc88a, #13855c);
-    }
-    
-    .bg-gradient-info {
-        background: linear-gradient(45deg, #36b9cc, #258391);
-    }
-    
-    .bg-gradient-warning {
-        background: linear-gradient(45deg, #f6c23e, #dda20a);
-    }
-    
-    .bg-gradient-danger {
-        background: linear-gradient(45deg, #e74a3b, #be392d);
-    }
-    
-    .bg-gradient-secondary {
-        background: linear-gradient(45deg, #5a5c69, #373840);
     }
     
     .btn-gradient-success {
@@ -214,22 +420,49 @@
         color: white;
     }
     
-    .rounded-4 {
-        border-radius: 0.75rem !important;
+    /* Styles pour les onglets */
+    .nav-tabs .nav-link {
+        border: none;
+        color: #5a5c69;
+        font-weight: 600;
+        transition: all 0.3s;
     }
     
-    .form-control, .form-select {
-        border-radius: 0.5rem;
-        padding: 0.75rem 1rem;
+    .nav-tabs .nav-link.active {
+        color: #1cc88a;
+        border-bottom: 3px solid #1cc88a;
     }
     
-    .form-control:focus, .form-select:focus {
-        border-color: #1cc88a;
-        box-shadow: 0 0 0 0.25rem rgba(28, 200, 138, 0.25);
+    .nav-tabs .nav-link:hover:not(.active) {
+        background-color: rgba(28, 200, 138, 0.1);
     }
     
+    /* Style pour la zone de dépôt de fichiers */
+    .dropzone-container {
+        transition: all 0.3s;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    
+    .dropzone-container:hover {
+        background-color: rgba(28, 200, 138, 0.05);
+    }
+    
+    .dropzone-container.has-file {
+        background-color: rgba(28, 200, 138, 0.1);
+    }
+    
+    .border-dashed {
+        border-style: dashed !important;
+    }
+    
+    /* Animations et effets */
     .animate-fade-in {
-        animation: fadeIn 0.8s ease-in-out;
+        animation: fadeIn 0.5s ease-in-out;
     }
     
     @keyframes fadeIn {
@@ -237,56 +470,25 @@
         to { opacity: 1; transform: translateY(0); }
     }
     
-    label {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: #5a5c69;
+    .fa-beat {
+        animation: beat 0.75s infinite alternate;
+        transform-origin: center;
     }
     
-    /* Amélioration pour le formulaire crispy */
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-
-    /* Styles pour le champ d'upload de fichier */
-    input[type=file] {
-        padding: 0.5rem;
+    @keyframes beat {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.25); }
     }
     
-    .form-control::-webkit-file-upload-button {
-        background: linear-gradient(45deg, #1cc88a, #13855c);
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 0.4rem;
-        margin-right: 0.8rem;
-        transition: all 0.2s;
-    }
-    
-    .form-control::-webkit-file-upload-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    }
-    
-    .fa-shake {
-        animation: shake 0.5s infinite;
-    }
-    
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-3px); }
-        75% { transform: translateX(3px); }
-    }
-    
-    .btn.processing {
-        background: linear-gradient(45deg, #28a745, #13855c) !important;
-        pointer-events: none;
+    /* Style des alertes personnalisées */
+    .border-left-success {
+        border-left: 4px solid #1cc88a;
     }
     
     /* Style pour le focus des champs */
     .input-focused {
         transform: translateY(-2px);
-        transition: transform 0.3s ease;
+        transition: transform 0.3s;
     }
     
     .input-focused label {
@@ -300,22 +502,33 @@
         color: #1cc88a;
     }
     
-    /* Amélioration du bouton de téléchargement de fichier */
-    .form-control::-webkit-file-upload-button {
-        background: linear-gradient(45deg, #1cc88a, #13855c);
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 0.4rem;
-        margin-right: 0.8rem;
-        transition: all 0.3s;
-        position: relative;
-        overflow: hidden;
+    /* Style pour les champs invalides */
+    .form-control.is-invalid, .form-select.is-invalid {
+        border-color: #e74a3b;
+        background-image: none;
     }
     
-    .form-control::-webkit-file-upload-button:hover {
-        transform: translateY(-2px) scale(1.05);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    /* Style pour la barre de progression */
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+    
+    /* Style pour le champ de notification en cours de traitement */
+    .processing {
+        background: linear-gradient(45deg, #6e707e, #858796);
+        opacity: 0.8;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .nav-tabs .nav-link {
+            padding: 0.5rem;
+        }
+        
+        .btn-lg {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
     }
 </style>
 {% endblock %}
