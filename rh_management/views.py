@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 import json
 from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password
+from django.utils import timezone
 
 # Vérifie si l'utilisateur est un admin ou un RH
 def is_admin_or_hr(user):
@@ -336,7 +337,22 @@ def leave_request_view(request):
 def manage_leaves_view(request):
     """Gère l'affichage des congés en attente pour les RH et encadrants."""
     pending_leaves = LeaveRequest.objects.filter(status='pending')
-    return render(request, 'rh_management/manage_leaves.html', {'pending_leaves': pending_leaves})
+    approved_this_month = LeaveRequest.objects.filter(status='approved').count()
+    rejected_this_month = LeaveRequest.objects.filter(status='rejected').count()
+    currently_on_leave = LeaveRequest.objects.filter(Q(start_date__lte=timezone.now()) & Q(end_date__gte=timezone.now())).count()
+
+    return render(request, 'rh_management/manage_leaves.html', {'pending_leaves': pending_leaves, 'approved_this_month': approved_this_month, 'rejected_this_month': rejected_this_month, 'currently_on_leave': currently_on_leave})
+
+@login_required
+@user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
+def manage_kilometric_expenses_view(request):
+    """Gère l'affichage des notes de frais kilométriques en attente pour les RH et encadrants."""
+    pending_count = KilometricExpense.objects.filter(status='pending')
+    approved_count = KilometricExpense.objects.filter(status='approved').count()
+    rejected_count = KilometricExpense.objects.filter(status='rejected').count()
+    total_distance = sum(expense.distance for expense in pending_count)
+
+    return render(request, 'rh_management/manage_kilometric_expenses.html', {'pending_count': pending_count, 'approved_count': approved_count, 'rejected_count': rejected_count, 'total_distance': total_distance})
 
 # ✅ Approuver un congé
 @login_required
@@ -421,7 +437,11 @@ def my_expenses_view(request):
 def manage_expenses_view(request):
     """Gère l'affichage des notes de frais en attente pour les RH et encadrants."""
     pending_expenses = ExpenseReport.objects.filter(status='pending')
-    return render(request, 'rh_management/manage_expenses.html', {'pending_expenses': pending_expenses})
+    approved_count = ExpenseReport.objects.filter(status='approved').count()
+    rejected_count = ExpenseReport.objects.filter(status='rejected').count()
+    total_amount = sum(expense.amount for expense in pending_expenses)
+    
+    return render(request, 'rh_management/manage_expenses.html', {'pending_expenses': pending_expenses, 'approved_count': approved_count, 'rejected_count': rejected_count, 'total_amount': total_amount})
 
 # ✅ Approuver une note de frais
 @login_required

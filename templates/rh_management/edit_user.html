@@ -2,129 +2,164 @@
 
 {% block content %}
 <div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
-                <div class="card-header bg-gradient-primary text-white p-4">
-                    <div class="d-flex align-items-center">
-                        <div>
-                            <h2 class="mb-0"><i class="fas fa-user-edit me-2"></i>Modifier l'utilisateur</h2>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card-body p-4">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5">
+        <div class="card-header bg-gradient-primary text-white p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0"><i class="fas fa-user-edit me-2"></i>Modifier l'utilisateur</h2>
+                <div class="d-flex align-items-center gap-2">
+                    {% if pending_approval %}
+                        <span class="badge bg-warning rounded-pill px-3">
+                            <i class="fas fa-clock me-1"></i>En attente d'approbation
+                        </span>
                     {% endif %}
-
-                    <form method="post" action="{% url 'edit_user' user.id %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="username" class="form-label fw-bold">Nom d'utilisateur</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="fas fa-user"></i></span>
-                                <input type="text" name="username" id="username" value="{{ user.username }}" class="form-control" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label fw-bold">Email</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="fas fa-envelope"></i></span>
-                                <input type="email" name="email" id="email" value="{{ user.email }}" class="form-control" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="is_staff" class="form-label fw-bold">RH</label>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="is_staff" id="is_staff" {% if is_in_hr %}checked{% endif %}>
-                                <label class="form-check-label" for="is_staff">RH</label>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="is_superuser" class="form-label fw-bold">Admin</label>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="is_superuser" id="is_superuser" {% if user.is_superuser %}checked{% endif %}>
-                                <label class="form-check-label" for="is_superuser">Admin</label>
-                            </div>
-                        </div>
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-gradient-primary rounded-pill">
-                                <i class="fas fa-save me-2"></i>Enregistrer les modifications
-                            </button>
-                        </div>
-                    </form>
+                    <a href="{% url 'dashboard' %}" class="btn btn-light rounded-pill">
+                        <i class="fas fa-arrow-left me-2"></i>Retour
+                    </a>
                 </div>
             </div>
+        </div>
+
+        <div class="card-body p-4">
+            {% if is_rh and not is_admin %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Accès non autorisé. Seuls les administrateurs et RH peuvent modifier les profils.
+                </div>
+            {% else %}
+                <form method="post" id="edit-form" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Informations personnelles -->
+                    <div class="card mb-4 border-0 shadow-sm rounded-4">
+                        <div class="card-header bg-light py-3">
+                            <h5 class="mb-0"><i class="fas fa-user me-2"></i>Informations personnelles</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label fw-bold">Nom d'utilisateur <span class="text-danger">*</span></label>
+                                        <input type="text" name="username" class="form-control" 
+                                               value="{{ user.username }}" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label fw-bold">Email <span class="text-danger">*</span></label>
+                                        <input type="email" name="email" class="form-control" 
+                                               value="{{ user.email }}" required>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label fw-bold">Prénom</label>
+                                        <input type="text" name="first_name" class="form-control" 
+                                               value="{{ user.first_name }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label fw-bold">Nom</label>
+                                        <input type="text" name="last_name" class="form-control" 
+                                               value="{{ user.last_name }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Rôles et permissions -->
+            <div class="card mb-4 border-0 shadow-sm rounded-4">
+                <div class="card-header bg-light py-3">
+                    <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>Rôles et permissions</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label fw-bold">Rôle utilisateur</label>
+                                <select name="user_role" class="form-select" {% if not user.is_admin %}disabled{% endif %}>
+                                    <option value="user" {% if not user.is_staff %}selected{% endif %}>Utilisateur standard</option>
+                                    <option value="rh" {% if user.is_staff and not user.is_admin %}selected{% endif %}>Ressources Humaines</option>
+                                    <option value="admin" {% if user.is_admin %}selected{% endif %}>Administrateur</option>
+                                </select>
+                                {% if not user.is_admin %}
+                                <div class="form-text text-muted">
+                                    <i class="fas fa-lock me-1"></i> Seuls les administrateurs peuvent modifier les rôles.
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if is_admin %}
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label fw-bold">Permissions spéciales</label>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" name="can_approve_leaves" id="can_approve_leaves" 
+                                           {% if user_permissions.can_approve_leaves %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_approve_leaves">
+                                        <i class="fas fa-calendar-check text-success me-1"></i> Peut approuver des congés
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="can_edit_profiles" id="can_edit_profiles"
+                                           {% if user_permissions.can_edit_profiles %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_edit_profiles">
+                                        <i class="fas fa-user-edit text-primary me-1"></i> Peut modifier des profils
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        {% if is_admin %}
+                            <button type="submit" class="btn btn-gradient-primary rounded-pill px-5">
+                                <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                            </button>
+                        {% else %}
+                            <button type="submit" name="request_approval" class="btn btn-gradient-warning rounded-pill px-5">
+                                <i class="fas fa-paper-plane me-2"></i>Demander approbation
+                            </button>
+                        {% endif %}
+                    </div>
+                </form>
+            {% endif %}
         </div>
     </div>
 </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('edit-form');
+        
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Afficher message d'erreur
+                    const errorAlert = document.createElement('div');
+                    errorAlert.className = 'alert alert-danger mt-3';
+                    errorAlert.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Veuillez remplir tous les champs obligatoires';
+                    form.insertBefore(errorAlert, form.firstChild);
+                }
+                
+                form.classList.add('was-validated');
+            });
+        }
+    });
+</script>
+
 <style>
-    /* Styles de base pour les éléments du formulaire */
-    .form-control {
-        border-radius: 0.5rem;
-        padding: 0.75rem 1rem;
-        transition: all 0.3s ease;
-    }
-    
-    .form-control:focus {
-        border-color: #4e73df;
-        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
-    }
-    
-    .input-group-text {
-        border-radius: 0.5rem 0 0 0.5rem;
-        border-right: none;
-        transition: all 0.3s ease;
-    }
-    
-    .input-group .form-control {
-        border-radius: 0 0.5rem 0.5rem 0;
-    }
-    
-    /* Animations et effets */
-    .animate-fade-in {
-        animation: fadeIn 0.6s ease-in-out;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .card {
-        transition: all 0.3s ease;
-    }
-    
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
-    }
-    
-    /* Styles pour les boutons */
-    .btn {
-        padding: 0.6rem 1.5rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        border: none;
-    }
-    
-    .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    .btn:active {
-        transform: translateY(1px);
-    }
-    
-    /* Styles pour les dégradés */
     .bg-gradient-primary {
         background: linear-gradient(45deg, #4e73df, #224abe);
     }
@@ -132,63 +167,20 @@
     .btn-gradient-primary {
         background: linear-gradient(45deg, #4e73df, #224abe);
         color: white;
-    }
-    
-    /* Améliorations pour les messages d'alerte */
-    .alert {
         border: none;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        animation: slideIn 0.3s ease-out;
+        transition: all 0.3s;
     }
     
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateY(-20px); }
-        to { opacity: 1; transform: translateY(0); }
+    .btn-gradient-warning {
+        background: linear-gradient(45deg, #f6c23e, #dda20a);
+        color: white;
+        border: none;
+        transition: all 0.3s;
     }
     
-    /* Animation pour les icônes */
-    .fas {
-        transition: all 0.3s ease;
-    }
-    
-    .btn:hover .fas {
-        transform: scale(1.2);
-    }
-    
-    /* Style pour le titre de la carte */
-    .card-title {
-        border-bottom: 2px solid #f0f0f0;
-        padding-bottom: 0.75rem;
-        margin-bottom: 1.5rem;
-        color: #4e73df;
-    }
-    
-    /* Arrondi des coins */
-    .rounded-4 {
-        border-radius: 0.75rem !important;
-    }
-    
-    /* Animation du badge */
-    .badge {
-        transition: all 0.3s ease;
-    }
-    
-    .badge:hover {
-        transform: scale(1.1);
-    }
-    
-    /* Effet de focus sur les champs */
-    .input-group:focus-within .input-group-text {
-        border-color: #4e73df;
-        background-color: #eef1ff;
-    }
-    
-    /* Animation de validation */
-    .form-control:valid:focus {
-        border-color: #1cc88a;
-        box-shadow: 0 0 0 0.2rem rgba(28, 200, 138, 0.25);
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
 </style>
 {% endblock %}

@@ -89,7 +89,8 @@ class ExpenseReport(models.Model):
     @property
     def total_amount(self):
         """ Calcul automatique du montant TTC """
-        return self.amount + (self.amount * (self.vat / 100))
+        from decimal import Decimal
+        return self.amount + (self.amount * (self.vat / Decimal('100')))
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

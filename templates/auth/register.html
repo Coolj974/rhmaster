@@ -3,58 +3,199 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-8">
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
-                <div class="card-header bg-gradient-info text-white p-4 text-center">
-                    <h2 class="mb-0"><i class="fas fa-user-plus me-2"></i> Inscription</h2>
+                <div class="card-header bg-gradient-primary text-white p-4 text-center">
+                    <h2 class="mb-0"><i class="fas fa-user-plus me-2"></i> Création d'un nouvel utilisateur</h2>
+                    <p class="mb-0 mt-2">Réservé aux administrateurs et ressources humaines</p>
                 </div>
                 <div class="card-body p-5">
-                    <form method="post" onsubmit="return validateEmail()">
-                        {% csrf_token %}
-                        <div class="mb-4">
-                            <label for="id_username" class="form-label fw-bold"></i>Nom d'utilisateur</label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-light border-0"><i class="fas fa-user"></i></span>
-                                <input type="text" name="username" id="id_username" class="form-control form-control-lg shadow-sm" required>
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} animate-fade-in mb-4">
+                                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %} me-2"></i>
+                                {{ message }}
                             </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if user.is_staff or user.is_superuser or is_rh %}
+                        <div class="progress mb-4" style="height: 8px;">
+                            <div id="formProgress" class="progress-bar bg-primary" style="width: 0%"></div>
                         </div>
-                        <div class="mb-4">
-                            <label for="id_email" class="form-label fw-bold"></i>Email</label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-light border-0"><i class="fas fa-envelope"></i></span>
-                                <input type="email" name="email" id="id_email" class="form-control form-control-lg shadow-sm" required>
+                        
+                        <form method="post" id="registration-form" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="mb-4 form-group-animate">
+                                        <label for="id_first_name" class="form-label fw-bold">Prénom <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-0">
+                                                <i class="fas fa-user"></i>
+                                            </span>
+                                            <input type="text" name="first_name" id="id_first_name" class="form-control shadow-sm" required>
+                                        </div>
+                                        <div class="invalid-feedback">Le prénom est requis</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-4 form-group-animate">
+                                        <label for="id_last_name" class="form-label fw-bold">Nom <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-0">
+                                                <i class="fas fa-user"></i>
+                                            </span>
+                                            <input type="text" name="last_name" id="id_last_name" class="form-control shadow-sm" required>
+                                        </div>
+                                        <div class="invalid-feedback">Le nom est requis</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-12">
+                                    <div class="mb-4 form-group-animate">
+                                        <label for="id_username" class="form-label fw-bold">Nom d'utilisateur <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-0">
+                                                <i class="fas fa-user-shield"></i>
+                                            </span>
+                                            <input type="text" name="username" id="id_username" class="form-control shadow-sm" required>
+                                        </div>
+                                        <div class="form-text text-muted">Ce nom sera utilisé pour la connexion</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-12">
+                                    <div class="mb-4 form-group-animate">
+                                        <label for="id_email" class="form-label fw-bold">Email <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-0">
+                                                <i class="fas fa-envelope"></i>
+                                            </span>
+                                            <input type="email" name="email" id="id_email" class="form-control shadow-sm" required>
+                                        </div>
+                                        <div class="form-text text-muted">Adresse email professionnelle de l'utilisateur</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-4 form-group-animate">
+                                        <label for="id_password1" class="form-label fw-bold">Mot de passe <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-0">
+                                                <i class="fas fa-lock"></i>
+                                            </span>
+                                            <input type="password" name="password1" id="id_password1" class="form-control shadow-sm" required>
+                                            <button class="input-group-text bg-light border-0 toggle-password" type="button" data-target="id_password1">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-4 form-group-animate">
+                                        <label for="id_password2" class="form-label fw-bold">Confirmation <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-0">
+                                                <i class="fas fa-lock"></i>
+                                            </span>
+                                            <input type="password" name="password2" id="id_password2" class="form-control shadow-sm" required>
+                                            <button class="input-group-text bg-light border-0 toggle-password" type="button" data-target="id_password2">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                        <div id="password-match" class="form-text"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-4 form-group-animate">
+                                        <label for="id_position" class="form-label fw-bold">Poste dans l'association <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-0">
+                                                <i class="fas fa-briefcase"></i>
+                                            </span>
+                                            <input type="text" name="position" id="id_position" class="form-control shadow-sm" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-4 form-group-animate">
+                                        <label for="id_role" class="form-label fw-bold">Rôle <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-0">
+                                                <i class="fas fa-user-tag"></i>
+                                            </span>
+                                            <select name="role" id="id_role" class="form-select shadow-sm" required>
+                                                <option value="">-- Sélectionner un rôle --</option>
+                                                <option value="employee">Employé</option>
+                                                <option value="manager">Encadrant</option>
+                                                <option value="rh">Ressources Humaines</option>
+                                                <option value="admin">Administrateur</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <div class="card bg-light rounded-4 border-0 shadow-sm mb-4">
+                                        <div class="card-body p-4">
+                                            <h5 class="card-title"><i class="fas fa-user-shield me-2"></i>Permissions de l'utilisateur</h5>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                                                        <label class="form-check-label" for="is_active">Compte actif</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="is_staff" name="is_staff">
+                                                        <label class="form-check-label" for="is_staff">Accès à l'administration</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="form-text text-muted">Utilisez une adresse email terminant par @cyberun.info</div>
-                        </div>
-                        <div class="mb-4">
-                            <label for="id_password" class="form-label fw-bold"></i>Mot de passe</label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-light border-0"><i class="fas fa-lock"></i></span>
-                                <input type="password" name="password" id="id_password" class="form-control form-control-lg shadow-sm" required>
+                            
+                            <div class="d-flex justify-content-center gap-3 mt-4">
+                                <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg px-4 py-2 rounded-pill shadow-sm">
+                                    <i class="fas fa-arrow-left me-2"></i> Annuler
+                                </a>
+                                <button type="submit" id="submit-btn" class="btn btn-gradient-primary btn-lg px-5 py-3 rounded-pill shadow-sm">
+                                    <i class="fas fa-user-plus me-2"></i> Créer l'utilisateur
+                                </button>
                             </div>
-                        </div>
-                        <div class="mb-4">
-                            <label for="id_role" class="form-label fw-bold">Rôle</label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-light border-0"><i class="fas fa-user-tag"></i></span>
-                                <select name="role" id="id_role" class="form-select form-control-lg shadow-sm" required>
-                                    <option value="employe">Employé</option>
-                                    <option value="encadrant">Encadrant</option>
-                                    <option value="stp">STP</option>
-                                    <option value="rh">RH</option>
-                                    <option value="admin">Admin</option>
-                                </select>
+                        </form>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="empty-state mb-3">
+                                <i class="fas fa-lock fa-5x text-muted"></i>
                             </div>
+                            <h3 class="mb-3">Accès restreint</h3>
+                            <p class="text-muted mb-4">Vous n'avez pas les autorisations nécessaires pour accéder à cette page.</p>
+                            <p class="mb-4">Seuls les administrateurs et le personnel RH peuvent créer de nouveaux utilisateurs.</p>
+                            <a href="{% url 'dashboard' %}" class="btn btn-gradient-primary rounded-pill px-5 py-3">
+                                <i class="fas fa-home me-2"></i> Retour au tableau de bord
+                            </a>
                         </div>
-                        <div class="text-center mt-5">
-                            <button type="submit" class="btn btn-gradient-info btn-lg px-5 py-3 rounded-pill shadow-sm">
-                                <i class="fas fa-check-circle me-2"></i>Créer mon compte
-                            </button>
-                        </div>
-                    </form>
-                    <p class="text-center mt-4">
-                        Déjà un compte ? <a href="{% url 'login' %}" class="text-info fw-bold">Connectez-vous ici</a>
-                    </p>
+                    {% endif %}
+                </div>
+                
+                <div class="card-footer bg-light p-3 text-center">
+                    <div class="d-flex justify-content-center gap-3">
+                        <span class="text-muted small">© {% now "Y" %} CybeRH</span>
+                        <span class="text-muted">•</span>
+                        <a href="#" class="text-decoration-none small">Documentation</a>
+                        <span class="text-muted">•</span>
+                        <a href="#" class="text-decoration-none small">Confidentialité</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -62,55 +203,189 @@
 </div>
 
 <script>
-function validateEmail() {
-    const email = document.getElementById('id_email').value;
-    const domain = email.split('@')[1];
-    if (domain !== 'cyberun.info') {
-        alert('Veuillez utiliser une adresse e-mail se terminant par cyberun.info');
-        return false;
-    }
-    return true;
-}
-
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener('DOMContentLoaded', function() {
     // Animation d'entrée pour la carte
     const card = document.querySelector('.animate-fade-in');
     if (card) {
         card.style.animation = 'fadeIn 0.8s ease-in-out';
     }
+    
+    // Fonctions pour masquer/afficher les mots de passe
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const passwordInput = document.getElementById(targetId);
+            
+            // Basculer entre mot de passe caché et visible
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Changer l'icône
+            this.querySelector('i').classList.toggle('fa-eye');
+            this.querySelector('i').classList.toggle('fa-eye-slash');
+        });
+    });
+    
+    // Animation pour les groupes de formulaire au focus
+    const formInputs = document.querySelectorAll('.form-control, .form-select');
+    formInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.closest('.form-group-animate').classList.add('input-focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.closest('.form-group-animate').classList.remove('input-focused');
+            
+            // Valider le champ
+            if (this.required && !this.value) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+        
+        input.addEventListener('input', function() {
+            updateProgressBar();
+        });
+    });
+    
+    // Vérification de la correspondance des mots de passe
+    const password1 = document.getElementById('id_password1');
+    const password2 = document.getElementById('id_password2');
+    const passwordMatchDiv = document.getElementById('password-match');
+    
+    if (password1 && password2 && passwordMatchDiv) {
+        function checkPasswordMatch() {
+            if (password2.value === '') {
+                passwordMatchDiv.innerHTML = '';
+                passwordMatchDiv.className = 'form-text';
+            } else if (password1.value === password2.value) {
+                passwordMatchDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i>Les mots de passe correspondent';
+                passwordMatchDiv.className = 'form-text text-success';
+                password2.classList.remove('is-invalid');
+                password2.classList.add('is-valid');
+            } else {
+                passwordMatchDiv.innerHTML = '<i class="fas fa-times-circle me-2"></i>Les mots de passe ne correspondent pas';
+                passwordMatchDiv.className = 'form-text text-danger';
+                password2.classList.add('is-invalid');
+                password2.classList.remove('is-valid');
+            }
+            updateProgressBar();
+        }
+        
+        password1.addEventListener('input', checkPasswordMatch);
+        password2.addEventListener('input', checkPasswordMatch);
+    }
+    
+    // Mise à jour de la barre de progression du formulaire
+    function updateProgressBar() {
+        const inputs = document.querySelectorAll('form input[required], form select[required]');
+        let filledCount = 0;
+        
+        inputs.forEach(input => {
+            if (input.value) {
+                filledCount++;
+            }
+        });
+        
+        const progress = (filledCount / inputs.length) * 100;
+        document.getElementById('formProgress').style.width = `${progress}%`;
+        
+        // Changer la couleur en fonction du progrès
+        const progressBar = document.getElementById('formProgress');
+        if (progress < 50) {
+            progressBar.className = 'progress-bar bg-danger';
+        } else if (progress < 100) {
+            progressBar.className = 'progress-bar bg-warning';
+        } else {
+            progressBar.className = 'progress-bar bg-success';
+        }
+    }
+    
+    // Animation du bouton de soumission
+    const submitBtn = document.getElementById('submit-btn');
+    if (submitBtn) {
+        submitBtn.addEventListener('mouseenter', function() {
+            this.querySelector('i').classList.add('fa-beat');
+        });
+        
+        submitBtn.addEventListener('mouseleave', function() {
+            this.querySelector('i').classList.remove('fa-beat');
+        });
+        
+        // Animation lors de la soumission
+        document.getElementById('registration-form').addEventListener('submit', function(event) {
+            // Vérification de tous les champs requis
+            const form = event.target;
+            
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Mettre en évidence les champs manquants
+                const invalidFields = form.querySelectorAll(':invalid');
+                invalidFields.forEach(field => {
+                    field.classList.add('is-invalid');
+                });
+                
+                // Message d'erreur
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'alert alert-danger mt-3 animate-shake';
+                errorMessage.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Veuillez remplir tous les champs obligatoires.';
+                
+                // Supprimer l'ancien message s'il existe
+                const oldMessage = form.querySelector('.alert-danger');
+                if (oldMessage) oldMessage.remove();
+                
+                form.insertBefore(errorMessage, form.firstChild);
+            } else {
+                // Animation de soumission
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Création du compte...';
+                submitBtn.disabled = true;
+            }
+            
+            form.classList.add('was-validated');
+        });
+    }
+    
+    // Initialisation
+    updateProgressBar();
 });
 </script>
 
 <style>
-    /* Styles pour les gradients et effets modernes */
-    .bg-gradient-info {
-        background: linear-gradient(45deg, #36b9cc, #258391);
+    /* Styles de base */
+    .bg-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
     }
     
-    .btn-gradient-info {
-        background: linear-gradient(45deg, #36b9cc, #258391);
+    .btn-gradient-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe);
         color: white;
         border: none;
         transition: all 0.3s;
     }
     
-    .btn-gradient-info:hover {
+    .btn-gradient-primary:hover {
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         color: white;
     }
     
+    /* Styles avancés */
     .rounded-4 {
         border-radius: 0.75rem !important;
     }
     
-    .form-control, .input-group-text {
+    .form-control, .form-select, .input-group-text {
         border-radius: 0.5rem;
+        transition: all 0.3s;
     }
     
-    .form-control:focus {
-        border-color: #36b9cc;
-        box-shadow: 0 0 0 0.25rem rgba(54, 185, 204, 0.25);
+    .form-control:focus, .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
     }
     
     .input-group-text {
@@ -118,13 +393,95 @@ document.addEventListener("DOMContentLoaded", function() {
         border-bottom-right-radius: 0;
     }
     
+    .input-group-text:last-child {
+        border-top-right-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        cursor: pointer;
+    }
+    
+    /* Animation pour les champs de formulaire */
+    .form-group-animate {
+        transition: all 0.3s ease;
+    }
+    
+    .input-focused {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(78, 115, 223, 0.1);
+    }
+    
+    .input-focused label {
+        color: #4e73df;
+        transition: color 0.3s ease;
+    }
+    
+    .input-focused .input-group-text i {
+        color: #4e73df;
+        transform: scale(1.2);
+        transition: all 0.3s ease;
+    }
+    
+    /* Animations */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
     
     .animate-fade-in {
-        animation: fadeIn 0.8s ease-in-out;
+        opacity: 0;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    
+    .animate-shake {
+        animation: shake 0.6s ease-in-out;
+    }
+    
+    .fa-beat {
+        animation: beat 0.75s infinite alternate;
+    }
+    
+    @keyframes beat {
+        to { transform: scale(1.2); }
+    }
+    
+    /* État vide */
+    .empty-state {
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+    }
+    
+    /* Barre de progression */
+    .progress {
+        border-radius: 0.5rem;
+        background-color: #e9ecef;
+    }
+    
+    .progress-bar {
+        border-radius: 0.5rem;
+        transition: width 0.6s ease, background-color 0.6s ease;
+    }
+    
+    /* Style pour le footer de la carte */
+    .card-footer {
+        border-top: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .input-focused {
+            transform: none;
+        }
     }
 </style>
 {% endblock %}

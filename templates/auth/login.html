@@ -13,33 +13,69 @@
                         <div class="avatar-circle bg-light mx-auto mb-3" style="width: 100px; height: 100px;">
                             <i class="fas fa-user-circle text-primary fa-4x"></i>
                         </div>
+                        <h4 class="text-muted">Bienvenue sur CybeRH</h4>
                     </div>
                     
-                    <form method="post">
+                    {% if form.errors %}
+                    <div class="alert alert-danger animate-shake">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Nom d'utilisateur ou mot de passe incorrect. Veuillez réessayer.
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" id="login-form">
                         {% csrf_token %}
-                        <div class="mb-4">
-                            <label for="id_username" class="form-label fw-bold"></i>Nom d'utilisateur</label>
-                            <div class="input-group input-group-lg">
+                        <div class="mb-4 form-floating">
+                            <div class="input-group input-group-lg form-group-animate">
                                 <span class="input-group-text bg-light border-0"><i class="fas fa-user"></i></span>
-                                <input type="text" name="username" id="id_username" class="form-control form-control-lg shadow-sm" required>
+                                <input type="text" name="username" id="id_username" class="form-control form-control-lg shadow-sm" 
+                                       placeholder="Nom d'utilisateur" required autofocus>
                             </div>
                         </div>
-                        <div class="mb-4">
-                            <label for="id_password" class="form-label fw-bold"></i>Mot de passe</label>
-                            <div class="input-group input-group-lg">
+                        
+                        <div class="mb-4 form-floating">
+                            <div class="input-group input-group-lg form-group-animate">
                                 <span class="input-group-text bg-light border-0"><i class="fas fa-lock"></i></span>
-                                <input type="password" name="password" id="id_password" class="form-control form-control-lg shadow-sm" required>
+                                <input type="password" name="password" id="id_password" class="form-control form-control-lg shadow-sm" 
+                                       placeholder="Mot de passe" required>
+                                <button class="input-group-text bg-light border-0" type="button" id="togglePassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                             </div>
                         </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="remember-me" name="remember">
+                                <label class="form-check-label" for="remember-me">Se souvenir de moi</label>
+                            </div>
+                            <a href="#" class="text-primary fw-bold text-decoration-none">
+                                Mot de passe oublié ?
+                            </a>
+                        </div>
+                        
                         <div class="text-center mt-5">
-                            <button type="submit" class="btn btn-gradient-primary btn-lg px-5 py-3 rounded-pill shadow-sm">
+                            <button type="submit" id="login-button" class="btn btn-gradient-primary btn-lg px-5 py-3 rounded-pill shadow-sm w-100">
                                 <i class="fas fa-sign-in-alt me-2"></i>Se connecter
                             </button>
                         </div>
                     </form>
-                    <p class="text-center mt-4">
-                        Pas encore de compte ? <span class="text-primary fw-bold">Demander à un administrateurs </span>
-                    </p>
+                    
+                    <div class="text-center mt-4">
+                        <p class="mb-0">Pas encore de compte ?</p>
+                        <a href="#" class="text-primary fw-bold text-decoration-none">
+                            Demander un accès à l'administrateur
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-light p-3 text-center">
+                    <div class="d-flex justify-content-center gap-3">
+                        <span class="text-muted small">© {% now "Y" %} CybeRH</span>
+                        <span class="text-muted">•</span>
+                        <a href="#" class="text-decoration-none small">Aide</a>
+                        <span class="text-muted">•</span>
+                        <a href="#" class="text-decoration-none small">Confidentialité</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -52,6 +88,51 @@ document.addEventListener("DOMContentLoaded", function() {
     const card = document.querySelector('.animate-fade-in');
     if (card) {
         card.style.animation = 'fadeIn 0.8s ease-in-out';
+    }
+    
+    // Animation pour les groupes de formulaire au focus
+    const formInputs = document.querySelectorAll('.form-control');
+    formInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.closest('.form-group-animate').classList.add('input-focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.closest('.form-group-animate').classList.remove('input-focused');
+        });
+    });
+    
+    // Fonctionnalité pour afficher/masquer le mot de passe
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('id_password');
+    
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Changer l'icône
+            this.querySelector('i').classList.toggle('fa-eye');
+            this.querySelector('i').classList.toggle('fa-eye-slash');
+        });
+    }
+    
+    // Animation du bouton de connexion
+    const loginButton = document.getElementById('login-button');
+    if (loginButton) {
+        loginButton.addEventListener('mouseenter', function() {
+            this.querySelector('i').classList.add('fa-beat');
+        });
+        
+        loginButton.addEventListener('mouseleave', function() {
+            this.querySelector('i').classList.remove('fa-beat');
+        });
+        
+        // Animation lors de la soumission
+        document.getElementById('login-form').addEventListener('submit', function() {
+            loginButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Connexion...';
+            loginButton.disabled = true;
+        });
     }
 });
 </script>
@@ -93,25 +174,81 @@ document.addEventListener("DOMContentLoaded", function() {
         border-bottom-right-radius: 0;
     }
     
+    .input-group-text:last-child {
+        border-top-right-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        cursor: pointer;
+    }
+    
     .avatar-circle {
         border-radius: 50%;
         display: flex;
         justify-content: center;
         align-items: center;
         font-weight: bold;
+        box-shadow: 0 5px 15px rgba(78, 115, 223, 0.2);
     }
     
+    /* Animations */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
     
     .animate-fade-in {
-        animation: fadeIn 0.8s ease-in-out;
+        opacity: 0;
     }
     
-    .text-primary {
-        color: #4e73df !important;
+    .form-group-animate {
+        transition: all 0.3s ease;
+    }
+    
+    .input-focused {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(78, 115, 223, 0.1);
+    }
+
+    .input-focused .input-group-text i {
+        color: #4e73df;
+        transform: scale(1.2);
+        transition: all 0.3s ease;
+    }
+    
+    .fa-beat {
+        animation: beat 0.75s infinite alternate;
+    }
+    
+    @keyframes beat {
+        to { transform: scale(1.2); }
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    
+    .animate-shake {
+        animation: shake 0.6s ease-in-out;
+    }
+    
+    /* Style pour le footer de la carte */
+    .card-footer {
+        border-top: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    /* Styles responsifs */
+    @media (max-width: 768px) {
+        .card {
+            margin-left: 1rem;
+            margin-right: 1rem;
+        }
+        
+        .input-focused {
+            transform: none;
+        }
     }
 </style>
 {% endblock %}
