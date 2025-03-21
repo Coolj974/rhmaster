@@ -18,7 +18,10 @@ from rh_management.views import (
     delete_leave, delete_expense, delete_kilometric_expense,
     dashboard_filtered,
     # Important - explicitly import these two views
-    manage_roles_view, delete_role
+    manage_roles_view, delete_role,
+    # Password Manager views
+    password_manager_list, password_manager_add, password_manager_edit, 
+    password_manager_delete, password_manager_view, password_share, password_share_remove
 )
 
 # Error handlers
@@ -99,6 +102,15 @@ urlpatterns = [
     path("reject-kilometric-expense/<int:expense_id>/", reject_kilometric_expense, name="reject_kilometric_expense"),  # Reject kilometric expense
     path("edit-kilometric-expense/<int:expense_id>/", edit_kilometric_expense, name="edit_kilometric_expense"),  # Edit kilometric expense
     path('delete_kilometric_expense/<int:id>/', delete_kilometric_expense, name='delete_kilometric_expense'),
+    
+    # Password Manager
+    path("password-manager/", password_manager_list, name="password_manager_list"),
+    path("password-manager/add/", password_manager_add, name="password_manager_add"),
+    path("password-manager/<int:pk>/edit/", password_manager_edit, name="password_manager_edit"),
+    path("password-manager/<int:pk>/delete/", password_manager_delete, name="password_manager_delete"),
+    path("password-manager/<int:pk>/view/", password_manager_view, name="password_manager_view"),
+    path("password-manager/<int:pk>/share/", password_share, name="password_share"),
+    path("password-manager/share/<int:share_id>/remove/", password_share_remove, name="password_share_remove"),
 ]
 
 # Add static and media URL patterns

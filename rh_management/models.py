@@ -3,6 +3,11 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.db import models
+from django.utils.crypto import get_random_string
+from cryptography.fernet import Fernet
+from django.conf import settings
+import base64
+import os
 
 # Constants for choices
 STATUS_CHOICES = [
@@ -255,3 +260,67 @@ class LeaveBalance(models.Model):
         
     def __str__(self):
         return f"Solde de congés de {self.user.username}: {self.available} jours"
+
+class PasswordManager(models.Model):
+    """Model to handle password entries securely."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    username = models.CharField(max_length=255, blank=True, null=True)
+    password = models.TextField()  # Will store encrypted password
+    url = models.URLField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    category = models.CharField(max_length=100, blank=True, null=True)
+    # Encryption key securely stored for each password
+    encryption_key = models.TextField()
+
+    def __str__(self):
+        return f"{self.title} ({self.user.username})"
+
+    def save(self, *args, **kwargs):
+        # Generate a new encryption key if not present
+        if not self.encryption_key:
+            self.encryption_key = base64.urlsafe_b64encode(os.urandom(32)).decode()
+        
+        # Encrypt the password if it's not already encrypted
+        if not kwargs.pop('skip_encryption', False):
+            self.encrypt_password()
+        
+        super().save(*args, **kwargs)
+
+    def encrypt_password(self):
+        """Encrypt the password using the object's encryption key."""
+        if not self.password:
+            return
+            
+        cipher_suite = Fernet(self.encryption_key.encode())
+        encrypted_password = cipher_suite.encrypt(self.password.encode())
+        self.password = encrypted_password.decode()
+
+    def decrypt_password(self):
+        """Decrypt the password using the object's encryption key."""
+        try:
+            cipher_suite = Fernet(self.encryption_key.encode())
+            decrypted_password = cipher_suite.decrypt(self.password.encode())
+            return decrypted_password.decode()
+        except Exception:
+            return "Erreur de déchiffrement"
+
+    def generate_password(self, length=16):
+        """Generate a strong random password."""
+        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?'
+        return get_random_string(length, chars)
+
+class PasswordShare(models.Model):
+    """Model to handle password sharing between users."""
+    password_entry = models.ForeignKey(PasswordManager, on_delete=models.CASCADE, related_name='shares')
+    shared_with = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shared_passwords')
+    created_at = models.DateTimeField(auto_now_add=True)
+    can_edit = models.BooleanField(default=False)  # Détermine si l'utilisateur peut modifier le mot de passe partagé
+    
+    class Meta:
+        unique_together = ('password_entry', 'shared_with')
+        
+    def __str__(self):
+        return f"{self.password_entry.title} partagé avec {self.shared_with.username}"

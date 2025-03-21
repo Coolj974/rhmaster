@@ -17,6 +17,10 @@ from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 from django.db.models import Avg
 from .models import LeaveBalance, LeaveRequest
+from .models import PasswordManager
+from .forms import PasswordManagerForm
+from django.contrib.auth.models import User, Group
+from .models import PasswordShare
 
 # Vérifie si l'utilisateur est un admin ou un RH
 def is_admin_or_hr(user):
@@ -995,3 +999,206 @@ def delete_role(request, role_id):
         return redirect('manage_roles')
     
     return render(request, 'rh_management/delete_role.html', {'role': role})
+
+@login_required
+def password_manager_list(request):
+    """View to display all password entries for the logged-in user."""
+    # Obtenir les mots de passe de l'utilisateur
+    owned_passwords = PasswordManager.objects.filter(user=request.user).order_by('title')
+    
+    # Obtenir les mots de passe partagés avec l'utilisateur
+    shared_passwords = PasswordManager.objects.filter(
+        shares__shared_with=request.user
+    ).order_by('title')
+    
+    # Regrouper par catégorie (mots de passe de l'utilisateur)
+    categories = {}
+    for pwd in owned_passwords:
+        cat = pwd.category or "Non classé"
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(pwd)
+    
+    # Regrouper les mots de passe partagés
+    shared_categories = {}
+    for pwd in shared_passwords:
+        cat = pwd.category or "Non classé"
+        if cat not in shared_categories:
+            shared_categories[cat] = []
+        shared_categories[cat].append(pwd)
+    
+    context = {
+        'categories': categories,
+        'shared_categories': shared_categories,
+        'password_count': owned_passwords.count(),
+        'shared_count': shared_passwords.count(),
+    }
+    return render(request, 'rh_management/password_manager.html', context)
+
+@login_required
+def password_manager_add(request):
+    """View to add a new password entry."""
+    if request.method == 'POST':
+        form = PasswordManagerForm(request.POST, user=request.user)
+        if form.is_valid():
+            password_entry = form.save(commit=False)
+            
+            # Si la génération de mot de passe est activée, on génère un mot de passe
+            if request.POST.get('generate_password') == 'on':
+                length = int(request.POST.get('password_length', 16))
+                password_entry.password = password_entry.generate_password(length)
+            
+            password_entry.save()
+            messages.success(request, "Mot de passe ajouté avec succès.")
+            return redirect('password_manager_list')
+    else:
+        form = PasswordManagerForm(user=request.user)
+    
+    return render(request, 'rh_management/password_form.html', {
+        'form': form,
+        'title': 'Ajouter un mot de passe',
+        'is_add': True
+    })
+
+@login_required
+def password_manager_edit(request, pk):
+    """View to edit an existing password entry."""
+    # Vérifier si l'utilisateur est propriétaire ou a les droits d'édition
+    try:
+        password_entry = PasswordManager.objects.get(pk=pk, user=request.user)
+        is_owner = True
+    except PasswordManager.DoesNotExist:
+        # Vérifier si partagé avec droits d'édition
+        try:
+            share = PasswordShare.objects.get(password_entry_id=pk, shared_with=request.user, can_edit=True)
+            password_entry = share.password_entry
+            is_owner = False
+        except PasswordShare.DoesNotExist:
+            messages.error(request, "Vous n'avez pas l'autorisation de modifier ce mot de passe.")
+            return redirect('password_manager_list')
+    
+    if request.method == 'POST':
+        form = PasswordManagerForm(request.POST, instance=password_entry, user=request.user)
+        if form.is_valid():
+            password_entry = form.save(commit=False)
+            
+            # Si la génération de mot de passe est activée, on génère un mot de passe
+            if request.POST.get('generate_password') == 'on':
+                length = int(request.POST.get('password_length', 16))
+                password_entry.password = password_entry.generate_password(length)
+            
+            password_entry.save()
+            messages.success(request, "Mot de passe mis à jour avec succès.")
+            return redirect('password_manager_view', pk=pk)
+    else:
+        form = PasswordManagerForm(instance=password_entry, user=request.user)
+    
+    return render(request, 'rh_management/password_form.html', {
+        'form': form,
+        'title': 'Modifier le mot de passe',
+        'is_add': False,
+        'password_entry': password_entry,
+        'is_owner': is_owner
+    })
+
+@login_required
+def password_manager_delete(request, pk):
+    """View to delete a password entry."""
+    # Seulement le propriétaire peut supprimer
+    password_entry = get_object_or_404(PasswordManager, pk=pk, user=request.user)
+    
+    if request.method == 'POST':
+        password_entry.delete()
+        messages.success(request, "Mot de passe supprimé avec succès.")
+        return redirect('password_manager_list')
+    
+    return render(request, 'rh_management/password_confirm_delete.html', {
+        'password_entry': password_entry
+    })
+
+@login_required
+def password_manager_view(request, pk):
+    """View to see details of a password entry."""
+    # Vérifier si c'est un mot de passe appartenant à l'utilisateur
+    try:
+        password_entry = PasswordManager.objects.get(pk=pk, user=request.user)
+        is_owner = True
+        can_edit = True
+    except PasswordManager.DoesNotExist:
+        # Vérifier si c'est un mot de passe partagé avec l'utilisateur
+        try:
+            share = PasswordShare.objects.get(password_entry_id=pk, shared_with=request.user)
+            password_entry = share.password_entry
+            is_owner = False
+            can_edit = share.can_edit
+        except PasswordShare.DoesNotExist:
+            # Ni propriétaire ni partagé
+            return redirect('password_manager_list')
+    
+    decrypted_password = password_entry.decrypt_password()
+    
+    # Récupérer les partages pour ce mot de passe (pour le propriétaire uniquement)
+    shares = []
+    if is_owner:
+        shares = PasswordShare.objects.filter(password_entry=password_entry)
+    
+    return render(request, 'rh_management/password_view.html', {
+        'password_entry': password_entry,
+        'decrypted_password': decrypted_password,
+        'is_owner': is_owner,
+        'can_edit': can_edit,
+        'shares': shares
+    })
+
+@login_required
+def password_share(request, pk):
+    """View to share a password with other users."""
+    password_entry = get_object_or_404(PasswordManager, pk=pk, user=request.user)
+    
+    if request.method == 'POST':
+        user_ids = request.POST.getlist('users')
+        can_edit = request.POST.get('can_edit') == 'on'
+        
+        # Supprimer les partages existants si l'option est cochée
+        if request.POST.get('replace_existing') == 'on':
+            PasswordShare.objects.filter(password_entry=password_entry).delete()
+        
+        # Créer les nouveaux partages
+        for user_id in user_ids:
+            if int(user_id) != request.user.id:  # Ne pas partager avec soi-même
+                PasswordShare.objects.update_or_create(
+                    password_entry=password_entry,
+                    shared_with_id=user_id,
+                    defaults={'can_edit': can_edit}
+                )
+        
+        messages.success(request, f"Le mot de passe '{password_entry.title}' a été partagé avec {len(user_ids)} utilisateur(s).")
+        return redirect('password_manager_view', pk=pk)
+    
+    # Obtenir tous les utilisateurs pour le formulaire de partage (excluant l'utilisateur actuel)
+    users = User.objects.exclude(id=request.user.id).order_by('username')
+    
+    # Obtenir les partages existants
+    current_shares = PasswordShare.objects.filter(password_entry=password_entry)
+    
+    # Extraire les IDs des utilisateurs avec qui le mot de passe est déjà partagé
+    shared_with_ids = [share.shared_with_id for share in current_shares]
+    
+    return render(request, 'rh_management/password_share.html', {
+        'password_entry': password_entry,
+        'users': users,
+        'current_shares': current_shares,
+        'shared_with_ids': shared_with_ids
+    })
+
+@login_required
+def password_share_remove(request, share_id):
+    """Remove a password share."""
+    share = get_object_or_404(PasswordShare, pk=share_id, password_entry__user=request.user)
+    password_id = share.password_entry.id
+    user_name = share.shared_with.username
+    
+    share.delete()
+    messages.success(request, f"Partage supprimé pour l'utilisateur {user_name}.")
+    
+    return redirect('password_manager_view', pk=password_id)

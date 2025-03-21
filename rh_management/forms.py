@@ -1,7 +1,7 @@
 from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Fieldset, Field, Div
-from .models import ExpenseReport, KilometricExpense, LeaveRequest, NotificationEmail
+from .models import ExpenseReport, KilometricExpense, LeaveRequest, NotificationEmail, PasswordManager
 from django.contrib.auth.decorators import login_required
 
 class BaseForm(forms.ModelForm):
@@ -109,3 +109,48 @@ class ExpenseForm(BaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setup_layout('Dépenses', self.Meta.fields)
+
+class PasswordManagerForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}), required=False)
+    show_password = forms.BooleanField(required=False, initial=False, 
+                                       widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 
+                                                                        'onchange': 'togglePasswordVisibility()'}))
+    generate_password = forms.BooleanField(required=False, initial=False,
+                                          widget=forms.CheckboxInput(attrs={'class': 'form-check-input',
+                                                                          'onchange': 'togglePasswordGeneration()'}))
+    password_length = forms.IntegerField(widget=forms.NumberInput(attrs={'class': 'form-control', 'min': '8', 'max': '32', 'value': '16'}),
+                                         required=False)
+    
+    class Meta:
+        model = PasswordManager
+        fields = ['title', 'username', 'password', 'url', 'notes', 'category']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'url': forms.URLInput(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'category': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+        
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        instance = kwargs.get('instance', None)
+        
+        super().__init__(*args, **kwargs)
+        
+        # Si nous modifions un mot de passe existant, décrypter le mot de passe
+        if instance and instance.pk:
+            self.fields['password'].initial = instance.decrypt_password()
+            
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        
+        if self.user:
+            instance.user = self.user
+            
+        # Le mot de passe est déjà en texte brut ici, la méthode save du modèle l'encryptera
+        
+        if commit:
+            instance.save()
+            
+        return instance
