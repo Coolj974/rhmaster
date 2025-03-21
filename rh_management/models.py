@@ -50,8 +50,38 @@ class LeaveRequest(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.get_leave_type_display()} ({self.start_date} à {self.end_date})"
 
+    def get_duration_days(self):
+        """Calcule la durée du congé en jours."""
+        if self.start_date and self.end_date:
+            delta = self.end_date - self.start_date
+            return delta.days + 1
+        return 0
+
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
+        # Vérifier si c'est une modification et si le statut change à "approved"
+        if self.pk:  # Si l'objet existe déjà (modification)
+            old_instance = LeaveRequest.objects.get(pk=self.pk)
+            status_changed_to_approved = old_instance.status != 'approved' and self.status == 'approved'
+            status_changed_from_approved = old_instance.status == 'approved' and self.status != 'approved'
+            
+            # Mettre à jour après sauvegarde pour éviter problèmes de transaction
+            super().save(*args, **kwargs)
+
+            # Mettre à jour le solde de congés quand le statut change à approved
+            if status_changed_to_approved and self.leave_type in ['CP', 'RTT']:
+                leave_balance, created = LeaveBalance.objects.get_or_create(user=self.user)
+                leave_balance.taken += self.get_duration_days()
+                leave_balance.save()
+            
+            # Rendre les jours de congés si le statut passe de approved à autre chose
+            elif status_changed_from_approved and self.leave_type in ['CP', 'RTT']:
+                leave_balance, created = LeaveBalance.objects.get_or_create(user=self.user)
+                leave_balance.taken = max(0, leave_balance.taken - self.get_duration_days())
+                leave_balance.save()
+        else:
+            # Nouvelle demande, pas de mise à jour du solde nécessaire
+            super().save(*args, **kwargs)
+        
         self.send_notification_emails()
 
     def send_notification_emails(self):
@@ -110,6 +140,7 @@ class KilometricExpense(models.Model):
     """Model to handle kilometric expenses."""
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)  # Date de soumission automatique
     vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPES)
     fiscal_power = models.IntegerField()
     departure = models.CharField(max_length=255)
@@ -211,3 +242,16 @@ class UserProfile(models.Model):
     is_stp = models.BooleanField(default=False)
     is_supervisor = models.BooleanField(default=False)
     # Les champs is_staff et is_superuser sont déjà dans le modèle User
+
+class LeaveBalance(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='leave_balance')
+    acquired = models.FloatField(default=0.0, help_text="Total des jours de congés acquis")
+    taken = models.FloatField(default=0.0, help_text="Total des jours de congés pris")
+    
+    @property
+    def available(self):
+        """Calcule le solde de congés disponible."""
+        return self.acquired - self.taken
+        
+    def __str__(self):
+        return f"Solde de congés de {self.user.username}: {self.available} jours"

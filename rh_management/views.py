@@ -15,6 +15,8 @@ import json
 from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password
 from django.utils import timezone
+from django.db.models import Avg
+from .models import LeaveBalance, LeaveRequest
 
 # Vérifie si l'utilisateur est un admin ou un RH
 def is_admin_or_hr(user):
@@ -50,6 +52,18 @@ def is_admin_hr_or_encadrant(user):
     return (user.is_superuser or 
             is_rh(user) or  # Utilisation de la fonction is_rh au lieu de la duplication de sa logique
             user.groups.filter(name__in=["HR", "Encadrant"]).exists())
+
+# Ajouter ces fonctions après les fonctions d'autorisation existantes
+
+def can_approve_leaves(user):
+    """Vérifie si l'utilisateur peut approuver des congés."""
+    return (is_admin_hr_or_encadrant(user) or 
+            user.groups.filter(name="CanApproveLeaves").exists())
+
+def can_edit_profiles(user):
+    """Vérifie si l'utilisateur peut modifier des profils."""
+    return (is_admin(user) or 
+            user.groups.filter(name="CanEditProfiles").exists())
 
 ### 🌟 AUTHENTIFICATION ###
 
@@ -195,47 +209,102 @@ def some_view(request):
 
 @login_required
 def edit_user(request, user_id):
-    user = get_object_or_404(User, id=user_id)
+    user_to_edit = get_object_or_404(User, id=user_id)
+    from django.contrib.auth.models import Group
     
-    if request.method == 'POST':
-        # Mise à jour des champs standard de User
-        user.username = request.POST.get('username')
-        user.email = request.POST.get('email')
+    # Récupérer tous les groupes disponibles
+    all_groups = Group.objects.all().order_by('name')
+    
+    if request.method == "POST":
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        is_staff = request.POST.get('is_staff') == 'on'
+        is_superuser = request.POST.get('is_superuser') == 'on'
+        user_role = request.POST.get('user_role')
         
-        # Mise à jour des champs de rôles standards
-        user.is_staff = 'is_staff' in request.POST
-        user.is_superuser = 'is_superuser' in request.POST
-        user.save()
+        # Vérifier si le nom d'utilisateur existe déjà pour un autre utilisateur
+        if User.objects.exclude(id=user_id).filter(username=username).exists():
+            messages.error(request, "Ce nom d'utilisateur est déjà utilisé.")
+            return redirect('edit_user', user_id=user_id)
+            
+        # Vérifier si l'email existe déjà pour un autre utilisateur
+        if User.objects.exclude(id=user_id).filter(email=email).exists():
+            messages.error(request, "Cet email est déjà utilisé.")
+            return redirect('edit_user', user_id=user_id)
+            
+        # Mettre à jour l'utilisateur
+        user_to_edit.username = username
+        user_to_edit.email = email
+        user_to_edit.first_name = first_name
+        user_to_edit.last_name = last_name
         
-        # Mise à jour des rôles personnalisés
-        profile, created = UserProfile.objects.get_or_create(user=user)
-        profile.is_employee = 'is_employee' in request.POST
-        profile.is_stp = 'is_stp' in request.POST
-        profile.is_supervisor = 'is_supervisor' in request.POST
-        profile.save()
+        # Gestion des rôles basée sur la sélection dans le formulaire
+        user_to_edit.is_staff = False
+        user_to_edit.is_superuser = False
         
-        messages.success(request, "Utilisateur modifié avec succès.")
+        if user_role == 'admin':
+            user_to_edit.is_staff = True
+            user_to_edit.is_superuser = True
+        elif user_role == 'rh':
+            user_to_edit.is_staff = True
+        
+        user_to_edit.save()
+        
+        # Gérer les groupes basés sur le rôle
+        user_to_edit.groups.clear()
+        
+        if user_role == 'rh':
+            hr_group, _ = Group.objects.get_or_create(name='HR')
+            user_to_edit.groups.add(hr_group)
+        elif user_role == 'encadrant':
+            encadrant_group, _ = Group.objects.get_or_create(name='Encadrant')
+            user_to_edit.groups.add(encadrant_group)
+        elif user_role == 'stp':
+            stp_group, _ = Group.objects.get_or_create(name='STP')
+            user_to_edit.groups.add(stp_group)
+        elif user_role == 'user':
+            employee_group, _ = Group.objects.get_or_create(name='Employé')
+            user_to_edit.groups.add(employee_group)
+        
+        # Gestion des permissions spéciales
+        if request.POST.get('can_approve_leaves') == 'on':
+            can_approve_group, _ = Group.objects.get_or_create(name='CanApproveLeaves')
+            user_to_edit.groups.add(can_approve_group)
+            
+        if request.POST.get('can_edit_profiles') == 'on':
+            can_edit_group, _ = Group.objects.get_or_create(name='CanEditProfiles')
+            user_to_edit.groups.add(can_edit_group)
+        
+        messages.success(request, f"L'utilisateur {username} a été mis à jour avec succès.")
         return redirect('manage_users')
     
-    # Pour l'affichage du formulaire
-    try:
-        profile = user.profile
-        is_employee = profile.is_employee
-        is_stp = profile.is_stp
-        is_supervisor = profile.is_supervisor
-    except UserProfile.DoesNotExist:
-        is_employee = False
-        is_stp = False
-        is_supervisor = False
+    # Détermination du rôle actuel pour l'affichage
+    current_role = 'user'
+    if user_to_edit.is_superuser:
+        current_role = 'admin'
+    elif user_to_edit.is_staff:
+        current_role = 'rh'
+    elif user_to_edit.groups.filter(name="Encadrant").exists():
+        current_role = 'encadrant'
+    elif user_to_edit.groups.filter(name="STP").exists():
+        current_role = 'stp'
+    
+    # Permissions spéciales
+    has_approve_leaves = user_to_edit.groups.filter(name="CanApproveLeaves").exists()
+    has_edit_profiles = user_to_edit.groups.filter(name="CanEditProfiles").exists()
     
     context = {
-        'user': user,
-        'is_employee': is_employee,
-        'is_stp': is_stp,
-        'is_supervisor': is_supervisor,
-        'is_in_hr': user.is_staff,
+        'user': user_to_edit,
+        'all_groups': all_groups,
+        'user_groups': user_to_edit.groups.all(),
+        'current_role': current_role,
+        'user_permissions': {
+            'can_approve_leaves': has_approve_leaves,
+            'can_edit_profiles': has_edit_profiles
+        }
     }
-    
     return render(request, 'rh_management/edit_user.html', context)
 
 @login_required
@@ -306,6 +375,9 @@ def is_hr(user):
 @login_required
 def leave_request_view(request):
     """Gère la demande de congé."""
+    # Récupérer ou créer le solde de congés de l'utilisateur
+    leave_balance, created = LeaveBalance.objects.get_or_create(user=request.user)
+    
     if request.method == "POST":
         form = LeaveRequestForm(request.POST, request.FILES)
         if form.is_valid():
@@ -314,14 +386,6 @@ def leave_request_view(request):
             leave_request.notification_emails = json.dumps([email.email for email in form.cleaned_data['notification_emails']])
             leave_request.save()
             
-            # Envoi d'un email de notification pour validation
-            notification_emails = form.cleaned_data['notification_emails']
-            #if notification_emails:
-            #    emails = [email.email for email in notification_emails]
-            #    subject = "Nouvelle demande de congé soumise"
-            #    message = f"Bonjour,\n\nUne nouvelle demande de congé a été soumise par {leave_request.user.username}. Veuillez la valider."
-            #    send_mail(subject, message, 'no-reply@cyberun.info', emails)
-            
             messages.success(request, "Votre demande de congé a été soumise avec succès.")
             return redirect('dashboard')
         else:
@@ -329,7 +393,93 @@ def leave_request_view(request):
     else:
         form = LeaveRequestForm()
 
-    return render(request, 'rh_management/leave_request.html', {'form': form})
+    # Récupérer les dernières demandes de congé de l'utilisateur
+    recent_leaves = LeaveRequest.objects.filter(user=request.user).order_by('-created_at')[:5]
+    
+    return render(request, 'rh_management/leave_request.html', {
+        'form': form,
+        'leave_balance': leave_balance,
+        'recent_leaves': recent_leaves
+    })
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def manage_leave_balances(request):
+    """Vue pour gérer les soldes de congés des employés."""
+    leave_balances = LeaveBalance.objects.all().select_related('user')
+    
+    # Statistiques
+    employee_count = User.objects.filter(is_active=True).count()
+    average_balance = LeaveBalance.objects.filter(acquired__gt=0).aggregate(avg=Avg('acquired'))['avg'] or 0
+    currently_on_leave = LeaveRequest.objects.filter(
+        status='approved', 
+        start_date__lte=timezone.now(), 
+        end_date__gte=timezone.now()
+    ).count()
+    no_balance_count = User.objects.filter(is_active=True).exclude(
+        id__in=LeaveBalance.objects.filter(acquired__gt=0).values_list('user_id', flat=True)
+    ).count()
+    
+    return render(request, 'rh_management/manage_leave_balances.html', {
+        'leave_balances': leave_balances,
+        'employee_count': employee_count,
+        'average_balance': round(average_balance, 1),
+        'currently_on_leave': currently_on_leave,
+        'no_balance_count': no_balance_count
+    })
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def update_leave_balance(request):
+    """Mise à jour du solde de congés d'un employé."""
+    if request.method == "POST":
+        balance_id = request.POST.get('balance_id')
+        acquired_days = float(request.POST.get('acquired_days', 0))
+        taken_days = float(request.POST.get('taken_days', 0))
+        
+        balance = get_object_or_404(LeaveBalance, id=balance_id)
+        balance.acquired = acquired_days
+        balance.taken = taken_days
+        balance.save()
+        
+        messages.success(request, f"Le solde de congés de {balance.user.get_full_name() or balance.user.username} a été mis à jour.")
+        return redirect('manage_leave_balances')
+    
+    return redirect('manage_leave_balances')
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def bulk_update_leave_balance(request):
+    """Attribution collective de congés."""
+    if request.method == "POST":
+        employee_group = request.POST.get('employee_group', 'all')
+        days_to_add = float(request.POST.get('days_to_add', 0))
+        
+        # Filtrer les utilisateurs selon le groupe sélectionné
+        users_query = User.objects.filter(is_active=True)
+        
+        if employee_group == 'permanent':
+            # Filtrer les employés permanents (exemple)
+            users_query = users_query.filter(groups__name='Permanent')
+        elif employee_group == 'temporary':
+            # Filtrer les employés temporaires (exemple)
+            users_query = users_query.filter(groups__name='Temporary')
+        elif employee_group == 'zero':
+            # Employés sans solde de congés
+            users_with_balance = LeaveBalance.objects.filter(acquired__gt=0).values_list('user_id', flat=True)
+            users_query = users_query.exclude(id__in=users_with_balance)
+        
+        updated_count = 0
+        for user in users_query:
+            balance, created = LeaveBalance.objects.get_or_create(user=user)
+            balance.acquired += days_to_add
+            balance.save()
+            updated_count += 1
+        
+        messages.success(request, f"Solde de congés mis à jour pour {updated_count} employés.")
+        return redirect('manage_leave_balances')
+    
+    return redirect('manage_leave_balances')
 
 # ✅ Gérer les congés en attente (RH et Encadrants)
 @login_required
@@ -356,7 +506,7 @@ def manage_kilometric_expenses_view(request):
 
 # ✅ Approuver un congé
 @login_required
-@user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
+@user_passes_test(can_approve_leaves)  # Utiliser la nouvelle fonction
 def approve_leave(request, leave_id):
     """Approuve une demande de congé."""
     leave = get_object_or_404(LeaveRequest, id=leave_id)
@@ -496,7 +646,7 @@ def cancel_expense(request, expense_id):
 
 # ✅ Exporter les notes de frais en Excel
 @login_required
-@user_passes_test(lambda user: user.is_superuser)
+@user_passes_test(is_admin)
 def export_expenses(request):
     """Exporte les notes de frais de l'utilisateur en format Excel."""
     expenses = ExpenseReport.objects.filter(user=request.user)
@@ -516,77 +666,14 @@ def export_expenses(request):
 
 ### 🌟 GESTION DES UTILISATEURS (ADMIN) ###
 @login_required
-@user_passes_test(lambda user: user.is_superuser)
+@user_passes_test(is_admin)
 def manage_users_view(request):
     """Gère l'affichage de tous les utilisateurs (Admin)."""
     users = User.objects.all()
     return render(request, 'rh_management/manage_users.html', {'users': users})
 
 @login_required
-@user_passes_test(lambda user: user.is_superuser)
-def edit_user(request, user_id):
-    user_to_edit = get_object_or_404(User, id=user_id)
-    from django.contrib.auth.models import Group
-    
-    # Récupérer tous les groupes disponibles
-    all_groups = Group.objects.all().order_by('name')
-    
-    if request.method == "POST":
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        is_staff = request.POST.get('is_staff') == 'on'
-        is_superuser = request.POST.get('is_superuser') == 'on'
-        
-        # Vérifier si le nom d'utilisateur existe déjà pour un autre utilisateur
-        if User.objects.exclude(id=user_id).filter(username=username).exists():
-            messages.error(request, "Ce nom d'utilisateur est déjà utilisé.")
-            return redirect('edit_user', user_id=user_id)
-        # Vérifier si l'email existe déjà pour un autre utilisateur
-        if User.objects.exclude(id=user_id).filter(email=email).exists():
-            messages.error(request, "Cet email est déjà utilisé.")
-            return redirect('edit_user', user_id=user_id)
-            
-        # Mettre à jour l'utilisateur
-        user_to_edit.username = username
-        user_to_edit.email = email
-        user_to_edit.is_staff = is_staff
-        user_to_edit.is_superuser = is_superuser
-        user_to_edit.save()
-        
-        # Gestion des groupes dynamique
-        # D'abord, supprimer tous les groupes existants
-        user_to_edit.groups.clear()
-        
-        # Ensuite, ajouter les groupes sélectionnés
-        for group in all_groups:
-            group_field = f"group_{group.id}"
-            if request.POST.get(group_field) == 'on':
-                user_to_edit.groups.add(group)
-                print(f"DEBUG - Added {user_to_edit.username} to {group.name} group")
-        
-        # Gestion spéciale pour HR si is_staff est activé
-        if is_staff:
-            hr_group, _ = Group.objects.get_or_create(name='HR')
-            user_to_edit.groups.add(hr_group)
-        
-        messages.success(request, f"L'utilisateur {username} a été mis à jour avec succès.")
-        return redirect('manage_users')
-    
-    # Passage des informations de groupe au template
-    user_groups = user_to_edit.groups.all()
-    
-    context = {
-        'user': user_to_edit,
-        'all_groups': all_groups,
-        'user_groups': user_groups,
-        'is_in_hr': user_to_edit.groups.filter(name="HR").exists(),
-        'is_stp': user_to_edit.groups.filter(name="STP").exists(),
-        'is_encadrant': user_to_edit.groups.filter(name="Encadrant").exists(),
-    }
-    return render(request, 'rh_management/edit_user.html', context)
-
-@login_required
-@user_passes_test(lambda user: user.is_superuser)
+@user_passes_test(is_admin)
 def delete_user(request, user_id):  # Renommé de delete_user_view à delete_user pour correspondre à l'import dans urls.py
     """Gère la suppression d'un utilisateur (Admin)."""
     user = User.objects.get(id=user_id)
@@ -846,13 +933,19 @@ def change_password(request):
 
 ### 🌟 GESTION DES RÔLES (ADMIN) ###
 @login_required
-@user_passes_test(lambda user: user.is_superuser)
+@user_passes_test(is_admin)
 def manage_roles_view(request):
     """Gère l'affichage et la création de rôles (Admin)."""
-    from django.contrib.auth.models import Group
+    from django.contrib.auth.models import Group, Permission
+    from django.contrib.contenttypes.models import ContentType
     
     # Récupération de tous les groupes
     roles = Group.objects.all().order_by('name')
+    
+    # Récupération des permissions disponibles pour l'affichage
+    available_permissions = Permission.objects.filter(
+        content_type__app_label='rh_management'
+    ).order_by('name')
     
     if request.method == "POST":
         role_name = request.POST.get('role_name')
@@ -862,16 +955,25 @@ def manage_roles_view(request):
                 messages.error(request, f"Le rôle '{role_name}' existe déjà.")
             else:
                 # Créer le nouveau rôle
-                Group.objects.create(name=role_name)
+                new_role = Group.objects.create(name=role_name)
+                
+                # Ajouter les permissions sélectionnées
+                for permission_id in request.POST.getlist('permissions'):
+                    permission = Permission.objects.get(id=permission_id)
+                    new_role.permissions.add(permission)
+                
                 messages.success(request, f"Le rôle '{role_name}' a été créé avec succès.")
                 return redirect('manage_roles')
         else:
             messages.error(request, "Le nom du rôle ne peut pas être vide.")
     
-    return render(request, 'rh_management/manage_roles.html', {'roles': roles})
+    return render(request, 'rh_management/manage_roles.html', {
+        'roles': roles,
+        'available_permissions': available_permissions
+    })
 
 @login_required
-@user_passes_test(lambda user: user.is_superuser)
+@user_passes_test(is_admin)
 def delete_role(request, role_id):
     """Supprime un rôle existant (Admin)."""
     from django.contrib.auth.models import Group

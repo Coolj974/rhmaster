@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <!-- ...existing code... -->
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
+        <!-- Entête avec statistiques globales -->
+        <div class="card-header bg-gradient-primary text-white p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0"><i class="fas fa-balance-scale me-2"></i> Gestion des Soldes de Congés</h2>
+                <a href="{% url 'dashboard' %}" class="btn btn-light rounded-pill shadow-sm">
+                    <i class="fas fa-home me-1"></i> Tableau de bord
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <!-- Statistiques rapides -->
+            <div class="row mb-4">
+                <!-- Total employés -->
+                <div class="col-md-3">
+                    <div class="card bg-gradient-primary text-white shadow-sm rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Employés</h6>
+                                    <h3 class="mb-0">{{ employee_count|default:"0" }}</h3>
+                                </div>
+                                <i class="fas fa-users fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Congés acquis moyen -->
+                <div class="col-md-3">
+                    <div class="card bg-gradient-success text-white shadow-sm rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Congés acquis (moy.)</h6>
+                                    <h3 class="mb-0">{{ average_balance|default:"0" }}</h3>
+                                </div>
+                                <i class="fas fa-calendar-plus fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- En congés -->
+                <div class="col-md-3">
+                    <div class="card bg-gradient-warning text-white shadow-sm rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">En congés actuellement</h6>
+                                    <h3 class="mb-0">{{ currently_on_leave|default:"0" }}</h3>
+                                </div>
+                                <i class="fas fa-plane-departure fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Sans solde -->
+                <div class="col-md-3">
+                    <div class="card bg-gradient-danger text-white shadow-sm rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Sans solde</h6>
+                                    <h3 class="mb-0">{{ no_balance_count|default:"0" }}</h3>
+                                </div>
+                                <i class="fas fa-exclamation-circle fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tableau des soldes de congés -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user me-2 text-primary"></i>Employé
+                                </div>
+                            </th>
+                            <th>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar-plus me-2 text-primary"></i>Congés acquis
+                                </div>
+                            </th>
+                            <th>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar-minus me-2 text-primary"></i>Congés pris
+                                </div>
+                            </th>
+                            <th>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar-check me-2 text-primary"></i>Solde actuel
+                                </div>
+                            </th>
+                            <th>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-history me-2 text-primary"></i>Dernière mise à jour
+                                </div>
+                            </th>
+                            <th>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-cog me-2 text-primary"></i>Actions
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for balance in leave_balances %}
+                        <tr class="employee-row">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle bg-gradient-secondary text-white me-2">
+                                        {% if balance.user.first_name and balance.user.last_name %}
+                                            {{ balance.user.first_name|first|upper }}{{ balance.user.last_name|first|upper }}
+                                        {% else %}
+                                            {{ balance.user.username|first|upper }}
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <span class="fw-bold">
+                                            {% if balance.user.first_name and balance.user.last_name %}
+                                                {{ balance.user.first_name }} {{ balance.user.last_name }}
+                                            {% else %}
+                                                {{ balance.user.username }}
+                                            {% endif %}
+                                        </span>
+                                        <small class="text-muted">{{ balance.user.email }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-success rounded-pill px-3 py-2">{{ balance.acquired }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-danger rounded-pill px-3 py-2">{{ balance.taken }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1" style="height:8px;">
+                                        {% with remaining_percent=balance.remaining_percent %}
+                                        <div class="progress-bar {% if balance.remaining < 5 %}bg-danger{% elif balance.remaining < 10 %}bg-warning{% else %}bg-success{% endif %}" 
+                                             role="progressbar" style="width: {{ remaining_percent }}%;">
+                                        </div>
+                                        {% endwith %}
+                                    </div>
+                                    <span class="ms-2 badge {% if balance.remaining < 5 %}bg-danger{% elif balance.remaining < 10 %}bg-warning{% else %}bg-success{% endif %} rounded-pill">
+                                        {{ balance.remaining }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>{{ balance.last_updated|date:"d/m/Y" }}
+                                </span>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-gradient-primary rounded-pill edit-balance" 
+                                        data-bs-toggle="modal" data-bs-target="#editBalanceModal"
+                                        data-user-id="{{ balance.user.id }}"
+                                        data-user-name="{% if balance.user.first_name and balance.user.last_name %}{{ balance.user.first_name }} {{ balance.user.last_name }}{% else %}{{ balance.user.username }}{% endif %}"
+                                        data-acquired="{{ balance.acquired }}"
+                                        data-taken="{{ balance.taken }}"
+                                        data-balance-id="{{ balance.id }}">
+                                    <i class="fas fa-pencil-alt me-1"></i> Ajuster
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill view-history"
+                                        data-bs-toggle="modal" data-bs-target="#historyModal"
+                                        data-user-id="{{ balance.user.id }}">
+                                    <i class="fas fa-history me-1"></i> Historique
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="empty-state">
+                                    <i class="fas fa-calendar-times fa-5x text-muted mb-3"></i>
+                                    <h4>Aucun solde de congés trouvé</h4>
+                                    <p class="text-muted">Ajoutez des soldes pour commencer</p>
+                                    <button type="button" class="btn btn-gradient-primary" data-bs-toggle="modal" data-bs-target="#bulkUpdateModal">
+                                        <i class="fas fa-plus-circle me-2"></i> Ajouter des soldes
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination (si nécessaire) -->
+            {% if leave_balances.has_other_pages %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if leave_balances.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link rounded-circle" href="?page={{ leave_balances.previous_page_number }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% for num in leave_balances.paginator.page_range %}
+                        {% if leave_balances.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link rounded-circle">{{ num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link rounded-circle" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if leave_balances.has_next %}
+                    <li class="page-item">
+                        <a class="page-link rounded-circle" href="?page={{ leave_balances.next_page_number }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Modal d'édition du solde -->
+    <div class="modal fade" id="editBalanceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow">
+                <form action="{% url 'update_leave_balance' %}" method="post" id="edit-balance-form">
+                    {% csrf_token %}
+                    <!-- ...existing code... -->
+                    <div class="modal-header bg-gradient-primary text-white">
+                        <h5 class="modal-title"><i class="fas fa-balance-scale me-2"></i>Ajuster le solde de congés</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="balance_id" name="balance_id">
+                        <input type="hidden" id="user_id" name="user_id">
+                        <!-- ...existing code... -->
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-gradient-primary rounded-pill">
+                            <i class="fas fa-save me-1"></i> Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal d'attribution collective -->
+    <div class="modal fade" id="bulkUpdateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow">
+                <form action="{% url 'bulk_update_leave_balance' %}" method="post" id="bulk-update-form">
+                    {% csrf_token %}
+                    <!-- ...existing code... -->
+                    <div class="modal-header bg-gradient-success text-white">
+                        <h5 class="modal-title"><i class="fas fa-users-cog me-2"></i>Attribution collective</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <!-- ...existing code... -->
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-gradient-success rounded-pill">
+                            <i class="fas fa-check-circle me-1"></i> Confirmer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- ...existing code... -->
+</div>
+{% endblock %}

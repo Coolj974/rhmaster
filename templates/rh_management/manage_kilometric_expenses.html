@@ -103,7 +103,6 @@
                         <tr>
                             <th class="border-0"><i class="fas fa-user me-2 text-info"></i>Employé</th>
                             <th class="border-0"><i class="fas fa-calendar me-2 text-info"></i>Date</th>
-                            <th class="border-0"><i class="fas fa-project-diagram me-2 text-info"></i>Projet</th>
                             <th class="border-0"><i class="fas fa-map-marked-alt me-2 text-info"></i>Trajet</th>
                             <th class="border-0"><i class="fas fa-road me-2 text-info"></i>Distance</th>
                             <th class="border-0"><i class="fas fa-car me-2 text-info"></i>Véhicule</th>
@@ -122,7 +121,10 @@
                                     </div>
                                     <div>
                                         <span class="fw-bold d-block">{{ expense.user.get_full_name|default:expense.user.username }}</span>
-                                        <small class="text-muted">Soumis le {{ expense.created_at|date:"d/m/Y"|default:expense.date }}</small>
+                                        <small class="text-muted">
+                                            {% now "d/m/Y" as today_date %}
+                                            Soumis le {{ expense.created_at|date:"d/m/Y"|default:today_date }}
+                                        </small>
                                     </div>
                                 </div>
                             </td>
@@ -130,13 +132,6 @@
                                 <span class="badge bg-light text-dark rounded-pill border">
                                     <i class="fas fa-calendar-day text-muted me-1"></i> {{ expense.date|date:"d/m/Y" }}
                                 </span>
-                            </td>
-                            <td>
-                                {% if expense.project %}
-                                    <span class="badge bg-gradient-primary rounded-pill px-3">{{ expense.project }}</span>
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
                             </td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-outline-info view-map-btn" data-bs-toggle="modal" data-bs-target="#mapModal{{ expense.id }}">
@@ -235,7 +230,7 @@
                                                         <p class="mb-1"><strong>Date:</strong> {{ expense.date|date:"d/m/Y" }}</p>
                                                         <p class="mb-1"><strong>Distance:</strong> {{ expense.distance }} km</p>
                                                         <p class="mb-1"><strong>Montant:</strong> {{ expense.amount }} €</p>
-                                                        <p class="mb-1"><strong>Véhicule:</strong> {{ expense.get_vehicle_type_display }} ({{ expense.fiscal_power }} CV)</p>
+                                                        <p class="mb-1"><strong>Véhicule:</strong> {% if expense.get_vehicle_type_display %}{{ expense.get_vehicle_type_display }}{% else %}{{ expense.vehicle_type }}{% endif %} ({{ expense.fiscal_power }} CV)</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -256,9 +251,25 @@
                                             </div>
                                         </div>
                                         
-                                        <div id="map{{ expense.id }}" style="height: 350px;" class="rounded-4 shadow-sm"></div>
+                                        <!-- Utilisation d'une iframe à la place de Leaflet -->
+                                        <div class="rounded-4 shadow-sm overflow-hidden">
+                                            <iframe id="mapFrame{{ expense.id }}" 
+                                                width="100%" 
+                                                height="350" 
+                                                frameborder="0" 
+                                                scrolling="no" 
+                                                marginheight="0" 
+                                                marginwidth="0" 
+                                                src="https://www.openstreetmap.org/export/embed.html?bbox={{ expense.departure_lng|default:55.5364|add:-0.1 }},{{ expense.departure_lat|default:-21.1151|add:-0.1 }},{{ expense.arrival_lng|default:55.5364|add:0.1 }},{{ expense.arrival_lat|default:-21.1151|add:0.1 }}&amp;layer=mapnik"
+                                                class="border-0">
+                                            </iframe>
+                                        </div>
                                     </div>
                                     <div class="modal-footer">
+                                        <a href="https://www.openstreetmap.org/directions?from={{ expense.departure_lat|default:-21.1151 }},{{ expense.departure_lng|default:55.5364 }}&to={{ expense.arrival_lat|default:-21.1151 }},{{ expense.arrival_lng|default:55.5364 }}" 
+                                           target="_blank" class="btn btn-outline-info rounded-pill">
+                                            <i class="fas fa-external-link-alt me-1"></i> Voir l'itinéraire complet
+                                        </a>
                                         <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Fermer</button>
                                     </div>
                                 </div>
@@ -346,9 +357,6 @@
     </div>
 </div>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         // Animation d'entrée pour la carte
@@ -416,56 +424,29 @@
             card.addEventListener('mouseleave', function() { this.classList.remove('card-hover'); });
         });
         
-        // Initialisation des cartes Leaflet
+        // Supprimer l'initialisation des cartes Leaflet
         {% for expense in expenses %}
+        // S'assurer que les modales fonctionnent correctement
         const mapModal{{ expense.id }} = document.getElementById('mapModal{{ expense.id }}');
-        if (mapModal{{ expense.id }}) {
-            mapModal{{ expense.id }}.addEventListener('shown.bs.modal', function() {
-                const map = L.map('map{{ expense.id }}');
-                
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap contributors'
-                }).addTo(map);
-                
-                const departLat = {{ expense.departure_lat|default:"0" }};
-                const departLng = {{ expense.departure_lng|default:"0" }};
-                const arrivalLat = {{ expense.arrival_lat|default:"0" }};
-                const arrivalLng = {{ expense.arrival_lng|default:"0" }};
-                
-                if (departLat && departLng) {
-                    L.marker([departLat, departLng], {
-                        icon: L.divIcon({
-                            className: 'custom-div-icon',
-                            html: `<div class="marker-pin marker-pin-start"><i class="fas fa-map-marker-alt"></i></div>`,
-                            iconSize: [30, 42],
-                            iconAnchor: [15, 42]
-                        })
-                    }).addTo(map).bindPopup("Départ: {{ expense.departure }}").openPopup();
-                }
-                
-                if (arrivalLat && arrivalLng) {
-                    L.marker([arrivalLat, arrivalLng], {
-                        icon: L.divIcon({
-                            className: 'custom-div-icon',
-                            html: `<div class="marker-pin marker-pin-end"><i class="fas fa-flag-checkered"></i></div>`,
-                            iconSize: [30, 42],
-                            iconAnchor: [15, 42]
-                        })
-                    }).addTo(map).bindPopup("Arrivée: {{ expense.arrival }}");
-                    
-                    if (departLat && departLng) {
-                        const routeLine = L.polyline([[departLat, departLng], [arrivalLat, arrivalLng]], {color: 'blue'}).addTo(map);
-                        map.fitBounds(routeLine.getBounds());
-                    } else {
-                        map.setView([arrivalLat, arrivalLng], 13);
-                    }
-                } else if (departLat && departLng) {
-                    map.setView([departLat, departLng], 13);
-                } else {
-                    map.setView([-21.1151, 55.5364], 10); // Centré sur l'île de La Réunion
-                }
+        const modalInstance{{ expense.id }} = new bootstrap.Modal(mapModal{{ expense.id }}, {
+            backdrop: true,
+            keyboard: true,
+            focus: true
+        });
+        
+        // Ajouter des gestionnaires d'événements explicites pour ouvrir et fermer la modale
+        document.querySelectorAll('[data-bs-target="#mapModal{{ expense.id }}"]').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                modalInstance{{ expense.id }}.show();
             });
-        }
+        });
+        
+        mapModal{{ expense.id }}.querySelectorAll('[data-bs-dismiss="modal"]').forEach(button => {
+            button.addEventListener('click', function() {
+                modalInstance{{ expense.id }}.hide();
+            });
+        });
         {% endfor %}
     });
 </script>
@@ -537,25 +518,64 @@
         100% { transform: translateY(0px); }
     }
     
-    /* Marqueurs de carte */
-    .marker-pin {
-        width: 30px;
-        height: 30px;
-        border-radius: 50% 50% 50% 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        transform: rotate(-45deg);
-        color: white;
+    /* Styles de base pour l'iframe de la carte */
+    iframe {
+        border: none;
+        display: block;
+        width: 100%;
+        height: 350px;
     }
     
-    .marker-pin i { transform: rotate(45deg); }
-    .marker-pin-start { background: #e74a3b; }
-    .marker-pin-end { background: #1cc88a; }
+    /* Assurer que les modales sont visibles et interactives */
+    .modal {
+        z-index: 1050 !important;
+    }
+    
+    .modal-dialog {
+        z-index: 1051 !important;
+    }
+    
+    .modal-content {
+        z-index: 1052 !important;
+    }
+    
+    .modal-backdrop {
+        z-index: 1040 !important;
+    }
+    
+    /* Assurer que les boutons dans les modales sont cliquables */
+    .modal-header .btn-close,
+    .modal-footer .btn {
+        position: relative;
+        z-index: 1060;
+    }
     
     /* Responsive */
     @media (max-width: 768px) {
         .card:hover { transform: none; }
+    }
+    
+    /* Correction pour le problème de fond noir sur les modals */
+    .modal-backdrop {
+        z-index: 1040 !important;
+    }
+    
+    .modal {
+        z-index: 1050 !important;
+    }
+    
+    .modal-content {
+        z-index: 1051 !important;
+    }
+    
+    .modal-header, .modal-footer {
+        z-index: 1052 !important;
+        position: relative;
+    }
+    
+    .btn-close, .map-modal-close {
+        position: relative;
+        z-index: 1053 !important;
     }
 </style>
 {% endblock %}
