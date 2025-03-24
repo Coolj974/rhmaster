@@ -232,21 +232,27 @@
         <div class="dashboard-actions d-flex">
             {% if is_admin or is_rh or is_encadrant %}
             <a href="{% url 'manage_leaves' %}" class="btn btn-gradient-primary rounded-pill me-2 action-button">
-                <i class="fas fa-calendar-check me-1"></i> Gérer les congés
-                {% if new_leave_requests_count > 0 %}
-                <span class="badge bg-white text-primary ms-1">{{ new_leave_requests_count }}</span>
-                {% endif %}
+            <i class="fas fa-calendar-check me-1"></i> Gérer les congés
+            {% if new_leave_requests_count > 0 %}
+            <span class="badge bg-white text-primary ms-1">{{ new_leave_requests_count }}</span>
+            {% endif %}
             </a>
             <a href="{% url 'manage_expenses' %}" class="btn btn-gradient-info rounded-pill me-2 action-button">
-                <i class="fas fa-receipt me-1"></i> Gérer les notes de frais
-                {% if new_expense_reports_count > 0 %}
-                <span class="badge bg-white text-info ms-1">{{ new_expense_reports_count }}</span>
-                {% endif %}
+            <i class="fas fa-receipt me-1"></i> Gérer les notes de frais
+            {% if new_expense_reports_count > 0 %}
+            <span class="badge bg-white text-info ms-1">{{ new_expense_reports_count }}</span>
+            {% endif %}
+            </a>
+            <a href="{% url 'manage_kilometric_expenses' %}" class="btn btn-gradient-warning rounded-pill me-2 action-button">
+            <i class="fas fa-car me-1"></i> Gérer les frais kilométriques
+            {% if new_kilometric_expenses_count > 0 %}
+            <span class="badge bg-white text-warning ms-1">{{ new_kilometric_expenses_count }}</span>
+            {% endif %}
             </a>
             {% endif %}
             
             <div class="dropdown">
-                <button class="btn btn-gradient-success rounded-pill dropdown-toggle action-button" type="button" id="newRequestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="btn btn-gradient-success dropdown-toggle action-button" type="button" id="newRequestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-plus-circle me-1"></i> Nouvelle demande
                 </button>
                 <ul class="dropdown-menu shadow border-0 rounded-3" aria-labelledby="newRequestDropdown">

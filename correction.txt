@@ -1,24 +1,23 @@
 - Demande de congés : 
-    type de congés pas très visible
-    Solde de congés
-    demi-journée
-    case à coché pour les notifications mail
-    enlever l'encart modifier l'adresse mail pour les employé
-    notifications de changement de mot de passe au centre du mobile et plus longtemps
-    préciser les caractères dans le changement mot passe
+    - Type de congés pas très visible
+    - Solde de congés
+    - Demi-journée
+    - Case à cocher pour les notifications mail
+    - Enlever l'encart "modifier l'adresse mail" pour les employés
+    - Notifications de changement de mot de passe au centre du mobile et plus longtemps
+    - Préciser les caractères requis dans le changement de mot de passe
 
-- Note de frais
-    piece justificative obligatoire
-    poids des fichiers 25mo
-    modifier note de frais
-    localisation mettre obligatoire
-    pour les employés mettre une case coché pour les notes de frais
+- Note de frais :
+    - Pièce justificative obligatoire
+    - Poids des fichiers limité à 25 Mo
+    - Modifier note de frais
+    - Localisation à rendre obligatoire
+    - Pour les employés, mettre une case à cocher pour les notes de frais
 
-    notifications :
-        Alain et Bastien,
-        copie caché Sarah et Coordinateur
+    - Notifications :
+        - Alain et Bastien
+        - Copie cachée à Sarah et Coordinateur
 
-Les demandes
-    les admins, encadrant, RH ne peuvent pas valider ses propres demande
-
-    sort le plus récent au plus old
+- Les demandes :
+    - Les admins, encadrants et RH ne peuvent pas valider leurs propres demandes
+    - Tri du plus récent au plus ancien
