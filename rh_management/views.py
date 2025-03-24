@@ -511,7 +511,7 @@ def manage_kilometric_expenses_view(request):
 
 # ✅ Approuver un congé
 @login_required
-@user_passes_test(can_approve_leaves)  # Utiliser la nouvelle fonction
+@user_passes_test(can_approve_leaves)  # Utiliser la fonction can_approve_leaves au lieu de is_admin_hr_or_encadrant
 def approve_leave(request, leave_id):
     """Approuve une demande de congé."""
     leave = get_object_or_404(LeaveRequest, id=leave_id)
@@ -530,7 +530,7 @@ def approve_leave(request, leave_id):
 
 # ✅ Rejeter un congé
 @login_required
-@user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
+@user_passes_test(can_approve_leaves)  # Utiliser la fonction can_approve_leaves au lieu de is_admin_hr_or_encadrant
 def reject_leave(request, leave_id):
     """Rejette une demande de congé."""
     leave = get_object_or_404(LeaveRequest, id=leave_id)
@@ -1276,3 +1276,103 @@ def api_leaves(request):
         })
     
     return JsonResponse(leave_data, safe=False)
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def mass_action(request):
+    """Handle mass actions on users like activate, deactivate, add to group, remove from group."""
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        user_ids = request.POST.getlist('user_ids')
+        group_id = request.POST.get('group')
+        
+        if not user_ids:
+            messages.error(request, "Aucun utilisateur sélectionné.")
+            return redirect('manage_users')
+        
+        users = User.objects.filter(id__in=user_ids)
+        
+        if action == 'activate':
+            users.update(is_active=True)
+            messages.success(request, f"{len(users)} utilisateur(s) activé(s) avec succès.")
+        
+        elif action == 'deactivate':
+            # Don't deactivate superusers unless the current user is a superuser
+            if not request.user.is_superuser:
+                users = users.exclude(is_superuser=True)
+            users.update(is_active=False)
+            messages.success(request, f"{len(users)} utilisateur(s) désactivé(s) avec succès.")
+        
+        elif action in ['add_group', 'remove_group'] and group_id:
+            try:
+                group = Group.objects.get(id=group_id)
+                count = 0
+                
+                for user in users:
+                    # Skip superusers for non-superuser admins
+                    if user.is_superuser and not request.user.is_superuser:
+                        continue
+                    
+                    if action == 'add_group':
+                        user.groups.add(group)
+                    else:  # remove_group
+                        user.groups.remove(group)
+                    
+                    count += 1
+                
+                action_text = "ajouté au" if action == 'add_group' else "retiré du"
+                messages.success(request, f"{count} utilisateur(s) {action_text} groupe '{group.name}' avec succès.")
+            
+            except Group.DoesNotExist:
+                messages.error(request, "Le groupe spécifié n'existe pas.")
+        
+        else:
+            messages.error(request, "Action non valide.")
+    
+    return redirect('manage_users')
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def reset_password(request, user_id):
+    """Reset a user's password to a default value and notify them."""
+    user = get_object_or_404(User, id=user_id)
+    
+    # Générer un mot de passe aléatoire temporaire
+    import random
+    import string
+    temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+    
+    # Définir le nouveau mot de passe
+    user.set_password(temp_password)
+    user.save()
+    
+    # Notifier l'utilisateur par message (dans une application réelle, envoyer un email)
+    messages.success(request, f"Le mot de passe de {user.username} a été réinitialisé. Mot de passe temporaire: {temp_password}")
+    
+    # Redirection vers la page de gestion des utilisateurs
+    return redirect('manage_users')
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def toggle_user_status(request, user_id):
+    """Active ou désactive un utilisateur."""
+    user_to_modify = get_object_or_404(User, id=user_id)
+    
+    # Empêcher la désactivation d'un super-utilisateur par un non-super-utilisateur
+    if user_to_modify.is_superuser and not request.user.is_superuser:
+        messages.error(request, "Vous n'avez pas l'autorisation de modifier le statut d'un administrateur.")
+        return redirect('manage_users')
+    
+    # Empêcher la désactivation de son propre compte
+    if user_to_modify == request.user:
+        messages.error(request, "Vous ne pouvez pas désactiver votre propre compte.")
+        return redirect('manage_users')
+    
+    # Basculer le statut de l'utilisateur
+    user_to_modify.is_active = not user_to_modify.is_active
+    user_to_modify.save()
+    
+    status_text = "activé" if user_to_modify.is_active else "désactivé"
+    messages.success(request, f"L'utilisateur {user_to_modify.username} a été {status_text} avec succès.")
+    
+    return redirect('manage_users')

@@ -2,9 +2,10 @@
 
 {% block content %}
 <div class="container mt-5">
+    <!-- Section Héro -->
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4 animate-fade-in">
                 <div class="card-header bg-gradient-primary text-white p-5 text-center">
                     <h1 class="display-4 fw-bold mb-2"><i class="fas fa-building me-3"></i>CybeRH</h1>
                     <p class="lead mb-0">Votre plateforme de gestion RH</p>
@@ -21,41 +22,46 @@
                             <i class="fas fa-tachometer-alt me-2"></i>Accéder au Tableau de Bord
                         </a>
                     {% else %}
-                        <div class="d-flex flex-wrap justify-content-center gap-3">
-                            <a href="{% url 'login' %}" class="btn btn-gradient-success btn-lg px-5 py-3 rounded-pill shadow-sm">
-                                <i class="fas fa-sign-in-alt me-2"></i>Se Connecter
-                            </a>
-                        </div>
+                        <a href="{% url 'login' %}" class="btn btn-gradient-success btn-lg px-5 py-3 rounded-pill shadow-sm">
+                            <i class="fas fa-sign-in-alt me-2"></i>Se Connecter
+                        </a>
                     {% endif %}
                 </div>
             </div>
             
-            <div class="row g-4 text-center">
+            <!-- Fonctionnalités principales -->
+            <div class="row g-4 text-center mb-5">
                 <div class="col-md-4">
-                    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 animate-fade-in" style="animation-delay: 0.2s;">
-                        <div class="p-3 rounded-circle bg-light mx-auto mb-3" style="width: 80px; height: 80px;">
-                            <i class="fas fa-calendar-check text-primary fa-2x mt-2"></i>
+                    <div class="card h-100 border-0 shadow-sm rounded-4 feature-card">
+                        <div class="card-body p-4">
+                            <div class="feature-icon-circle mb-3">
+                                <i class="fas fa-calendar-check text-primary"></i>
+                            </div>
+                            <h3 class="h5">Gestion des congés</h3>
+                            <p class="text-muted small mb-0">Demandez et suivez vos congés en quelques clics</p>
                         </div>
-                        <h3 class="h5">Gestion des congés</h3>
-                        <p class="text-muted small mb-0">Demandez et suivez vos congés en quelques clics</p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 animate-fade-in" style="animation-delay: 0.4s;">
-                        <div class="p-3 rounded-circle bg-light mx-auto mb-3" style="width: 80px; height: 80px;">
-                            <i class="fas fa-receipt text-success fa-2x mt-2"></i>
+                    <div class="card h-100 border-0 shadow-sm rounded-4 feature-card">
+                        <div class="card-body p-4">
+                            <div class="feature-icon-circle mb-3">
+                                <i class="fas fa-receipt text-success"></i>
+                            </div>
+                            <h3 class="h5">Notes de frais</h3>
+                            <p class="text-muted small mb-0">Soumettez et gérez vos dépenses professionnelles</p>
                         </div>
-                        <h3 class="h5">Notes de frais</h3>
-                        <p class="text-muted small mb-0">Soumettez et gérez vos dépenses professionnelles</p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 animate-fade-in" style="animation-delay: 0.6s;">
-                        <div class="p-3 rounded-circle bg-light mx-auto mb-3" style="width: 80px; height: 80px;">
-                            <i class="fas fa-car text-info fa-2x mt-2"></i>
+                    <div class="card h-100 border-0 shadow-sm rounded-4 feature-card">
+                        <div class="card-body p-4">
+                            <div class="feature-icon-circle mb-3">
+                                <i class="fas fa-car text-info"></i>
+                            </div>
+                            <h3 class="h5">Frais kilométriques</h3>
+                            <p class="text-muted small mb-0">Calculez et déclarez vos déplacements professionnels</p>
                         </div>
-                        <h3 class="h5">Frais kilométriques</h3>
-                        <p class="text-muted small mb-0">Calculez et déclarez vos déplacements professionnels</p>
                     </div>
                 </div>
             </div>
@@ -63,52 +69,88 @@
     </div>
 </div>
 
-<!-- Bande de fonctionnalités supplémentaires -->
-<div class="bg-light py-5 mt-5">
+<!-- Sections des fonctionnalités avancées -->
+<div class="bg-light py-5">
     <div class="container">
-        <h2 class="text-center mb-5 fw-bold text-primary">Fonctionnalités clés</h2>
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-3">
-                <div class="card border-0 shadow-hover h-100 animate-fade-in">
+        <h2 class="text-center mb-4 text-primary fw-bold">Fonctionnalités clés</h2>
+        <div class="row g-4 justify-content-center">
+            <div class="col-6 col-md-3">
+                <div class="card border-0 h-100 feature-highlight">
                     <div class="card-body text-center p-4">
-                        <div class="feature-icon bg-gradient-primary text-white mb-3">
+                        <div class="icon-circle bg-gradient-primary text-white mb-3">
                             <i class="fas fa-rocket"></i>
                         </div>
-                        <h3 class="h5 card-title">Rapidité</h3>
-                        <p class="card-text small text-muted">Traitement accéléré de vos demandes administratives</p>
+                        <h3 class="h5">Rapidité</h3>
+                        <p class="small text-muted">Traitement accéléré de vos demandes</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="card border-0 shadow-hover h-100 animate-fade-in">
+            <div class="col-6 col-md-3">
+                <div class="card border-0 h-100 feature-highlight">
                     <div class="card-body text-center p-4">
-                        <div class="feature-icon bg-gradient-success text-white mb-3">
+                        <div class="icon-circle bg-gradient-success text-white mb-3">
                             <i class="fas fa-shield-alt"></i>
                         </div>
-                        <h3 class="h5 card-title">Sécurité</h3>
-                        <p class="card-text small text-muted">Protection avancée de vos données personnelles</p>
+                        <h3 class="h5">Sécurité</h3>
+                        <p class="small text-muted">Protection avancée de vos données</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="card border-0 shadow-hover h-100 animate-fade-in">
+            <div class="col-6 col-md-3">
+                <div class="card border-0 h-100 feature-highlight">
                     <div class="card-body text-center p-4">
-                        <div class="feature-icon bg-gradient-warning text-white mb-3">
+                        <div class="icon-circle bg-gradient-warning text-white mb-3">
                             <i class="fas fa-chart-line"></i>
                         </div>
-                        <h3 class="h5 card-title">Analyse</h3>
-                        <p class="card-text small text-muted">Tableaux de bord et rapports personnalisés</p>
+                        <h3 class="h5">Analyses</h3>
+                        <p class="small text-muted">Tableaux de bord personnalisés</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="card border-0 shadow-hover h-100 animate-fade-in">
+            <div class="col-6 col-md-3">
+                <div class="card border-0 h-100 feature-highlight">
                     <div class="card-body text-center p-4">
-                        <div class="feature-icon bg-gradient-danger text-white mb-3">
+                        <div class="icon-circle bg-gradient-danger text-white mb-3">
                             <i class="fas fa-mobile-alt"></i>
                         </div>
-                        <h3 class="h5 card-title">Mobile</h3>
-                        <p class="card-text small text-muted">Accédez à l'application depuis n'importe où</p>
+                        <h3 class="h5">Mobile</h3>
+                        <p class="small text-muted">Accessible depuis n'importe où</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gestionnaire de mots de passe -->
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card border-0 shadow-lg rounded-4 bg-gradient-primary text-white overflow-hidden password-feature-card">
+                <div class="card-body p-4 p-md-5 position-relative">
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="feature-icon bg-white text-primary rounded-circle me-3">
+                                    <i class="fas fa-key"></i>
+                                </div>
+                                <h3 class="mb-0">Gestionnaire de mots de passe</h3>
+                            </div>
+                            <p>Sécurisez tous vos identifiants professionnels en un seul endroit avec notre nouveau gestionnaire de mots de passe chiffré.</p>
+                            
+                            <div class="mt-4 d-flex justify-content-center justify-content-md-start">
+                                <a href="{% url 'password_manager_list' %}" class="btn btn-light btn-lg rounded-pill">
+                                    <i class="fas fa-lock me-2"></i> Accéder maintenant
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-5 d-none d-md-block">
+                            <div class="password-manager-graphic">
+                                <i class="fas fa-fingerprint text-white-50"></i>
+                                <i class="fas fa-shield-alt text-white-50"></i>
+                                <i class="fas fa-lock text-white-50"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -117,248 +159,162 @@
 </div>
 
 <!-- Témoignages -->
-<div class="container mt-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <h2 class="text-center mb-5 fw-bold">Témoignages</h2>
-            
-            <div id="testimonialCarousel" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner">
-                    <div class="carousel-item active">
-                        <div class="card border-0 shadow-lg rounded-4 p-4">
-                            <div class="card-body text-center">
-                                <i class="fas fa-quote-left fa-3x text-primary opacity-25 mb-3"></i>
-                                <p class="lead mb-4">CybeRH a considérablement simplifié la gestion administrative de nos équipes. Une vraie révolution pour notre entreprise !</p>
-                                <div class="d-flex justify-content-center align-items-center">
-                                    <div class="avatar-circle bg-gradient-primary text-white me-2">JD</div>
-                                    <div>
-                                        <h5 class="mb-0">Jean Dupont</h5>
-                                        <p class="small text-muted mb-0">Directeur RH, Cyber Solutions</p>
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h2 class="text-center mb-4 text-primary fw-bold">Témoignages</h2>
+                
+                <div id="testimonialCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active">
+                            <div class="card border-0 shadow rounded-4 p-4">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-quote-left fa-2x text-primary opacity-25 mb-3"></i>
+                                    <p class="lead mb-3">CybeRH a considérablement simplifié la gestion administrative de nos équipes.</p>
+                                    <div class="d-flex justify-content-center align-items-center">
+                                        <div class="avatar-circle bg-gradient-primary text-white me-2">JD</div>
+                                        <div>
+                                            <h5 class="mb-0">Jean Dupont</h5>
+                                            <p class="small text-muted mb-0">Directeur RH</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="card border-0 shadow rounded-4 p-4">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-quote-left fa-2x text-primary opacity-25 mb-3"></i>
+                                    <p class="lead mb-3">Interface intuitive et performante, nous fait gagner un temps précieux.</p>
+                                    <div class="d-flex justify-content-center align-items-center">
+                                        <div class="avatar-circle bg-gradient-success text-white me-2">ML</div>
+                                        <div>
+                                            <h5 class="mb-0">Marie Leblanc</h5>
+                                            <p class="small text-muted mb-0">Manager</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="carousel-item">
-                        <div class="card border-0 shadow-lg rounded-4 p-4">
-                            <div class="card-body text-center">
-                                <i class="fas fa-quote-left fa-3x text-primary opacity-25 mb-3"></i>
-                                <p class="lead mb-4">Intuitive et performante, cette plateforme nous fait gagner un temps précieux dans la gestion de nos notes de frais.</p>
-                                <div class="d-flex justify-content-center align-items-center">
-                                    <div class="avatar-circle bg-gradient-success text-white me-2">ML</div>
-                                    <div>
-                                        <h5 class="mb-0">Marie Leblanc</h5>
-                                        <p class="small text-muted mb-0">Manager, Datatech</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="d-flex justify-content-center mt-3">
+                        <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="0" class="mx-1 carousel-indicator" aria-current="true" aria-label="Testimonial 1"></button>
+                        <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="1" class="mx-1 carousel-indicator" aria-label="Testimonial 2"></button>
                     </div>
-                </div>
-                <div class="carousel-indicators position-relative mt-3">
-                    <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="0" class="active bg-primary" aria-current="true" aria-label="Slide 1"></button>
-                    <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="1" class="bg-primary" aria-label="Slide 2"></button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Pied de page avec appel à l'action -->
-<div class="bg-gradient-primary text-white py-5 mt-5">
+<!-- Appel à l'action -->
+<div class="bg-gradient-primary text-white py-5">
     <div class="container text-center">
-        <h2 class="mb-4">Prêt à simplifier votre gestion RH ?</h2>
-        <p class="lead mb-4">Rejoignez les entreprises qui optimisent leurs processus administratifs</p>
+        <h2 class="h3 mb-3">Prêt à simplifier votre gestion RH ?</h2>
+        <p class="mb-4">Rejoignez les entreprises qui optimisent leurs processus administratifs</p>
         
         {% if not user.is_authenticated %}
-            <div class="d-flex flex-wrap justify-content-center gap-3">
-                <a href="{% url 'login' %}" class="btn btn-light btn-lg px-5 py-3 rounded-pill shadow-sm">
-                    <i class="fas fa-sign-in-alt me-2"></i>Commencer maintenant
-                </a>
-                <a href="#" class="btn btn-outline-light btn-lg px-5 py-3 rounded-pill">
-                    <i class="fas fa-info-circle me-2"></i>En savoir plus
-                </a>
-            </div>
+            <a href="{% url 'login' %}" class="btn btn-light btn-lg px-4 py-2 rounded-pill shadow-sm">
+                <i class="fas fa-sign-in-alt me-2"></i>Commencer maintenant
+            </a>
         {% else %}
-            <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg px-5 py-3 rounded-pill shadow-sm">
+            <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg px-4 py-2 rounded-pill shadow-sm">
                 <i class="fas fa-tachometer-alt me-2"></i>Accéder à mon tableau de bord
             </a>
         {% endif %}
     </div>
 </div>
 
-<!-- Nouvelle rangée avec le gestionnaire de mots de passe -->
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card border-0 shadow-lg rounded-4 bg-gradient-primary text-white hover-card-special">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="feature-icon bg-white text-primary rounded-circle me-3">
-                        <i class="fas fa-key fa-2x"></i>
-                    </div>
-                    <h3 class="mb-0">Gestionnaire de mots de passe</h3>
-                </div>
-                <p class="lead">Sécurisez tous vos identifiants professionnels en un seul endroit avec notre nouveau gestionnaire de mots de passe chiffré.</p>
-                <div class="mt-3">
-                    <div class="row g-2">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-shield-alt me-2"></i>
-                                <span>Chiffrement avancé</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-random me-2"></i>
-                                <span>Génération de mots de passe</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-folder me-2"></i>
-                                <span>Organisation par catégories</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-search me-2"></i>
-                                <span>Recherche rapide</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="text-center mt-4">
-                    <a href="{% url 'password_manager_list' %}" class="btn btn-light btn-lg rounded-pill">
-                        <i class="fas fa-lock me-2"></i> Accéder au gestionnaire
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Animation d'entrée pour les éléments
-        const animatedElements = document.querySelectorAll('.animate-fade-in');
+        // Optimisation : Utiliser IntersectionObserver pour les animations au défilement
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
         
-        // Observer pour déclencher les animations au défilement
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
+        const animateOnScroll = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    // Récupérer le délai d'animation s'il existe
-                    const delay = entry.target.style.animationDelay || '0s';
-                    // Appliquer l'animation
-                    entry.target.style.animation = `fadeIn 0.8s ease-in-out ${delay} forwards`;
-                    // Arrêter d'observer cet élément
-                    observer.unobserve(entry.target);
+                    entry.target.classList.add('visible');
+                    animateOnScroll.unobserve(entry.target);
                 }
             });
-        }, { threshold: 0.1 });
+        }, observerOptions);
         
-        // Observer tous les éléments avec la classe animate-fade-in
-        animatedElements.forEach(element => {
-            observer.observe(element);
+        // Observer les éléments à animer
+        document.querySelectorAll('.feature-card, .feature-highlight, .password-feature-card').forEach(el => {
+            el.classList.add('animate-on-scroll');
+            animateOnScroll.observe(el);
         });
         
-        // Animation des boutons au survol
-        document.querySelectorAll('.btn').forEach(btn => {
-            btn.addEventListener('mouseenter', function() {
-                this.classList.add('btn-pulse');
-                const icon = this.querySelector('i');
-                if (icon) icon.classList.add('fa-beat');
-            });
-            
-            btn.addEventListener('mouseleave', function() {
-                this.classList.remove('btn-pulse');
-                const icon = this.querySelector('i');
-                if (icon) icon.classList.remove('fa-beat');
-            });
+        // Animation des icônes dans la section du gestionnaire de mots de passe
+        const icons = document.querySelectorAll('.password-manager-graphic i');
+        let delay = 0;
+        icons.forEach(icon => {
+            setTimeout(() => {
+                icon.classList.add('pulse-animation');
+            }, delay);
+            delay += 500;
         });
     });
 </script>
 
 <style>
-    /* Styles pour les gradients et effets modernes */
-    .bg-gradient-primary {
-        background: linear-gradient(45deg, #4e73df, #224abe);
-    }
+    /* Optimisation des styles */
+    .rounded-4 { border-radius: 0.75rem !important; }
     
-    .bg-gradient-success {
-        background: linear-gradient(45deg, #1cc88a, #13855c);
-    }
+    /* Gradient de couleurs */
+    .bg-gradient-primary { background: linear-gradient(135deg, #4e73df, #224abe); }
+    .bg-gradient-success { background: linear-gradient(135deg, #1cc88a, #13855c); }
+    .bg-gradient-warning { background: linear-gradient(135deg, #f6c23e, #dda20a); }
+    .bg-gradient-danger { background: linear-gradient(135deg, #e74a3b, #be392d); }
     
-    .bg-gradient-info {
-        background: linear-gradient(45deg, #36b9cc, #258391);
-    }
-    
-    .bg-gradient-warning {
-        background: linear-gradient(45deg, #f6c23e, #dda20a);
-    }
-    
-    .bg-gradient-danger {
-        background: linear-gradient(45deg, #e74a3b, #be392d);
-    }
-    
+    /* Boutons */
     .btn-gradient-primary {
-        background: linear-gradient(45deg, #4e73df, #224abe);
+        background: linear-gradient(135deg, #4e73df, #224abe);
         color: white;
         border: none;
         transition: all 0.3s;
     }
     
     .btn-gradient-success {
-        background: linear-gradient(45deg, #1cc88a, #13855c);
+        background: linear-gradient(135deg, #1cc88a, #13855c);
         color: white;
         border: none;
         transition: all 0.3s;
     }
     
-    .btn-gradient-info {
-        background: linear-gradient(45deg, #36b9cc, #258391);
-        color: white;
-        border: none;
-        transition: all 0.3s;
-    }
-    
-    .btn-gradient-primary:hover, .btn-gradient-success:hover, .btn-gradient-info:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    .btn-gradient-primary:hover, .btn-gradient-success:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
         color: white;
     }
     
-    /* Animations et styles supplémentaires */
-    .rounded-4 {
-        border-radius: 0.75rem !important;
-    }
-    
-    .animate-fade-in {
-        opacity: 0;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .shadow-hover {
-        transition: all 0.3s ease;
-    }
-    
-    .shadow-hover:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
-    
-    .feature-icon {
-        width: 60px;
-        height: 60px;
-        font-size: 24px;
+    /* Icônes et cercles */
+    .feature-icon-circle {
+        width: 70px;
+        height: 70px;
+        background-color: rgba(78, 115, 223, 0.1);
         border-radius: 50%;
-        margin: 0 auto;
         display: flex;
         align-items: center;
         justify-content: center;
+        margin: 0 auto;
+        font-size: 1.5rem;
+    }
+    
+    .icon-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        font-size: 1.5rem;
     }
     
     .avatar-circle {
@@ -369,68 +325,110 @@
         justify-content: center;
         align-items: center;
         font-weight: bold;
-        font-size: 16px;
     }
     
-    .carousel-indicators [data-bs-target] {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        margin: 0 5px;
+    /* Animations optimisées */
+    .animate-on-scroll {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s ease-out, transform 0.6s ease-out;
     }
     
-    .btn-pulse {
-        animation: pulse 1.5s infinite;
+    .animate-on-scroll.visible {
+        opacity: 1;
+        transform: translateY(0);
     }
     
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
-    
-    .fa-beat {
-        animation: beat 0.75s infinite alternate;
-    }
-    
-    @keyframes beat {
-        to { transform: scale(1.3); }
-    }
-
-    .hover-card {
+    /* Animations spécifiques */
+    .feature-card {
         transition: all 0.3s ease;
     }
     
-    .hover-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
     
-    .hover-card-special {
+    .feature-highlight {
         transition: all 0.3s ease;
+    }
+    
+    .feature-highlight:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    }
+    
+    /* Animation du gestionnaire de mots de passe */
+    .password-feature-card {
         overflow: hidden;
         position: relative;
     }
     
-    .hover-card-special:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 15px 30px rgba(78, 115, 223, 0.3) !important;
-    }
-    
-    .hover-card-special::before {
+    .password-feature-card::before {
         content: '';
         position: absolute;
         top: 0;
+        right: 0;
+        bottom: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
+        background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 50%);
+        pointer-events: none;
     }
     
-    .hover-card-special:hover::before {
+    .password-manager-graphic {
+        position: relative;
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .password-manager-graphic i {
+        position: absolute;
+        font-size: 3rem;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    
+    .password-manager-graphic i:nth-child(1) { left: 20%; top: 20%; }
+    .password-manager-graphic i:nth-child(2) { left: 50%; top: 50%; }
+    .password-manager-graphic i:nth-child(3) { left: 70%; top: 30%; }
+    
+    .password-manager-graphic i.pulse-animation {
+        opacity: 0.7;
+        transform: translateY(0);
+    }
+    
+    /* Témoignages */
+    .carousel-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #4e73df;
+        opacity: 0.3;
+        border: none;
+        padding: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .carousel-indicator[aria-current="true"] {
         opacity: 1;
+    }
+    
+    /* Médias queries pour responsive */
+    @media (max-width: 767px) {
+        .icon-circle {
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+        }
+        
+        .feature-icon-circle {
+            width: 60px;
+            height: 60px;
+            font-size: 1.2rem;
+        }
     }
 </style>
 {% endblock %}

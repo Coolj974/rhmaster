@@ -7,33 +7,20 @@ ont accès aux bonnes fonctionnalités et que les restrictions sont correctement
 
 import os
 import sys
-import django
-import datetime
 import argparse
 import logging
 import colorama
 from colorama import Fore, Style
 
-# Configuration initiale
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hr_tool.settings')
-django.setup()
+# Ajouter le répertoire parent au chemin Python pour pouvoir importer les modules Django
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from django.test import Client
-from django.contrib.auth.models import User, Group
-from django.urls import reverse
-from django.core.exceptions import PermissionDenied
-
-from rh_management.models import (
-    LeaveRequest, ExpenseReport, KilometricExpense, 
-    LeaveBalance, PasswordManager, PasswordShare
-)
-
-# Configuration du logging
+# Configuration du logging avant import de Django
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(os.path.join(os.path.dirname(__file__), 'test_permissions.log')),
+        logging.FileHandler(os.path.join(os.path.dirname(__file__), 'test_permissions.log'), encoding='utf-8'),
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -42,12 +29,46 @@ logger = logging.getLogger(__name__)
 # Initialisation de colorama pour les codes couleur
 colorama.init()
 
+# Configuration initiale - correction du module de paramètres
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hr_tool.settings')
+
+# Initialiser Django avant d'importer des modules Django
+try:
+    import django
+    django.setup()
+    logger.info("Django initialisé avec succès")
+    
+    # Maintenant que Django est initialisé, on peut configurer ALLOWED_HOSTS
+    from django.conf import settings
+    if 'testserver' not in settings.ALLOWED_HOSTS:
+        settings.ALLOWED_HOSTS.append('testserver')
+    logger.info(f"ALLOWED_HOSTS: {settings.ALLOWED_HOSTS}")
+    
+    # Importations de Django après l'initialisation
+    from django.test import Client
+    from django.contrib.auth.models import User, Group
+    from django.urls import reverse
+    from django.core.exceptions import PermissionDenied
+    import datetime
+
+    # Maintenant on peut importer les modèles en toute sécurité
+    from rh_management.models import (
+        LeaveRequest, ExpenseReport, KilometricExpense, 
+        LeaveBalance, PasswordManager, PasswordShare
+    )
+except Exception as e:
+    logger.error(f"Erreur lors de l'initialisation de Django: {e}")
+    import traceback
+    logger.error(traceback.format_exc())
+    sys.exit(1)
+
 class PermissionTester:
     """Classe principale pour tester les permissions de l'application."""
     
     def __init__(self, verbose=False):
         self.verbose = verbose
-        self.client = Client()
+        # Configuration du client de test pour ignorer les vérifications CSRF
+        self.client = Client(enforce_csrf_checks=False)
         self.results = {
             'passed': 0,
             'failed': 0,
@@ -409,7 +430,12 @@ class PermissionTester:
     def _login(self, username, password):
         """Connecte un utilisateur."""
         self.client.logout()
-        return self.client.login(username=username, password=password)
+        success = self.client.login(username=username, password=password)
+        if success and self.verbose:
+            self.log(f"Utilisateur {username} connecté avec succès", 'info')
+        elif not success:
+            self.log(f"Échec de connexion pour l'utilisateur {username}", 'warning')
+        return success
     
     def _run_test(self, description, test_func, expected):
         """Exécute un test et enregistre le résultat."""
@@ -421,6 +447,7 @@ class PermissionTester:
                 self.log(f"✅ SUCCÈS: {description}", 'success')
                 self.results['passed'] += 1
             else:
+                # Log plus de détails pour les échecs
                 self.log(f"❌ ÉCHEC: {description} (obtenu: {result}, attendu: {expected})", 'error')
                 self.results['failed'] += 1
                 
@@ -433,12 +460,44 @@ class PermissionTester:
             
         except Exception as e:
             self.log(f"⚠️ ERREUR: {description} - {str(e)}", 'warning')
+            # Loguer plus de détails sur l'exception
+            if self.verbose:
+                import traceback
+                self.log(f"Détails de l'erreur: {traceback.format_exc()}", 'warning')
             self.results['skipped'] += 1
             self.results['tests'].append({
                 'description': description,
                 'success': False,
                 'error': str(e)
             })
+    
+    def run_targeted_tests(self, target='all'):
+        """Exécute des tests ciblés sur une fonctionnalité spécifique."""
+        self.setup()
+        
+        # Liste des tests disponibles
+        test_functions = {
+            'auth': self.test_authentication,
+            'dashboard': self.test_dashboard_access,
+            'leave': self.test_leave_permissions,
+            'expense': self.test_expense_permissions,
+            'kilometric': self.test_kilometric_expense_permissions,
+            'users': self.test_user_management_permissions,
+            'password': self.test_password_manager_permissions,
+            'api': self.test_api_access,
+            'all': self.run_all_tests
+        }
+        
+        # Exécuter le test demandé
+        if target in test_functions:
+            if target == 'all':
+                self.run_all_tests()
+            else:
+                self.log(f"\n=== Exécution du test: {target} ===", 'info')
+                test_functions[target]()
+                self.display_results()
+        else:
+            self.log(f"Test '{target}' inconnu. Tests disponibles: {', '.join(test_functions.keys())}", 'error')
     
     def display_results(self):
         """Affiche les résultats des tests."""
@@ -466,6 +525,7 @@ def main():
     """Fonction principale."""
     parser = argparse.ArgumentParser(description='Script de test des permissions pour CybeRH')
     parser.add_argument('-v', '--verbose', action='store_true', help='Mode verbeux')
+    parser.add_argument('-t', '--target', type=str, default='all', help='Test ciblé à exécuter (par défaut: tous)')
     args = parser.parse_args()
     
     print(f"{Fore.CYAN}======================================")
@@ -473,7 +533,7 @@ def main():
     print(f"======================================{Style.RESET_ALL}")
     
     tester = PermissionTester(verbose=args.verbose)
-    tester.run_all_tests()
+    tester.run_targeted_tests(target=args.target)
 
 if __name__ == "__main__":
     main()

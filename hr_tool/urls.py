@@ -11,7 +11,8 @@ from rh_management.views import (
     leave_request_view, manage_leaves_view, approve_leave, reject_leave,
     submit_expense, manage_expenses_view, approve_expense, reject_expense, cancel_expense,
     profile_view, update_profile, change_password,
-    manage_users_view, edit_user, delete_user,
+    manage_users_view, edit_user, delete_user, toggle_user_status, mass_action, 
+    reset_password,
     submit_kilometric_expense, my_kilometric_expenses, manage_kilometric_expenses,
     approve_kilometric_expense, reject_kilometric_expense, edit_kilometric_expense,
     export_expenses, export_expenses_excel, export_expenses_pdf,
@@ -72,6 +73,9 @@ urlpatterns = [
     path("manage-users/", manage_users_view, name="manage_users"),
     path("edit-user/<int:user_id>/", edit_user, name="edit_user"),
     path("delete-user/<int:user_id>/", delete_user, name="delete_user"),
+    path("toggle-user-status/<int:user_id>/", toggle_user_status, name="toggle_user_status"),
+    path("reset-password/<int:user_id>/", reset_password, name="reset_password"),
+    path("mass-action/", mass_action, name="mass_action"),  # Nouvelle URL pour les actions en masse
     
     # Role management - explicitly define these paths
     path("manage-roles/", manage_roles_view, name="manage_roles"),
