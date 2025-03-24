@@ -374,9 +374,21 @@
     <script>
         // Animation pour les alerts
         document.addEventListener("DOMContentLoaded", function() {
-            // Auto-dismiss des alertes après 5 secondes
+            // Auto-dismiss uniquement des alertes de notification (générées par messages Django)
+            // et non des alertes statiques utilisées dans l'interface
             setTimeout(function() {
-                $('.alert').alert('close');
+                // Sélectionner uniquement les alertes dans le conteneur de messages
+                document.querySelectorAll('.position-fixed .alert').forEach(alert => {
+                    // Utiliser la méthode close de Bootstrap si disponible, sinon supprimer simplement l'élément
+                    if (bootstrap && bootstrap.Alert) {
+                        new bootstrap.Alert(alert).close();
+                    } else {
+                        alert.style.opacity = '0';
+                        setTimeout(() => {
+                            alert.remove();
+                        }, 300);
+                    }
+                });
             }, 5000);
             
             // Animation d'entrée pour les éléments avec la classe animate-fade-in

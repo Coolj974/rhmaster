@@ -21,6 +21,7 @@ from .models import PasswordManager
 from .forms import PasswordManagerForm
 from django.contrib.auth.models import User, Group
 from .models import PasswordShare
+from datetime import datetime
 
 # Vérifie si l'utilisateur est un admin ou un RH
 def is_admin_or_hr(user):
@@ -1202,3 +1203,76 @@ def password_share_remove(request, share_id):
     messages.success(request, f"Partage supprimé pour l'utilisateur {user_name}.")
     
     return redirect('password_manager_view', pk=password_id)
+
+@login_required
+def api_leaves(request):
+    """API pour récupérer les congés pour le calendrier."""
+    start_date = request.GET.get('start', None)
+    end_date = request.GET.get('end', None)
+    show_all = request.GET.get('all', 'false') == 'true'
+    
+    # Conversion des dates - gestion plus robuste des formats de date
+    if start_date:
+        try:
+            # Gérer le cas où il y a un espace au lieu d'un +
+            if ' ' in start_date and not '+' in start_date:
+                start_date = start_date.replace(' ', '+')
+            # Remplacer Z par +00:00 si nécessaire
+            if 'Z' in start_date:
+                start_date = start_date.replace('Z', '+00:00')
+            # Conversion en datetime
+            start_date = datetime.fromisoformat(start_date)
+        except ValueError:
+            # En cas d'échec, essayer un format plus simple
+            start_date = datetime.strptime(start_date.split('T')[0], '%Y-%m-%d')
+    
+    if end_date:
+        try:
+            # Gérer le cas où il y a un espace au lieu d'un +
+            if ' ' in end_date and not '+' in end_date:
+                end_date = end_date.replace(' ', '+')
+            # Remplacer Z par +00:00 si nécessaire
+            if 'Z' in end_date:
+                end_date = end_date.replace('Z', '+00:00')
+            # Conversion en datetime
+            end_date = datetime.fromisoformat(end_date)
+        except ValueError:
+            # En cas d'échec, essayer un format plus simple
+            end_date = datetime.strptime(end_date.split('T')[0], '%Y-%m-%d')
+    
+    # Filtrer les congés
+    if show_all and (is_admin_or_hr(request.user) or is_encadrant(request.user)):
+        # Pour les admins, RH et encadrants, montrer tous les congés
+        leaves = LeaveRequest.objects.all()
+    else:
+        # Pour les autres, montrer seulement leurs propres congés
+        leaves = LeaveRequest.objects.filter(user=request.user)
+    
+    # Filtrer par date si fournie
+    if start_date:
+        leaves = leaves.filter(end_date__gte=start_date)
+    if end_date:
+        leaves = leaves.filter(start_date__lte=end_date)
+    
+    # Formater les données pour le calendrier
+    leave_data = []
+    for leave in leaves:
+        status_color = {
+            'pending': '#f6c23e',  # warning
+            'approved': '#1cc88a',  # success
+            'rejected': '#e74a3b',  # danger
+        }
+        
+        leave_data.append({
+            'id': leave.id,
+            'title': f"{leave.user.get_full_name() or leave.user.username} - {leave.get_leave_type_display()}",
+            'start_date': leave.start_date.isoformat(),
+            'end_date': leave.end_date.isoformat(),
+            'user': leave.user.get_full_name() or leave.user.username,
+            'leave_type': leave.get_leave_type_display(),
+            'status': leave.status,
+            'reason': leave.reason or '',
+            'color': status_color.get(leave.status, '#f6c23e')
+        })
+    
+    return JsonResponse(leave_data, safe=False)

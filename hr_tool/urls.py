@@ -21,7 +21,8 @@ from rh_management.views import (
     manage_roles_view, delete_role,
     # Password Manager views
     password_manager_list, password_manager_add, password_manager_edit, 
-    password_manager_delete, password_manager_view, password_share, password_share_remove
+    password_manager_delete, password_manager_view, password_share, password_share_remove,
+    api_leaves,
 )
 
 # Error handlers
@@ -111,6 +112,9 @@ urlpatterns = [
     path("password-manager/<int:pk>/view/", password_manager_view, name="password_manager_view"),
     path("password-manager/<int:pk>/share/", password_share, name="password_share"),
     path("password-manager/share/<int:share_id>/remove/", password_share_remove, name="password_share_remove"),
+    
+    # API
+    path("api/leaves/", api_leaves, name="api_leaves"),
 ]
 
 # Add static and media URL patterns
