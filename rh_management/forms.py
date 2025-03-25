@@ -26,31 +26,25 @@ class BaseForm(forms.ModelForm):
         )
 
 class ExpenseReportForm(BaseForm):
-    receipt = forms.FileField(required=False, label="Joindre une facture")
-
+    """Formulaire pour soumettre un rapport de dépenses."""
+    
     class Meta:
         model = ExpenseReport
-        fields = ['date', 'description', 'amount', 'vat', 'project', 'location', 'refacturable', 'receipt', 'notification_emails']
-        labels = {
-            'date': 'Date',
-            'description': 'Description',
-            'amount': 'Montant',
-            'vat': 'TVA',
-            'project': 'Projet',
-            'location': 'Localisation',
-            'refacturable': 'Refacturable'
-        }
+        fields = [
+            'date', 'description', 'amount', 'vat', 
+            'project', 'location', 'attachment', 'refacturable'
+        ]
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'description': forms.TextInput(attrs={'class': 'form-control'}),
-            'amount': forms.NumberInput(attrs={'class': 'form-control'}),
-            'vat': forms.NumberInput(attrs={'class': 'form-control'}),
-            'project': forms.TextInput(attrs={'class': 'form-control'}),
-            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Description de la dépense'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'vat': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'project': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nom du projet'}),
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Lieu de la dépense'}),
+            'attachment': forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf,.jpg,.jpeg,.png'}),
             'refacturable': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'receipt': forms.FileInput(attrs={'class': 'form-control-file'}),
         }
-
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setup_layout('Informations sur le rapport de dépenses', self.Meta.fields)
@@ -92,20 +86,26 @@ class KilometricExpenseForm(BaseForm):
         self.setup_layout('Frais kilométriques', self.Meta.fields)
 
 class ExpenseForm(BaseForm):
+    """Formulaire pour soumettre une dépense."""
+    
+    # Modifiez ici pour remplacer 'receipt' par 'attachment'
     class Meta:
         model = ExpenseReport
-        fields = ['date', 'description', 'amount', 'vat', 'project', 'location', 'refacturable', 'receipt']
+        fields = [
+            'date', 'description', 'amount', 'vat', 
+            'project', 'location', 'attachment', 'refacturable'
+        ]
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'description': forms.TextInput(attrs={'class': 'form-control'}),
-            'amount': forms.NumberInput(attrs={'class': 'form-control'}),
-            'vat': forms.NumberInput(attrs={'class': 'form-control'}),
-            'project': forms.TextInput(attrs={'class': 'form-control'}),
-            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Description de la dépense'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'vat': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'project': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nom du projet'}),
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Lieu de la dépense'}),
+            'attachment': forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf,.jpg,.jpeg,.png'}),
             'refacturable': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'receipt': forms.FileInput(attrs={'class': 'form-control-file'}),
         }
-
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setup_layout('Dépenses', self.Meta.fields)

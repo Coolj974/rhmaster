@@ -280,14 +280,20 @@
                     <h3 class="mb-0"><i class="fas fa-calendar-plus me-2"></i> Demande de congé</h3>
                 </div>
                 <div class="card-body p-4">
-                    <!-- Remplacer la classe alert par balance-info pour éviter la disparition automatique -->
-                    <div class="balance-info bg-light mb-4 p-3 rounded-3 border-start border-4 border-info">
+                    <!-- Affichage amélioré du solde de congés -->
+                    <div class="alert alert-info mb-4">
                         <div class="d-flex align-items-center">
                             <div class="flex-shrink-0">
                                 <i class="fas fa-info-circle fa-2x text-info"></i>
                             </div>
                             <div class="flex-grow-1 ms-3">
-                                <h5 class="fw-bold text-info">Solde de congés</h5>
+                                <h5 class="fw-bold">Solde de congés</h5>
+                                <div class="progress mb-2" style="height: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                        style="width: {{ leave_balance.percentage }}%;" 
+                                        aria-valuenow="{{ leave_balance.available }}" aria-valuemin="0" 
+                                        aria-valuemax="{{ leave_balance.acquired }}"></div>
+                                </div>
                                 <p class="mb-0">Jours disponibles: <span class="fw-bold">{{ leave_balance.available }}</span> sur {{ leave_balance.acquired }}</p>
                             </div>
                         </div>
@@ -296,10 +302,16 @@
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         
-                        <!-- Champ Type de congé -->
+                        <!-- Type de congé amélioré avec icônes et meilleure visibilité -->
                         <div class="mb-3">
-                            <label for="{{ form.leave_type.id_for_label }}" class="form-label">Type de congé <span class="text-danger">*</span></label>
-                            {{ form.leave_type }}
+                            <label for="{{ form.leave_type.id_for_label }}" class="form-label fw-bold fs-5 text-primary">
+                                <i class="fas fa-tag me-2"></i>Type de congé <span class="text-danger">*</span>
+                            </label>
+                            <div class="card border-primary mb-3">
+                                <div class="card-body">
+                                    {{ form.leave_type }}
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- Dates de début et de fin -->
@@ -318,6 +330,30 @@
                             </div>
                         </div>
                         
+                        <!-- Option demi-journée -->
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="half_day" name="half_day">
+                                <label class="form-check-label" for="half_day">Demi-journée</label>
+                            </div>
+                        </div>
+                        
+                        <!-- Sélection matin/après-midi (visible uniquement si demi-journée est cochée) -->
+                        <div id="half_day_options" class="mb-3" style="display: none;">
+                            <div class="card border-light bg-light">
+                                <div class="card-body">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="half_day_period" id="morning" value="morning" checked>
+                                        <label class="form-check-label" for="morning">Matin</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="half_day_period" id="afternoon" value="afternoon">
+                                        <label class="form-check-label" for="afternoon">Après-midi</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- Champ Motif -->
                         <div class="mb-3">
                             <label for="{{ form.reason.id_for_label }}" class="form-label">Motif</label>
@@ -331,10 +367,22 @@
                             <small class="form-text text-muted">Vous pouvez joindre un justificatif (optionnel)</small>
                         </div>
                         
-                        <!-- Champ Email de notification -->
+                        <!-- Notifications par e-mail (remplacer par des cases à cocher) -->
                         <div class="mb-3">
-                            <label for="{{ form.notification_emails.id_for_label }}" class="form-label">Envoyer une notification à</label>
-                            {{ form.notification_emails }}
+                            <label class="form-label">Notifications</label>
+                            <div class="card border-light bg-light">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="notify_manager" name="notify_manager" checked>
+                                        <label class="form-check-label" for="notify_manager"><i class="fas fa-user-tie me-2"></i>Informer mon responsable</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="notify_hr" name="notify_hr" checked>
+                                        <label class="form-check-label" for="notify_hr"><i class="fas fa-users-cog me-2"></i>Informer les ressources humaines</label>
+                                    </div>
+                                    <input type="hidden" name="notification_emails" id="notification_emails">
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="mt-4">
@@ -605,5 +653,51 @@
         startDateInput.addEventListener('change', calculateDuration);
         endDateInput.addEventListener('change', calculateDuration);
     });
+
+    // Gérer l'option demi-journée
+    const halfDayCheckbox = document.getElementById('half_day');
+    const halfDayOptions = document.getElementById('half_day_options');
+    const endDateInput = document.getElementById('id_end_date');
+    
+    halfDayCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            halfDayOptions.style.display = 'block';
+            // Pour une demi-journée, la date de fin est la même que la date de début
+            endDateInput.value = document.getElementById('id_start_date').value;
+            endDateInput.disabled = true;
+        } else {
+            halfDayOptions.style.display = 'none';
+            endDateInput.disabled = false;
+        }
+    });
+    
+    // Mettre à jour la date de fin quand la date de début change (si demi-journée est sélectionnée)
+    document.getElementById('id_start_date').addEventListener('change', function() {
+        if (halfDayCheckbox.checked) {
+            endDateInput.value = this.value;
+        }
+    });
+    
+    // Gérer les notifications par email
+    const notifyManagerCheckbox = document.getElementById('notify_manager');
+    const notifyHRCheckbox = document.getElementById('notify_hr');
+    const notificationEmailsInput = document.getElementById('notification_emails');
+    
+    function updateNotificationEmails() {
+        let emails = [];
+        if (notifyManagerCheckbox.checked) {
+            emails.push('alain@example.com', 'bastien@example.com');
+        }
+        if (notifyHRCheckbox.checked) {
+            emails.push('sarah@example.com', 'coordinateur@example.com');
+        }
+        notificationEmailsInput.value = emails.join(',');
+    }
+    
+    notifyManagerCheckbox.addEventListener('change', updateNotificationEmails);
+    notifyHRCheckbox.addEventListener('change', updateNotificationEmails);
+    
+    // Initialiser les notifications
+    updateNotificationEmails();
 </script>
 {% endblock %}

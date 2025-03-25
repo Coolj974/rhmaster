@@ -389,7 +389,7 @@
                         }, 300);
                     }
                 });
-            }, 5000);
+            }, 8000);  // Augmenté de 5000 à 8000
             
             // Animation d'entrée pour les éléments avec la classe animate-fade-in
             const animatedElements = document.querySelectorAll('.animate-fade-in');
@@ -422,6 +422,28 @@
                     }, 600);
                 });
             });
+            
+            // Pour le mobile, centrer les messages
+            function adjustAlertPosition() {
+                const alertContainer = document.querySelector('.position-fixed');
+                if (alertContainer) {
+                    if (window.innerWidth < 768) {  // Pour les appareils mobiles
+                        alertContainer.classList.remove('end-0');
+                        alertContainer.classList.add('start-50');
+                        alertContainer.style.transform = 'translateX(-50%)';
+                        alertContainer.style.maxWidth = '90%';
+                    } else {
+                        alertContainer.classList.add('end-0');
+                        alertContainer.classList.remove('start-50');
+                        alertContainer.style.transform = '';
+                        alertContainer.style.maxWidth = '350px';
+                    }
+                }
+            }
+            
+            // Appliquer au chargement et lors du redimensionnement
+            adjustAlertPosition();
+            window.addEventListener('resize', adjustAlertPosition);
             
             // Bootstrap 5 handles dropdowns automatically with data-bs-toggle attribute
             // No manual initialization needed

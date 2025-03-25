@@ -379,33 +379,78 @@ def is_hr(user):
 
 @login_required
 def leave_request_view(request):
-    """Gère la demande de congé."""
-    # Récupérer ou créer le solde de congés de l'utilisateur
-    leave_balance, created = LeaveBalance.objects.get_or_create(user=request.user)
-    
-    if request.method == "POST":
+    """Vue pour soumettre une demande de congé."""
+    if request.method == 'POST':
         form = LeaveRequestForm(request.POST, request.FILES)
         if form.is_valid():
             leave_request = form.save(commit=False)
             leave_request.user = request.user
-            leave_request.notification_emails = json.dumps([email.email for email in form.cleaned_data['notification_emails']])
+            
+            # Gérer l'option demi-journée
+            if request.POST.get('half_day') == 'on':
+                leave_request.half_day = True
+                leave_request.half_day_period = request.POST.get('half_day_period', 'morning')
+                # Assurez-vous que les dates de début et de fin sont identiques
+                leave_request.end_date = leave_request.start_date
+            
             leave_request.save()
+            
+            # Traiter les notifications
+            notify_manager = request.POST.get('notify_manager') == 'on'
+            notify_hr = request.POST.get('notify_hr') == 'on'
+            
+            recipients = []
+            if notify_manager:
+                recipients.extend(['alain@example.com', 'bastien@example.com'])
+            if notify_hr:
+                recipients.extend(['sarah@example.com', 'coordinateur@example.com'])
+            
+            if recipients:
+                subject = f"Nouvelle demande de congé de {request.user.get_full_name() or request.user.username}"
+                message = f"""
+                Une nouvelle demande de congé a été soumise:
+                
+                Employé: {request.user.get_full_name() or request.user.username}
+                Type de congé: {leave_request.get_leave_type_display()}
+                Du: {leave_request.start_date}
+                Au: {leave_request.end_date}
+                {f"Demi-journée: {leave_request.get_half_day_period_display()}" if leave_request.half_day else ""}
+                Raison: {leave_request.reason or "Non spécifiée"}
+                
+                Veuillez vous connecter à l'application pour examiner cette demande.
+                """
+                
+                send_mail(
+                    subject,
+                    message,
+                    'noreply@rhcyber.com',
+                    recipients
+                )
             
             messages.success(request, "Votre demande de congé a été soumise avec succès.")
             return redirect('dashboard')
-        else:
-            messages.error(request, "Veuillez corriger les erreurs dans le formulaire.")
     else:
         form = LeaveRequestForm()
-
-    # Récupérer les dernières demandes de congé de l'utilisateur
-    recent_leaves = LeaveRequest.objects.filter(user=request.user).order_by('-created_at')[:5]
     
-    return render(request, 'rh_management/leave_request.html', {
+    # Récupérer le solde de congés de l'utilisateur
+    leave_balance, created = LeaveBalance.objects.get_or_create(
+        user=request.user,
+        defaults={'acquired': 25.0, 'taken': 0.0}
+    )
+    
+    # Calculer le pourcentage de congés restants
+    if leave_balance:
+        if leave_balance.acquired > 0:
+            leave_balance.percentage = (leave_balance.available / leave_balance.acquired) * 100
+        else:
+            leave_balance.percentage = 0
+    
+    context = {
         'form': form,
-        'leave_balance': leave_balance,
-        'recent_leaves': recent_leaves
-    })
+        'leave_balance': leave_balance
+    }
+    
+    return render(request, 'rh_management/leave_request.html', context)
 
 @login_required
 @user_passes_test(is_admin_or_hr)
@@ -490,13 +535,43 @@ def bulk_update_leave_balance(request):
 @login_required
 @user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def manage_leaves_view(request):
-    """Gère l'affichage des congés en attente pour les RH et encadrants."""
-    pending_leaves = LeaveRequest.objects.filter(status='pending')
-    approved_this_month = LeaveRequest.objects.filter(status='approved').count()
-    rejected_this_month = LeaveRequest.objects.filter(status='rejected').count()
-    currently_on_leave = LeaveRequest.objects.filter(Q(start_date__lte=timezone.now()) & Q(end_date__gte=timezone.now())).count()
-
-    return render(request, 'rh_management/manage_leaves.html', {'pending_leaves': pending_leaves, 'approved_this_month': approved_this_month, 'rejected_this_month': rejected_this_month, 'currently_on_leave': currently_on_leave})
+    """Vue pour la gestion des congés."""
+    is_admin = request.user.is_superuser
+    is_hr = request.user.groups.filter(name='HR').exists() or request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    if is_admin or is_hr or is_encadrant:
+        # Filtrer les demandes à afficher selon le rôle
+        leaves = LeaveRequest.objects.all()
+        
+        # Exclure les propres demandes de l'utilisateur pour éviter l'auto-validation
+        # Montrer uniquement les demandes en attente pour validation
+        pending_leaves = leaves.filter(status='pending').exclude(user=request.user)
+        
+        # Les demandes de l'utilisateur (pour information)
+        user_leaves = leaves.filter(user=request.user)
+        
+        # Autres demandes déjà traitées (pour information)
+        processed_leaves = leaves.exclude(status='pending').exclude(user=request.user)
+        
+        # Trier du plus récent au plus ancien
+        pending_leaves = pending_leaves.order_by('-created_at')
+        user_leaves = user_leaves.order_by('-created_at')
+        processed_leaves = processed_leaves.order_by('-created_at')
+        
+        context = {
+            'pending_leaves': pending_leaves,
+            'user_leaves': user_leaves,
+            'processed_leaves': processed_leaves,
+            'is_admin': is_admin,
+            'is_hr': is_hr,
+            'is_encadrant': is_encadrant
+        }
+        
+        return render(request, 'rh_management/manage_leaves.html', context)
+    else:
+        messages.error(request, "Vous n'avez pas l'autorisation d'accéder à cette page.")
+        return redirect('dashboard')
 
 @login_required
 @user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
@@ -552,32 +627,64 @@ def reject_leave(request, leave_id):
 # ✅ Soumettre une note de frais
 @login_required
 def submit_expense(request):
-    """Permet à un utilisateur de soumettre une note de frais."""
-    if request.method == "POST":
+    """Vue pour soumettre une note de frais."""
+    if request.method == 'POST':
         form = ExpenseReportForm(request.POST, request.FILES)
         if form.is_valid():
+            # S'assurer que la pièce justificative est fournie
+            if not request.FILES.get('attachment'):
+                form.add_error('attachment', 'Une pièce justificative est requise.')
+                return render(request, 'rh_management/submit_expense.html', {'form': form})
+                
+            # Vérifier la taille du fichier
+            if request.FILES.get('attachment').size > 25 * 1024 * 1024:  # 25 Mo
+                form.add_error('attachment', 'La taille du fichier ne doit pas dépasser 25 Mo.')
+                return render(request, 'rh_management/submit_expense.html', {'form': form})
+            
             expense = form.save(commit=False)
             expense.user = request.user
-            expense.notification_emails = json.dumps([email.email for email in form.cleaned_data['notification_emails']])
             expense.save()
             
-            # Envoi d'un email de notification pour validation
-            notification_emails = form.cleaned_data['notification_emails']
-            # if notification_emails:
-            #    emails = [email.email for email in notification_emails]
-            #    subject = "Nouvelle note de frais soumise"
-            #    message = f"Bonjour,\n\nUne nouvelle note de frais a été soumise par {expense.user.username}. Veuillez la valider."
-            #    send_mail(subject, message, 'no-reply@cyberun.info', emails)
+            # Traiter les notifications
+            notification_emails = request.POST.get('notification_emails', '').split(',')
+            cc_emails = []
+            bcc_emails = []
             
-            messages.success(request, "Note de frais enregistrée avec succès.")
-            return redirect("dashboard")
-        else:
-            messages.error(request, "Veuillez corriger les erreurs dans le formulaire.")
+            for email in notification_emails:
+                if email.startswith('bcc:'):
+                    bcc_emails.append(email[4:])  # Enlever le préfixe 'bcc:'
+                else:
+                    cc_emails.append(email)
+            
+            # Envoyer l'email de notification
+            if cc_emails or bcc_emails:
+                subject = f"Nouvelle note de frais soumise par {request.user.get_full_name() or request.user.username}"
+                message = f"""
+                Une nouvelle note de frais a été soumise:
+                
+                Date: {expense.date}
+                Description: {expense.description}
+                Montant: {expense.amount} €
+                Projet: {expense.project}
+                Localisation: {expense.location}
+                
+                Veuillez vous connecter à l'application pour l'examiner.
+                """
+                
+                send_mail(
+                    subject,
+                    message,
+                    'noreply@rhcyber.com',
+                    cc_emails,
+                    bcc=bcc_emails
+                )
+            
+            messages.success(request, "Votre note de frais a été soumise avec succès.")
+            return redirect('dashboard')
     else:
         form = ExpenseReportForm()
-
-    return render(request, "rh_management/submit_expense.html", {"form": form})
-
+    
+    return render(request, 'rh_management/submit_expense.html', {'form': form})
 
 # ✅ Voir ses notes de frais
 @login_required
@@ -906,32 +1013,48 @@ def update_profile(request):
 
 @login_required
 def change_password(request):
-    """Permet à l'utilisateur de changer son mot de passe."""
-    if request.method == "POST":
+    """Vue pour changer le mot de passe."""
+    if request.method == 'POST':
         current_password = request.POST.get('current_password')
         new_password = request.POST.get('new_password')
         confirm_password = request.POST.get('confirm_password')
         
-        user = request.user
-        
-        # Vérification du mot de passe actuel
-        if not user.check_password(current_password):
+        if not request.user.check_password(current_password):
             messages.error(request, "Le mot de passe actuel est incorrect.")
             return redirect('profile')
-            
-        # Vérification que les nouveaux mots de passe correspondent
+        
         if new_password != confirm_password:
             messages.error(request, "Les nouveaux mots de passe ne correspondent pas.")
             return redirect('profile')
+        
+        # Vérifier la complexité du mot de passe
+        if len(new_password) < 8:
+            messages.error(request, "Le mot de passe doit contenir au moins 8 caractères.")
+            return redirect('profile')
             
-        # Mettre à jour le mot de passe
-        user.set_password(new_password)
-        user.save()
+        if not any(c.isupper() for c in new_password):
+            messages.error(request, "Le mot de passe doit contenir au moins une lettre majuscule.")
+            return redirect('profile')
+            
+        if not any(c.islower() for c in new_password):
+            messages.error(request, "Le mot de passe doit contenir au moins une lettre minuscule.")
+            return redirect('profile')
+            
+        if not any(c.isdigit() for c in new_password):
+            messages.error(request, "Le mot de passe doit contenir au moins un chiffre.")
+            return redirect('profile')
+            
+        if not any(not c.isalnum() for c in new_password):
+            messages.error(request, "Le mot de passe doit contenir au moins un caractère spécial.")
+            return redirect('profile')
+        
+        request.user.set_password(new_password)
+        request.user.save()
         
         # Mettre à jour la session pour éviter la déconnexion
-        update_session_auth_hash(request, user)
+        update_session_auth_hash(request, request.user)
         
-        messages.success(request, "Votre mot de passe a été changé avec succès!")
+        messages.success(request, "Votre mot de passe a été modifié avec succès.")
         return redirect('profile')
     
     return redirect('profile')

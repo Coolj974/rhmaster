@@ -122,7 +122,21 @@ class LeaveRequestAdmin(admin.ModelAdmin):
 
 @admin.register(ExpenseReport)
 class ExpenseReportAdmin(admin.ModelAdmin):
-    list_display = ('user', 'date', 'description', 'amount', 'vat', 'total_amount', 'status')
+    # Ajout d'une méthode pour calculer le montant total
+    def total_amount(self, obj):
+        """
+        Calcule le montant total incluant la TVA
+        """
+        if obj.vat and obj.amount:
+            # Calculer le montant avec TVA
+            total = obj.amount * (1 + (obj.vat / 100))
+            return f"{total:.2f} €"
+        return f"{obj.amount} €"
+    
+    total_amount.short_description = "Montant total (TVA incluse)"
+    
+    # Assurez-vous que list_display et les autres attributs restent inchangés
+    list_display = ['user', 'date', 'description', 'amount', 'vat', 'total_amount', 'status', 'created_at']
     list_filter = ('status', 'date', 'refacturable', 'user__groups')
     search_fields = ('user__username', 'description', 'project', 'location')
     date_hierarchy = 'date'

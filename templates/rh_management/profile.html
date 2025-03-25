@@ -51,16 +51,20 @@
                                                 <input type="text" name="username" id="username" value="{{ user.username }}" class="form-control" required>
                                             </div>
                                         </div>
+                                        
+                                        {% if user.is_superuser or user.is_staff %}
                                         <div class="mb-3">
                                             <label for="email" class="form-label fw-bold">Email</label>
                                             <div class="input-group">
                                                 <span class="input-group-text bg-white"><i class="fas fa-envelope"></i></span>
-                                                <input type="email" name="email" id="email" value="{{ user.email }}" class="form-control" {% if not user.is_superuser and not user.is_staff %}readonly{% endif %}>
+                                                <input type="email" name="email" id="email" value="{{ user.email }}" class="form-control">
                                             </div>
-                                            {% if not user.is_superuser and not user.is_staff %}
-                                                <small class="text-muted">Seuls les administrateurs et RH peuvent modifier votre adresse email.</small>
-                                            {% endif %}
                                         </div>
+                                        {% else %}
+                                        <!-- Pour les employés, cacher le champ de modification d'email -->
+                                        <input type="hidden" name="email" value="{{ user.email }}">
+                                        {% endif %}
+                                        
                                         <div class="d-grid gap-2 mt-4">
                                             <button type="submit" class="btn btn-gradient-primary rounded-pill">
                                                 <i class="fas fa-save me-2"></i>Enregistrer les modifications
@@ -89,6 +93,16 @@
                                             <div class="input-group">
                                                 <span class="input-group-text bg-white"><i class="fas fa-key"></i></span>
                                                 <input type="password" name="new_password" id="new_password" class="form-control" required>
+                                            </div>
+                                            <div class="password-requirements mt-2 small">
+                                                <p class="mb-1 text-muted">Le mot de passe doit contenir :</p>
+                                                <ul class="ps-3 mb-0">
+                                                    <li class="requirement" id="req-length">Au moins 8 caractères</li>
+                                                    <li class="requirement" id="req-uppercase">Au moins 1 lettre majuscule</li>
+                                                    <li class="requirement" id="req-lowercase">Au moins 1 lettre minuscule</li>
+                                                    <li class="requirement" id="req-number">Au moins 1 chiffre</li>
+                                                    <li class="requirement" id="req-special">Au moins 1 caractère spécial (@,#,$,etc.)</li>
+                                                </ul>
                                             </div>
                                         </div>
                                         <div class="mb-3">
@@ -303,4 +317,40 @@
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validation du mot de passe
+    const newPasswordInput = document.getElementById('new_password');
+    const confirmPasswordInput = document.getElementById('confirm_password');
+    
+    // Vérifier la force du mot de passe
+    newPasswordInput.addEventListener('input', function() {
+        const password = this.value;
+        
+        // Vérifier les critères
+        const lengthValid = password.length >= 8;
+        const uppercaseValid = /[A-Z]/.test(password);
+        const lowercaseValid = /[a-z]/.test(password);
+        const numberValid = /[0-9]/.test(password);
+        const specialValid = /[^A-Za-z0-9]/.test(password);
+        
+        // Mettre à jour les indicateurs visuels
+        document.getElementById('req-length').className = 'requirement ' + (lengthValid ? 'text-success' : 'text-danger');
+        document.getElementById('req-uppercase').className = 'requirement ' + (uppercaseValid ? 'text-success' : 'text-danger');
+        document.getElementById('req-lowercase').className = 'requirement ' + (lowercaseValid ? 'text-success' : 'text-danger');
+        document.getElementById('req-number').className = 'requirement ' + (numberValid ? 'text-success' : 'text-danger');
+        document.getElementById('req-special').className = 'requirement ' + (specialValid ? 'text-success' : 'text-danger');
+    });
+    
+    // Vérifier que les mots de passe correspondent
+    confirmPasswordInput.addEventListener('input', function() {
+        if (this.value !== newPasswordInput.value) {
+            this.setCustomValidity('Les mots de passe ne correspondent pas');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+});
+</script>
 {% endblock %}

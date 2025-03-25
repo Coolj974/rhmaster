@@ -113,13 +113,25 @@
                                 <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Notifications</h5>
                             </div>
                             <div class="card-body p-4">
-                                <div class="mb-0">
-                                    <label for="notification_emails" class="form-label fw-bold">Emails de notification</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light border-0"><i class="fas fa-envelope"></i></span>
-                                        {{ form.notification_emails }}
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Notifications</label>
+                                    <div class="card border-light bg-light rounded-3">
+                                        <div class="card-body">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="notify_manager" name="notify_manager" checked>
+                                                <label class="form-check-label" for="notify_manager">
+                                                    <i class="fas fa-user-tie me-2"></i>Informer mon responsable
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="notify_hr" name="notify_hr" checked>
+                                                <label class="form-check-label" for="notify_hr">
+                                                    <i class="fas fa-users-cog me-2"></i>Informer les ressources humaines
+                                                </label>
+                                            </div>
+                                            <input type="hidden" name="notification_emails" id="notification_emails">
+                                        </div>
                                     </div>
-                                    <div class="form-text text-muted">Séparés par des virgules</div>
                                 </div>
                             </div>
                         </div>
@@ -524,6 +536,30 @@
                 this.closest('.mb-3')?.classList.remove('input-focus');
             });
         });
+
+        // Gérer les notifications par email
+        const notifyManagerCheckbox = document.getElementById('notify_manager');
+        const notifyHRCheckbox = document.getElementById('notify_hr');
+        const notificationEmailsInput = document.getElementById('notification_emails');
+        
+        function updateNotificationEmails() {
+            let emails = [];
+            if (notifyManagerCheckbox.checked) {
+                // Les responsables avec copie normale
+                emails.push('alain@example.com', 'bastien@example.com');
+            }
+            if (notifyHRCheckbox.checked) {
+                // Les RH en copie cachée
+                emails.push('bcc:sarah@example.com', 'bcc:coordinateur@example.com');
+            }
+            notificationEmailsInput.value = emails.join(',');
+        }
+        
+        notifyManagerCheckbox.addEventListener('change', updateNotificationEmails);
+        notifyHRCheckbox.addEventListener('change', updateNotificationEmails);
+        
+        // Initialiser les notifications
+        updateNotificationEmails();
     });
 </script>
 
