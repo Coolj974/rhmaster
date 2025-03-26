@@ -28,7 +28,8 @@ from .leave_views import (
     approve_leave,
     reject_leave,
     leave_action,
-    delete_leave
+    delete_leave,
+    export_leaves  # Ajout de l'import
 )
 
 # Importation des vues de gestion des notes de frais

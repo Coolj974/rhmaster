@@ -12,9 +12,17 @@
                 Sélectionnez votre itinéraire sur la carte ou saisissez les adresses directement.
             </div>
             
-            <form id="kilometric-expense-form" method="post" class="needs-validation" novalidate>
+            <form id="kilometric-expense-form" method="post" class="needs-validation" novalidate action="{% url 'submit_kilometric_expense' %}">
                 {% csrf_token %}
                 
+                <!-- Champs obligatoires -->
+                <input type="hidden" name="departure_lat" id="departure_lat" required>
+                <input type="hidden" name="departure_lng" id="departure_lng" required>
+                <input type="hidden" name="arrival_lat" id="arrival_lat" required>
+                <input type="hidden" name="arrival_lng" id="arrival_lng" required>
+                <input type="hidden" name="distance" id="distance" required>
+                <input type="hidden" name="amount" id="amount" required>
+
                 <div class="row">
                     <!-- Panneau d'information du véhicule -->
                     <div class="col-lg-5 mb-4">
@@ -70,10 +78,10 @@
                         
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="distance" class="form-label">Distance (km)</label>
+                                <label for="distance_field" class="form-label">Distance (km)</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-road"></i></span>
-                                    <input type="text" id="distance" name="distance" class="form-control" readonly required>
+                                    <input type="text" id="distance_field" name="distance" class="form-control" readonly required>
                                 </div>
                                 <div class="form-text">Calculée selon l'itinéraire</div>
                             </div>
@@ -154,9 +162,11 @@
                         <input type="hidden" id="departure_lng" name="departure_lng" required>
                         <input type="hidden" id="arrival_lat" name="arrival_lat" required>
                         <input type="hidden" id="arrival_lng" name="arrival_lng" required>
-                        
+                        <input type="hidden" name="distance" id="distance" required>
+                        <input type="hidden" name="amount" id="amount" required>
+
                         <div class="text-center mt-4">
-                            <button type="submit" class="btn btn-primary px-4 py-2">
+                            <button type="submit" class="btn btn-primary px-4 py-2" id="submitBtn">
                                 <i class="fas fa-paper-plane me-2"></i> Soumettre ma demande
                             </button>
                         </div>
@@ -175,7 +185,7 @@
         // Éléments du formulaire
         const form = document.getElementById("kilometric-expense-form");
         const allerRetourCheckbox = document.getElementById("aller_retour");
-        const distanceField = document.getElementById("distance");
+        const distanceField = document.getElementById("distance_field");
         const reimbursementField = document.getElementById("reimbursement");
         const vehicleTypeField = document.getElementById("id_vehicle_type");
         const fiscalPowerField = document.getElementById("id_fiscal_power");
@@ -338,45 +348,116 @@
 
         // Calcul de l'itinéraire
         function calculateRoute() {
-            if (departureMarker && arrivalMarker) {
-                let lat1 = departureMarker.getLatLng().lat;
-                let lng1 = departureMarker.getLatLng().lng;
-                let lat2 = arrivalMarker.getLatLng().lat;
-                let lng2 = arrivalMarker.getLatLng().lng;
+            if (!departureMarker || !arrivalMarker) return;
 
-                let url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${openRouteServiceApiKey}&start=${lng1},${lat1}&end=${lng2},${lat2}`;
+            const lat1 = departureMarker.getLatLng().lat;
+            const lng1 = departureMarker.getLatLng().lng;
+            const lat2 = arrivalMarker.getLatLng().lat;
+            const lng2 = arrivalMarker.getLatLng().lng;
 
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.features && data.features.length > 0) {
-                            let route = data.features[0];
-                            if (route.properties && route.properties.segments && route.properties.segments.length > 0) {
-                                let distance = route.properties.segments[0].distance / 1000; // Convertir en km
-                                distanceField.value = distance.toFixed(2);
-                                distanceInitiale = distance;
+            // Utilisation de l'API OSRM pour plus de fiabilité
+            const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full`;
 
-                                if (routeLayer) {
-                                    map.removeLayer(routeLayer);
-                                }
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.routes && data.routes.length > 0) {
+                        // Récupération de la distance en kilomètres
+                        const distance = data.routes[0].distance / 1000;
+                        
+                        // Mise à jour de l'affichage de la distance
+                        document.getElementById('distance_field').value = distance.toFixed(2);
+                        document.getElementById('distance').value = distance.toFixed(2);
 
-                                let routeCoordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
-                                routeLayer = L.polyline(routeCoordinates, {color: 'blue'}).addTo(map);
-                                map.fitBounds(routeLayer.getBounds());
-
-                                updateReimbursement();
-                            } else {
-                                alert("Aucune route trouvée");
-                            }
-                        } else {
-                            alert("Aucune route trouvée");
+                        // Tracé de l'itinéraire
+                        if (routeLayer) {
+                            map.removeLayer(routeLayer);
                         }
-                    })
-                    .catch(error => {
-                        console.error("Erreur:", error);
-                        alert("Erreur lors du calcul de l'itinéraire");
-                    });
+
+                        // Décodage de la géométrie de l'itinéraire
+                        const coordinates = decodePolyline(data.routes[0].geometry);
+                        routeLayer = L.polyline(coordinates, {color: 'blue'}).addTo(map);
+                        map.fitBounds(routeLayer.getBounds(), {padding: [30, 30]});
+
+                        // Mise à jour du montant
+                        updateReimbursement();
+                        
+                        // Activation du bouton de soumission
+                        document.getElementById('submitBtn').disabled = false;
+                        updateDistance(distance);
+                        enableSubmitButton();
+                    } else {
+                        alert("Impossible de calculer l'itinéraire entre ces deux points.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Erreur:", error);
+                    // Calcul de la distance à vol d'oiseau en fallback
+                    const distance = calculateDirectDistance(lat1, lng1, lat2, lng2);
+                    document.getElementById('distance_field').value = distance.toFixed(2);
+                    document.getElementById('distance').value = distance.toFixed(2);
+                    updateReimbursement();
+                });
+        }
+
+        // Fonction pour calculer la distance à vol d'oiseau (en cas d'échec de l'API)
+        function calculateDirectDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Rayon de la Terre en km
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function toRad(degrees) {
+            return degrees * Math.PI / 180;
+        }
+
+        // Fonction pour décoder la géométrie de l'itinéraire
+        function decodePolyline(str, precision = 5) {
+            let index = 0,
+                lat = 0,
+                lng = 0,
+                coordinates = [],
+                shift = 0,
+                result = 0,
+                byte = null,
+                latitude_change,
+                longitude_change,
+                factor = Math.pow(10, precision);
+
+            while (index < str.length) {
+                byte = null;
+                shift = 0;
+                result = 0;
+
+                do {
+                    byte = str.charCodeAt(index++) - 63;
+                    result |= (byte & 0x1f) << shift;
+                    shift += 5;
+                } while (byte >= 0x20);
+
+                latitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                shift = result = 0;
+
+                do {
+                    byte = str.charCodeAt(index++) - 63;
+                    result |= (byte & 0x1f) << shift;
+                    shift += 5;
+                } while (byte >= 0x20);
+
+                longitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+
+                lat += latitude_change;
+                lng += longitude_change;
+
+                coordinates.push([lat / factor, lng / factor]);
             }
+
+            return coordinates;
         }
 
         // Réinitialiser la carte
@@ -461,6 +542,94 @@
         
         // Initialiser les notifications
         updateNotificationEmails();
+
+        // Nouvelle fonction pour vérifier la validité du formulaire
+        function enableSubmitButton() {
+            const departure = document.getElementById('departure').value;
+            const arrival = document.getElementById('arrival').value;
+            const distance = document.getElementById('distance').value;
+            const date = document.getElementById('id_date').value;
+            const vehicleType = document.getElementById('id_vehicle_type').value;
+            const fiscalPower = document.getElementById('id_fiscal_power').value;
+            const project = document.getElementById('id_project').value;
+
+            const isValid = departure && arrival && distance && date && vehicleType && fiscalPower && project;
+            document.getElementById('submitBtn').disabled = !isValid;
+        }
+
+        // Ajouter les écouteurs d'événements pour tous les champs requis
+        const requiredFields = document.querySelectorAll('input[required], select[required]');
+        requiredFields.forEach(field => {
+            field.addEventListener('change', enableSubmitButton);
+            field.addEventListener('input', enableSubmitButton);
+        });
+
+        // Supprimer le disabled initial du bouton
+        document.getElementById('submitBtn').removeAttribute('disabled');
     });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('kilometric-expense-form');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Fonction pour vérifier si le formulaire est valide
+        function checkFormValidity() {
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value) {
+                    isValid = false;
+                }
+            });
+            
+            submitBtn.disabled = !isValid;
+        }
+
+        // Vérifier à chaque modification du formulaire
+        form.addEventListener('change', checkFormValidity);
+
+        // Validation avant soumission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Vérifier les coordonnées
+            if (!document.getElementById('departure_lat').value || 
+                !document.getElementById('arrival_lat').value) {
+                alert('Veuillez sélectionner un point de départ et d\'arrivée sur la carte');
+                return;
+            }
+
+            // Vérifier la distance
+            if (!document.getElementById('distance').value) {
+                alert('La distance n\'a pas pu être calculée');
+                return;
+            }
+
+            // Si tout est OK, soumettre le formulaire
+            this.submit();
+        });
+
+        // Mettre à jour les champs cachés lors du calcul de l'itinéraire
+        function updateFormFields(route) {
+            document.getElementById('distance').value = route.distance.toFixed(2);
+            document.getElementById('amount').value = calculateAmount(route.distance);
+            checkFormValidity();
+        }
+
+        // Calcul du montant en fonction de la distance et du type de véhicule
+        function calculateAmount(distance) {
+            const vehicleType = document.getElementById('id_vehicle_type').value;
+            const fiscalPower = document.getElementById('id_fiscal_power').value;
+            // ...existing code pour le calcul du montant...
+        }
+    });
+
+    // Mise à jour de la distance
+    function updateDistance(distance) {
+        // Mettre à jour l'affichage ET le champ caché
+        document.getElementById('distance_field').value = distance.toFixed(2);
+        updateReimbursement();
+    }
 </script>
 {% endblock %}

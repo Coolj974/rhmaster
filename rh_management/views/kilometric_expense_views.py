@@ -38,101 +38,72 @@ def submit_kilometric_expense(request):
     """Vue pour soumettre un frais kilométrique."""
     if request.method == "POST":
         try:
-            # Récupérer les données du formulaire
-            travel_date = request.POST.get('travel_date')
-            kilometers = request.POST.get('kilometers')
-            origin = request.POST.get('origin')
-            destination = request.POST.get('destination')
-            purpose = request.POST.get('purpose')
-            vehicle_type = request.POST.get('vehicle_type')
+            # Récupérer la distance depuis le formulaire
+            distance = float(request.POST.get('distance', 0))
             
-            # Validation des données
-            if not all([travel_date, kilometers, origin, destination, vehicle_type]):
-                messages.error(request, "Veuillez remplir tous les champs obligatoires.")
+            # Validation de la distance
+            if distance <= 0:
+                messages.error(request, "La distance doit être supérieure à zéro.")
                 return redirect('submit_kilometric_expense')
-            
-            # Conversion des valeurs
-            travel_date = datetime.strptime(travel_date, '%Y-%m-%d').date()
-            kilometers = float(str(kilometers).replace(',', '.'))
-            
-            if kilometers <= 0:
-                messages.error(request, "Le kilométrage doit être supérieur à zéro.")
-                return redirect('submit_kilometric_expense')
-            
-            # Calculer le montant en fonction du type de véhicule et du kilométrage
-            rate = get_kilometric_rate(vehicle_type)
-            amount = kilometers * rate
-            
-            # Créer le frais kilométrique
-            kilometric = KilometricExpense(
-                user=request.user,
-                travel_date=travel_date,
-                kilometers=kilometers,
-                origin=origin,
-                destination=destination,
-                purpose=purpose,
-                vehicle_type=vehicle_type,
-                amount=amount,
-                status='pending'
-            )
-            
-            # Gérer le téléchargement du justificatif
-            if 'proof' in request.FILES:
-                proof = request.FILES['proof']
                 
-                # Vérifier la taille du fichier
-                if proof.size > 5 * 1024 * 1024:  # 5 Mo
-                    messages.error(request, "Le justificatif ne doit pas dépasser 5 Mo.")
-                    return redirect('submit_kilometric_expense')
-                
-                # Vérifier le type de fichier
-                allowed_types = ['application/pdf', 'image/jpeg', 'image/png']
-                if proof.content_type not in allowed_types:
-                    messages.error(request, "Format de fichier non autorisé. Utilisez PDF, JPEG ou PNG.")
-                    return redirect('submit_kilometric_expense')
-                
-                kilometric.proof = proof
+            data = {
+                'user': request.user,
+                'travel_date': request.POST.get('date'),
+                'vehicle_type': request.POST.get('vehicle_type'),
+                'fiscal_power': request.POST.get('fiscal_power'),
+                'departure': request.POST.get('departure'),
+                'arrival': request.POST.get('arrival'),
+                'departure_lat': request.POST.get('departure_lat'),
+                'departure_lng': request.POST.get('departure_lng'),
+                'arrival_lat': request.POST.get('arrival_lat'),
+                'arrival_lng': request.POST.get('arrival_lng'),
+                'distance': distance,  # Utiliser la distance validée
+                'project': request.POST.get('project'),
+                'status': 'pending'
+            }
             
-            # Enregistrer le frais kilométrique
-            kilometric.save()
+            # Calculer le montant automatiquement
+            rate = get_kilometric_rate(data['vehicle_type'])
+            data['amount'] = distance * rate
             
-            messages.success(request, "Votre frais kilométrique a été soumis avec succès.")
+            # Créer l'objet KilometricExpense
+            expense = KilometricExpense.objects.create(**data)
+            
+            messages.success(request, "Votre demande de frais kilométriques a été soumise avec succès.")
             return redirect('my_kilometric_expenses')
-            
-        except ValueError:
-            messages.error(request, "Format de kilométrage ou de date invalide.")
+
+        except ValueError as e:
+            messages.error(request, f"Erreur de format : {str(e)}")
+            return redirect('submit_kilometric_expense')
         except Exception as e:
-            messages.error(request, f"Une erreur s'est produite: {str(e)}")
-    
-    # Create an instance of the form for GET requests
-    form = KilometricExpenseForm()
-    
-    # Ajouter les compteurs de notifications au contexte
-    is_admin = request.user.is_superuser
-    is_rh = request.user.is_staff
-    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
-    
-    # Compter les notifications
+            messages.error(request, f"Une erreur s'est produite : {str(e)}")
+            return redirect('submit_kilometric_expense')
+
+    # Ajout des compteurs de notifications
     new_leave_requests_count = 0
     new_expense_reports_count = 0
     new_kilometric_expenses_count = 0
     
-    if is_admin or is_rh or is_encadrant:
-        if is_admin or is_rh:
+    # Si l'utilisateur est admin, RH ou encadrant, calculer les notifications
+    if request.user.is_superuser or request.user.is_staff or request.user.groups.filter(name='Encadrant').exists():
+        from ..models import LeaveRequest, ExpenseReport
+        if request.user.is_superuser or request.user.is_staff:
             new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
             new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
             new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
-        elif is_encadrant:
+        elif request.user.groups.filter(name='Encadrant').exists():
             team_members = User.objects.filter(team_leader=request.user)
             new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
             new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
             new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
-    
+
+    # Affichage du formulaire (GET)
+    form = KilometricExpenseForm()
     context = {
         'form': form,
-        'is_admin': is_admin,
-        'is_rh': is_rh,
-        'is_encadrant': is_encadrant,
+        'is_admin': request.user.is_superuser,
+        'is_rh': request.user.is_staff,
+        'is_encadrant': request.user.groups.filter(name='Encadrant').exists(),
         'new_leave_requests_count': new_leave_requests_count,
         'new_expense_reports_count': new_expense_reports_count,
         'new_kilometric_expenses_count': new_kilometric_expenses_count,

@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Avg, Sum
 from django.core.mail import send_mail
+from django.http import HttpResponse
 from ..models import LeaveRequest, LeaveBalance
 from ..forms import LeaveRequestForm
 from .permissions import is_admin_or_hr, is_admin_hr_or_encadrant, can_approve_leaves
@@ -395,3 +396,33 @@ def delete_leave(request, id):
     if request.user.is_superuser:
         leave.delete()
     return redirect('dashboard')
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def export_leaves(request):
+    """
+    Exporte les demandes de congés au format Excel ou PDF
+    """
+    format = request.GET.get('format', 'excel')
+    
+    if format == 'excel':
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=leaves.xlsx'
+        
+        # Logique d'export Excel à implémenter
+        
+        return response
+        
+    elif format == 'pdf':
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename=leaves.pdf'
+        
+        # Logique d'export PDF à implémenter
+        
+        return response
+    
+    else:
+        messages.error(request, "Format d'export non supporté")
+        return redirect('manage_leaves')

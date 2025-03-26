@@ -15,7 +15,7 @@ from rh_management.views import (
     reset_password,
     submit_kilometric_expense, my_kilometric_expenses, manage_kilometric_expenses,
     approve_kilometric_expense, reject_kilometric_expense, edit_kilometric_expense,
-    export_expenses, export_expenses_excel, export_expenses_pdf,
+    export_expenses, export_expenses_excel, export_expenses_pdf, export_leaves,
     delete_leave, delete_expense, delete_kilometric_expense,
     dashboard_filtered,
     # Important - explicitly import these two views
@@ -25,7 +25,7 @@ from rh_management.views import (
     password_manager_delete, password_manager_view, password_share, password_share_remove,
     api_leaves,
     password_manager, password_add, password_view, password_edit, password_delete,
-    leave_action, expense_action, kilometric_expense_action
+    leave_action, expense_action, kilometric_expense_action, manage_leave_balances
 )
 
 # Error handlers
@@ -91,6 +91,8 @@ urlpatterns = [
     path("reject-leave/<int:leave_id>/", reject_leave, name="reject_leave"),  # Reject leave
     path('delete_leave/<int:id>/', delete_leave, name='delete_leave'),
     path('leave-action/<int:leave_id>/', leave_action, name='leave_action'),
+    path('export/', export_leaves, name='export_leaves'),
+    path('leave-balance/', manage_leave_balances, name='manage_leave_balances'),
 
     # Expense Management
     path("submit-expense/", submit_expense, name="submit_expense"),  # Submit expense
