@@ -1,356 +1,399 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
-                <div class="card-header bg-gradient-primary text-white p-4">
-                    <div class="d-flex align-items-center">
-                        <div>
-                            <h2 class="mb-0"><i class="fas fa-user-circle me-2"></i>{{ user.username }}</h2>
-                            <p class="mb-0 mt-1 fs-6">
-                                {% if user.is_superuser %}
-                                    <span class="badge bg-gradient-danger rounded-pill px-3">
-                                        <i class="fas fa-crown me-1"></i> Admin
-                                    </span>
-                                {% elif user.is_staff %}
-                                    <span class="badge bg-gradient-warning rounded-pill px-3">
-                                        <i class="fas fa-user-tie me-1"></i> RH
-                                    </span>
-                                {% else %}
-                                    <span class="badge bg-gradient-primary rounded-pill px-3">
-                                        <i class="fas fa-user me-1"></i> Employé
-                                    </span>
-                                {% endif %}
-                            </p>
-                        </div>
+<!-- En-tête de la page -->
+<div class="container py-4">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-user-circle me-2"></i>Profil utilisateur</h1>
+        <div>
+            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-arrow-left fa-sm text-white-50 me-1"></i> Retour au tableau de bord
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages de notification -->
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="{% if message.tags == 'success' %}fas fa-check-circle{% elif message.tags == 'error' %}fas fa-exclamation-circle{% else %}fas fa-info-circle{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Informations de profil principal -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-id-card me-2"></i>Informations personnelles</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Photo de profil -->
+                    <div class="text-center mb-4">
+                        {% if user_profile.profile_picture %}
+                            <img src="{{ user_profile.profile_picture.url }}" class="rounded-circle img-thumbnail mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                        {% else %}
+                            <div class="rounded-circle bg-primary text-white mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                                <span style="font-size: 48px;">{{ user.username.0|upper }}</span>
+                            </div>
+                        {% endif %}
+                        <h5 class="fw-bold">{{ user.first_name }} {{ user.last_name }}</h5>
+                        <p class="text-muted mb-2">@{{ user.username }}</p>
+                        {% if user.is_superuser %}
+                            <span class="badge bg-danger rounded-pill px-3">
+                                <i class="fas fa-crown me-1"></i> Admin
+                            </span>
+                        {% elif user.is_staff %}
+                            <span class="badge bg-warning rounded-pill px-3">
+                                <i class="fas fa-user-tie me-1"></i> RH
+                            </span>
+                        {% else %}
+                            <span class="badge bg-primary rounded-pill px-3">
+                                <i class="fas fa-user me-1"></i> Employé
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Détails -->
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                            <span class="fw-bold"><i class="fas fa-envelope me-2"></i>Email</span>
+                            <span class="text-primary">{{ user.email }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                            <span class="fw-bold"><i class="fas fa-phone me-2"></i>Téléphone</span>
+                            <span class="text-primary">{{ user_profile.phone|default:"Non renseigné" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                            <span class="fw-bold"><i class="fas fa-briefcase me-2"></i>Poste</span>
+                            <span class="text-primary">{{ user_profile.position|default:"Non renseigné" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                            <span class="fw-bold"><i class="fas fa-building me-2"></i>Département</span>
+                            <span class="text-primary">{{ user_profile.department|default:"Non renseigné" }}</span>
+                        </li>
+                    </ul>
+                    
+                    <!-- Actions rapides -->
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-block" type="button" data-bs-toggle="collapse" data-bs-target="#editProfileForm">
+                            <i class="fas fa-edit me-2"></i> Modifier mes informations
+                        </button>
                     </div>
                 </div>
-                
-                <div class="card-body p-4">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card mb-4 border-0 shadow-sm rounded-4 bg-light">
-                                <div class="card-body">
-                                    <form method="post" action="{% url 'update_profile' %}">
-                                        {% csrf_token %}
-                                        <div class="mb-3">
-                                            <label for="username" class="form-label fw-bold">Nom d'utilisateur</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-white"><i class="fas fa-user"></i></span>
-                                                <input type="text" name="username" id="username" value="{{ user.username }}" class="form-control" required>
-                                            </div>
-                                        </div>
-                                        
-                                        {% if user.is_superuser or user.is_staff %}
-                                        <div class="mb-3">
-                                            <label for="email" class="form-label fw-bold">Email</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-white"><i class="fas fa-envelope"></i></span>
-                                                <input type="email" name="email" id="email" value="{{ user.email }}" class="form-control">
-                                            </div>
-                                        </div>
-                                        {% else %}
-                                        <!-- Pour les employés, cacher le champ de modification d'email -->
+            </div>
+        </div>
+        
+        <!-- Formulaire de modification (collapsible) -->
+        <div class="col-xl-8 col-md-6">
+            <div class="collapse mb-4" id="editProfileForm">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-edit me-2"></i>Modifier mes informations</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'update_profile' %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="username" class="form-label fw-bold">Nom d'utilisateur</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" name="username" id="username" value="{{ user.username }}" class="form-control" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label fw-bold">Email</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" name="email" id="email" value="{{ user.email }}" class="form-control" {% if not user.is_superuser and not user.is_staff %}readonly{% endif %}>
+                                    </div>
+                                    {% if not user.is_superuser and not user.is_staff %}
+                                        <div class="form-text">Seuls les administrateurs et RH peuvent modifier l'email.</div>
                                         <input type="hidden" name="email" value="{{ user.email }}">
-                                        {% endif %}
-                                        
-                                        <div class="d-grid gap-2 mt-4">
-                                            <button type="submit" class="btn btn-gradient-primary rounded-pill">
-                                                <i class="fas fa-save me-2"></i>Enregistrer les modifications
-                                            </button>
-                                        </div>
-                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="first_name" class="form-label fw-bold">Prénom</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user-edit"></i></span>
+                                        <input type="text" name="first_name" id="first_name" value="{{ user.first_name }}" class="form-control">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="last_name" class="form-label fw-bold">Nom</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user-edit"></i></span>
+                                        <input type="text" name="last_name" id="last_name" value="{{ user.last_name }}" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="phone" class="form-label fw-bold">Téléphone</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input type="text" name="phone" id="phone" value="{{ user_profile.phone|default:'' }}" class="form-control">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="address" class="form-label fw-bold">Adresse</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                        <input type="text" name="address" id="address" value="{{ user_profile.address|default:'' }}" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="position" class="form-label fw-bold">Poste</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-briefcase"></i></span>
+                                        <input type="text" name="position" id="position" value="{{ user_profile.position|default:'' }}" class="form-control">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="department" class="form-label fw-bold">Département</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                        <input type="text" name="department" id="department" value="{{ user_profile.department|default:'' }}" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="profile_picture" class="form-label fw-bold">Photo de profil</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-camera"></i></span>
+                                    <input type="file" name="profile_picture" id="profile_picture" class="form-control">
+                                </div>
+                                <div class="form-text">Maximum 5Mo. Formats acceptés: JPEG, PNG, GIF</div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-secondary me-2" data-bs-toggle="collapse" data-bs-target="#editProfileForm">
+                                    <i class="fas fa-times me-1"></i> Annuler
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i> Enregistrer les modifications
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Panneau de sécurité -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-danger"><i class="fas fa-lock me-2"></i>Sécurité</h6>
+                </div>
+                <div class="card-body">
+                    <h5 class="mb-3">Changer de mot de passe</h5>
+                    <form method="post" action="{% url 'change_password' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Mot de passe actuel</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" name="current_password" id="current_password" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">Nouveau mot de passe</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-key"></i></span>
+                                <input type="password" name="new_password" id="new_password" class="form-control" required>
+                            </div>
+                            <div class="password-requirements mt-2 small">
+                                <p class="mb-1 text-muted">Le mot de passe doit contenir :</p>
+                                <ul class="ps-3 mb-0">
+                                    <li class="requirement" id="req-length">Au moins 8 caractères</li>
+                                    <li class="requirement" id="req-uppercase">Au moins 1 lettre majuscule</li>
+                                    <li class="requirement" id="req-lowercase">Au moins 1 lettre minuscule</li>
+                                    <li class="requirement" id="req-number">Au moins 1 chiffre</li>
+                                    <li class="requirement" id="req-special">Au moins 1 caractère spécial (@,#,$,etc.)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirmer le mot de passe</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-check-double"></i></span>
+                                <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-key me-1"></i> Changer le mot de passe
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Panneau de préférences -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-info"><i class="fas fa-cog me-2"></i>Préférences</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'update_profile' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="preferences">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Thème</label>
+                                <select name="theme" class="form-select">
+                                    <option value="light" {% if user_profile.theme_preference == 'light' %}selected{% endif %}>Clair</option>
+                                    <option value="dark" {% if user_profile.theme_preference == 'dark' %}selected{% endif %}>Sombre</option>
+                                    <option value="system" {% if user_profile.theme_preference == 'system' %}selected{% endif %}>Système</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Langue</label>
+                                <select name="language" class="form-select">
+                                    <option value="fr" {% if user_profile.language_preference == 'fr' %}selected{% endif %}>Français</option>
+                                    <option value="en" {% if user_profile.language_preference == 'en' %}selected{% endif %}>English</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">Paramètres de notification</h5>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notifications_enabled" name="notifications_enabled" {% if user_profile.notifications_enabled %}checked{% endif %}>
+                                        <label class="form-check-label" for="notifications_enabled">Activer les notifications</label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="email_notifications" name="email_notifications" {% if user_profile.email_notifications %}checked{% endif %}>
+                                        <label class="form-check-label" for="email_notifications">Recevoir les notifications par email</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="col-md-6">
-                            <div class="card mb-4 border-0 shadow-sm rounded-4 bg-light">
-                                <div class="card-body">
-                                    <h5 class="card-title mb-3"><i class="fas fa-lock me-2"></i>Changer de mot de passe</h5>
-                                    <form method="post" action="{% url 'change_password' %}">
-                                        {% csrf_token %}
-                                        <div class="mb-3">
-                                            <label for="current_password" class="form-label fw-bold">Mot de passe actuel</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-white"><i class="fas fa-lock"></i></span>
-                                                <input type="password" name="current_password" id="current_password" class="form-control" required>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="new_password" class="form-label fw-bold">Nouveau mot de passe</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-white"><i class="fas fa-key"></i></span>
-                                                <input type="password" name="new_password" id="new_password" class="form-control" required>
-                                            </div>
-                                            <div class="password-requirements mt-2 small">
-                                                <p class="mb-1 text-muted">Le mot de passe doit contenir :</p>
-                                                <ul class="ps-3 mb-0">
-                                                    <li class="requirement" id="req-length">Au moins 8 caractères</li>
-                                                    <li class="requirement" id="req-uppercase">Au moins 1 lettre majuscule</li>
-                                                    <li class="requirement" id="req-lowercase">Au moins 1 lettre minuscule</li>
-                                                    <li class="requirement" id="req-number">Au moins 1 chiffre</li>
-                                                    <li class="requirement" id="req-special">Au moins 1 caractère spécial (@,#,$,etc.)</li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="confirm_password" class="form-label fw-bold">Confirmer le mot de passe</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-white"><i class="fas fa-check-double"></i></span>
-                                                <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
-                                            </div>
-                                        </div>
-                                        <div class="d-grid gap-2">
-                                            <button type="submit" class="btn btn-gradient-warning rounded-pill">
-                                                <i class="fas fa-key me-2"></i>Changer le mot de passe
-                                            </button>
-                                        </div>
-                                    </form>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-info">
+                                <i class="fas fa-save me-1"></i> Enregistrer les préférences
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if request.user.is_superuser %}
+    <!-- Options d'administration pour les administrateurs -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-tools me-2"></i>Administration</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card border-left-info mb-3">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <i class="fas fa-user-plus fa-2x text-info"></i>
                                 </div>
+                                <div class="col">
+                                    <h5 class="mb-0">Création de compte</h5>
+                                    <p class="text-muted small mb-0">Ajouter un nouvel utilisateur</p>
+                                </div>
+                            </div>
+                            <div class="d-grid mt-3">
+                                <a href="{% url 'register' %}" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-plus me-1"></i> Créer un compte
+                                </a>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="text-center mt-3">
-                        <a href="{% url 'dashboard' %}" class="btn btn-gradient-secondary rounded-pill">
-                            <i class="fas fa-arrow-left me-2"></i>Retour au tableau de bord
-                        </a>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-left-secondary mb-3">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <i class="fas fa-users-cog fa-2x text-secondary"></i>
+                                </div>
+                                <div class="col">
+                                    <h5 class="mb-0">Gestion des utilisateurs</h5>
+                                    <p class="text-muted small mb-0">Gérer tous les utilisateurs</p>
+                                </div>
+                            </div>
+                            <div class="d-grid mt-3">
+                                <a href="{% url 'manage_users' %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-cog me-1"></i> Gérer les utilisateurs
+                                </a>
+                            </div>
+                        </div>
                     </div>
-
-                    {% if request.user.is_superuser %}
-                    <div class="mt-4 text-center">
-                        <a href="{% url 'register' %}" class="btn btn-gradient-info btn-lg">
-                            <i class="fas fa-user-plus me-2"></i>Créer un compte
-                        </a>
-                    </div>
-                    <!-- Mise à jour: changer 'manage_users_view' en 'manage_users' -->
-                    <div class="mt-4 text-center">
-                        <a href="{% url 'manage_users' %}" class="btn btn-gradient-secondary btn-lg">
-                            <i class="fas fa-users me-2"></i>Gérer les utilisateurs
-                        </a>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endif %}
 
-<style>
-    /* Styles de base pour les éléments du formulaire */
-    .form-control {
-        border-radius: 0.5rem;
-        padding: 0.75rem 1rem;
-        transition: all 0.3s ease;
-    }
-    
-    .form-control:focus {
-        border-color: #4e73df;
-        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
-    }
-    
-    .form-control:read-only {
-        background-color: #f8f9fa;
-        opacity: 0.8;
-    }
-    
-    .input-group-text {
-        border-radius: 0.5rem 0 0 0.5rem;
-        border-right: none;
-        transition: all 0.3s ease;
-    }
-    
-    .input-group .form-control {
-        border-radius: 0 0.5rem 0.5rem 0;
-    }
-    
-    /* Animations et effets */
-    .animate-fade-in {
-        animation: fadeIn 0.6s ease-in-out;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .card {
-        transition: all 0.3s ease;
-    }
-    
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
-    }
-    
-    /* Styles pour les boutons */
-    .btn {
-        padding: 0.6rem 1.5rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        border: none;
-    }
-    
-    .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    .btn:active {
-        transform: translateY(1px);
-    }
-    
-    /* Styles pour les dégradés */
-    .bg-gradient-primary {
-        background: linear-gradient(45deg, #4e73df, #224abe);
-    }
-    
-    .bg-gradient-warning {
-        background: linear-gradient(45deg, #f6c23e, #dda20a);
-    }
-    
-    .bg-gradient-danger {
-        background: linear-gradient(45deg, #e74a3b, #be392d);
-    }
-    
-    .bg-gradient-secondary {
-        background: linear-gradient(45deg, #858796, #60616f);
-        color: white;
-    }
-    
-    .btn-gradient-primary {
-        background: linear-gradient(45deg, #4e73df, #224abe);
-        color: white;
-    }
-    
-    .btn-gradient-warning {
-        background: linear-gradient(45deg, #f6c23e, #dda20a);
-        color: white;
-    }
-    
-    .btn-gradient-secondary {
-        background: linear-gradient(45deg, #858796, #60616f);
-        color: white;
-    }
-
-    .btn-gradient-info {
-        background: linear-gradient(45deg, #36b9cc, #2c9faf);
-        color: white;
-    }
-    
-    /* Améliorations pour les messages d'alerte */
-    .alert {
-        border: none;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateY(-20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    /* Animation pour les icônes */
-    .fas {
-        transition: all 0.3s ease;
-    }
-    
-    .btn:hover .fas {
-        transform: scale(1.2);
-    }
-    
-    /* Style pour le titre de la carte */
-    .card-title {
-        border-bottom: 2px solid #f0f0f0;
-        padding-bottom: 0.75rem;
-        margin-bottom: 1.5rem;
-        color: #4e73df;
-    }
-    
-    /* Arrondi des coins */
-    .rounded-4 {
-        border-radius: 0.75rem !important;
-    }
-    
-    /* Animation du badge */
-    .badge {
-        transition: all 0.3s ease;
-    }
-    
-    .badge:hover {
-        transform: scale(1.1);
-    }
-    
-    /* Effet de focus sur les champs */
-    .input-group:focus-within .input-group-text {
-        border-color: #4e73df;
-        background-color: #eef1ff;
-    }
-    
-    /* Animation de validation */
-    .form-control:valid:focus {
-        border-color: #1cc88a;
-        box-shadow: 0 0 0 0.2rem rgba(28, 200, 138, 0.25);
-    }
-    
-    /* Style pour l'avatar */
-    .user-avatar {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid white;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-</style>
-
+{% block extra_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Validation du mot de passe
     const newPasswordInput = document.getElementById('new_password');
     const confirmPasswordInput = document.getElementById('confirm_password');
     
-    // Vérifier la force du mot de passe
-    newPasswordInput.addEventListener('input', function() {
-        const password = this.value;
-        
-        // Vérifier les critères
-        const lengthValid = password.length >= 8;
-        const uppercaseValid = /[A-Z]/.test(password);
-        const lowercaseValid = /[a-z]/.test(password);
-        const numberValid = /[0-9]/.test(password);
-        const specialValid = /[^A-Za-z0-9]/.test(password);
-        
-        // Mettre à jour les indicateurs visuels
-        document.getElementById('req-length').className = 'requirement ' + (lengthValid ? 'text-success' : 'text-danger');
-        document.getElementById('req-uppercase').className = 'requirement ' + (uppercaseValid ? 'text-success' : 'text-danger');
-        document.getElementById('req-lowercase').className = 'requirement ' + (lowercaseValid ? 'text-success' : 'text-danger');
-        document.getElementById('req-number').className = 'requirement ' + (numberValid ? 'text-success' : 'text-danger');
-        document.getElementById('req-special').className = 'requirement ' + (specialValid ? 'text-success' : 'text-danger');
-    });
+    if (newPasswordInput) {
+        newPasswordInput.addEventListener('input', function() {
+            const password = this.value;
+            
+            // Vérifier les critères
+            const lengthValid = password.length >= 8;
+            const uppercaseValid = /[A-Z]/.test(password);
+            const lowercaseValid = /[a-z]/.test(password);
+            const numberValid = /[0-9]/.test(password);
+            const specialValid = /[^A-Za-z0-9]/.test(password);
+            
+            // Mettre à jour les indicateurs visuels
+            document.getElementById('req-length').className = 'requirement ' + (lengthValid ? 'text-success' : 'text-danger');
+            document.getElementById('req-uppercase').className = 'requirement ' + (uppercaseValid ? 'text-success' : 'text-danger');
+            document.getElementById('req-lowercase').className = 'requirement ' + (lowercaseValid ? 'text-success' : 'text-danger');
+            document.getElementById('req-number').className = 'requirement ' + (numberValid ? 'text-success' : 'text-danger');
+            document.getElementById('req-special').className = 'requirement ' + (specialValid ? 'text-success' : 'text-danger');
+        });
+    }
     
-    // Vérifier que les mots de passe correspondent
-    confirmPasswordInput.addEventListener('input', function() {
-        if (this.value !== newPasswordInput.value) {
-            this.setCustomValidity('Les mots de passe ne correspondent pas');
-        } else {
-            this.setCustomValidity('');
-        }
-    });
+    if (confirmPasswordInput && newPasswordInput) {
+        confirmPasswordInput.addEventListener('input', function() {
+            if (this.value !== newPasswordInput.value) {
+                this.setCustomValidity('Les mots de passe ne correspondent pas');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    }
 });
 </script>
+{% endblock %}
 {% endblock %}

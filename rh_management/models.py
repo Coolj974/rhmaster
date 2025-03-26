@@ -90,18 +90,31 @@ class ExpenseReport(models.Model):
         ('rejected', 'Refusé')
     )
     
+    EXPENSE_TYPE_CHOICES = (
+        ('transport', 'Transport'),
+        ('meal', 'Repas'),
+        ('accommodation', 'Hébergement'),
+        ('supplies', 'Fournitures'),
+        ('communication', 'Communication'),
+        ('representation', 'Frais de représentation'),
+        ('other', 'Autre')
+    )
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='expense_reports')
     date = models.DateField()
     description = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     vat = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    project = models.CharField(max_length=100)
-    location = models.CharField(max_length=100)  # Maintenant obligatoire
-    attachment = models.FileField(upload_to='expense_attachments/')  # Maintenant obligatoire
+    expense_type = models.CharField(max_length=20, choices=EXPENSE_TYPE_CHOICES, default='other')
+    project = models.CharField(max_length=100, blank=True, null=True)  # Rendu optionnel
+    location = models.CharField(max_length=100, blank=True, null=True)  # Rendu optionnel
+    receipt = models.FileField(upload_to='expense_receipts/', blank=True, null=True)  # Pour le champ du formulaire
+    attachment = models.FileField(upload_to='expense_attachments/', blank=True, null=True)  # Rendu optionnel
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    refacturable = models.BooleanField(default=False)  # Nouveau champ pour indiquer si la dépense est refacturable
+    refacturable = models.BooleanField(default=False)
+    comment = models.TextField(blank=True, null=True)  # Pour les commentaires d'approbation/rejet
     
     def __str__(self):
         return f"{self.user.username} - {self.description} ({self.date})"

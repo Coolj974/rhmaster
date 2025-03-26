@@ -10,7 +10,7 @@ from rh_management.views import (
     home_view, login_view, register_view, logout_view, dashboard_view,
     leave_request_view, manage_leaves_view, approve_leave, reject_leave,
     submit_expense, manage_expenses_view, approve_expense, reject_expense, cancel_expense,
-    profile_view, update_profile, change_password,
+    profile_view, update_profile, change_password, edit_preferences,
     manage_users_view, edit_user, delete_user, toggle_user_status, mass_action, 
     reset_password,
     submit_kilometric_expense, my_kilometric_expenses, manage_kilometric_expenses,
@@ -70,6 +70,7 @@ urlpatterns = [
     path("profile/", profile_view, name="profile"),
     path("profile/update/", update_profile, name="update_profile"),
     path("profile/change-password/", change_password, name="change_password"),
+    path('profile/preferences/', edit_preferences, name='edit_preferences'),
     
     # User management
     path("manage-users/", manage_users_view, name="manage_users"),
