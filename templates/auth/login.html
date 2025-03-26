@@ -1,254 +1,333 @@
-{% extends "base.html" %}
-
-{% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
-                <div class="card-header bg-gradient-primary text-white p-4 text-center">
-                    <h2 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i> Connexion</h2>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - CybeRH</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #224abe;
+            --success-color: #1cc88a;
+            --light-color: #f8f9fc;
+            --dark-color: #5a5c69;
+        }
+        
+        body {
+            height: 100vh;
+            background: linear-gradient(135deg, #f8f9fc 0%, #eaecf4 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .login-form-container {
+            flex: 1;
+            background-color: white;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .login-image {
+            flex: 1;
+            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .login-form-container h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .login-form-container p {
+            color: var(--dark-color);
+            margin-bottom: 30px;
+        }
+        
+        .form-control {
+            height: 50px;
+            border-radius: 10px;
+            box-shadow: none;
+            margin-bottom: 20px;
+            padding-left: 45px;
+            border: 1px solid #e3e6f0;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+        }
+        
+        .input-group {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 16px;
+            color: var(--primary-color);
+            z-index: 10;
+        }
+        
+        .btn-login {
+            height: 50px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(78, 115, 223, 0.3);
+            background: linear-gradient(135deg, #224abe 0%, #4e73df 100%);
+        }
+        
+        .login-image h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+        
+        .login-image p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 80%;
+            margin: 0 auto 30px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .feature-text {
+            flex: 1;
+        }
+        
+        .feature-text h5 {
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        .feature-text p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+            opacity: 0.8;
+        }
+        
+        .brand-logo {
+            max-width: 200px;
+            margin-bottom: 30px;
+        }
+        
+        .form-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .form-error i {
+            margin-right: 10px;
+        }
+        
+        .text-muted {
+            font-size: 0.85rem;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .login-form-container > * {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        
+        .login-form-container > *:nth-child(2) { animation-delay: 0.2s; }
+        .login-form-container > *:nth-child(3) { animation-delay: 0.4s; }
+        .login-form-container > *:nth-child(4) { animation-delay: 0.6s; }
+        .login-form-container > *:nth-child(5) { animation-delay: 0.8s; }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .login-image {
+                display: none;
+            }
+            
+            .login-container {
+                max-width: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-form-container">
+            <div class="text-center mb-4">
+                <img src="#" alt="CybeRH Logo" class="brand-logo">
+                <h1>Connexion</h1>
+                <p>Accédez à votre compte CybeRH</p>
+            </div>
+            
+            {% if form.errors %}
+            <div class="form-error mb-4">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Identifiants incorrects. Veuillez réessayer.</span>
+            </div>
+            {% endif %}
+            
+            {% if next %}
+                {% if user.is_authenticated %}
+                <div class="form-error mb-4">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Votre compte n'a pas accès à cette page. Pour continuer, connectez-vous avec un compte ayant les autorisations nécessaires.</span>
                 </div>
-                <div class="card-body p-5">
-                    <div class="text-center mb-4">
-                        <div class="avatar-circle bg-light mx-auto mb-3" style="width: 100px; height: 100px;">
-                            <i class="fas fa-user-circle text-primary fa-4x"></i>
-                        </div>
-                        <h4 class="text-muted">Bienvenue sur CybeRH</h4>
+                {% else %}
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Veuillez vous connecter pour accéder à cette page.
+                </div>
+                {% endif %}
+            {% endif %}
+            
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                
+                <div class="input-group">
+                    <span class="input-icon">
+                        <i class="fas fa-user"></i>
+                    </span>
+                    <input type="text" name="username" class="form-control" placeholder="Nom d'utilisateur" required autofocus>
+                </div>
+                
+                <div class="input-group">
+                    <span class="input-icon">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                    <input type="password" name="password" class="form-control" placeholder="Mot de passe" required>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="remember-me">
+                    <label class="form-check-label" for="remember-me">
+                        Se souvenir de moi
+                    </label>
+                </div>
+                
+                <input type="hidden" name="next" value="{{ next }}">
+                
+                <button type="submit" class="btn btn-login btn-block w-100">
+                    <i class="fas fa-sign-in-alt me-2"></i> Se connecter
+                </button>
+                
+                <div class="text-center mt-4">
+                    <a href="#" class="text-decoration-none text-muted">Mot de passe oublié ?</a>
+                </div>
+            </form>
+        </div>
+        
+        <div class="login-image">
+            <h2>CybeRH</h2>
+            <p>Votre portail de gestion RH complet</p>
+            
+            <div class="features mt-4">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-calendar-alt"></i>
                     </div>
-                    
-                    {% if form.errors %}
-                    <div class="alert alert-danger animate-shake">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Nom d'utilisateur ou mot de passe incorrect. Veuillez réessayer.
-                    </div>
-                    {% endif %}
-                    
-                    <form method="post" id="login-form">
-                        {% csrf_token %}
-                        <div class="mb-4 form-floating">
-                            <div class="input-group input-group-lg form-group-animate">
-                                <span class="input-group-text bg-light border-0"><i class="fas fa-user"></i></span>
-                                <input type="text" name="username" id="id_username" class="form-control form-control-lg shadow-sm" 
-                                       placeholder="Nom d'utilisateur" required autofocus>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4 form-floating">
-                            <div class="input-group input-group-lg form-group-animate">
-                                <span class="input-group-text bg-light border-0"><i class="fas fa-lock"></i></span>
-                                <input type="password" name="password" id="id_password" class="form-control form-control-lg shadow-sm" 
-                                       placeholder="Mot de passe" required>
-                                <button class="input-group-text bg-light border-0" type="button" id="togglePassword">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="remember-me" name="remember">
-                                <label class="form-check-label" for="remember-me">Se souvenir de moi</label>
-                            </div>
-                            <a href="#" class="text-primary fw-bold text-decoration-none">
-                                Mot de passe oublié ?
-                            </a>
-                        </div>
-                        
-                        <div class="text-center mt-5">
-                            <button type="submit" id="login-button" class="btn btn-gradient-primary btn-lg px-5 py-3 rounded-pill shadow-sm w-100">
-                                <i class="fas fa-sign-in-alt me-2"></i>Se connecter
-                            </button>
-                        </div>
-                    </form>
-                    
-                    <div class="text-center mt-4">
-                        <p class="mb-0">Pas encore de compte ?</p>
-                        <a href="#" class="text-primary fw-bold text-decoration-none">
-                            Demander un accès à l'administrateur
-                        </a>
+                    <div class="feature-text">
+                        <h5>Gestion des congés</h5>
+                        <p>Demandez et suivez vos congés en quelques clics</p>
                     </div>
                 </div>
-                <div class="card-footer bg-light p-3 text-center">
-                    <div class="d-flex justify-content-center gap-3">
-                        <span class="text-muted small">© {% now "Y" %} CybeRH</span>
-                        <span class="text-muted">•</span>
-                        <a href="#" class="text-decoration-none small">Aide</a>
-                        <span class="text-muted">•</span>
-                        <a href="#" class="text-decoration-none small">Confidentialité</a>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h5>Notes de frais</h5>
+                        <p>Soumettez vos notes de frais simplement</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h5>Frais kilométriques</h5>
+                        <p>Calculez et déclarez vos déplacements professionnels</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h5>Gestionnaire de mots de passe</h5>
+                        <p>Stockez et partagez vos identifiants en toute sécurité</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Animation d'entrée pour la carte
-    const card = document.querySelector('.animate-fade-in');
-    if (card) {
-        card.style.animation = 'fadeIn 0.8s ease-in-out';
-    }
     
-    // Animation pour les groupes de formulaire au focus
-    const formInputs = document.querySelectorAll('.form-control');
-    formInputs.forEach(input => {
-        input.addEventListener('focus', function() {
-            this.closest('.form-group-animate').classList.add('input-focused');
-        });
-        
-        input.addEventListener('blur', function() {
-            this.closest('.form-group-animate').classList.remove('input-focused');
-        });
-    });
-    
-    // Fonctionnalité pour afficher/masquer le mot de passe
-    const togglePassword = document.getElementById('togglePassword');
-    const passwordInput = document.getElementById('id_password');
-    
-    if (togglePassword && passwordInput) {
-        togglePassword.addEventListener('click', function() {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            
-            // Changer l'icône
-            this.querySelector('i').classList.toggle('fa-eye');
-            this.querySelector('i').classList.toggle('fa-eye-slash');
-        });
-    }
-    
-    // Animation du bouton de connexion
-    const loginButton = document.getElementById('login-button');
-    if (loginButton) {
-        loginButton.addEventListener('mouseenter', function() {
-            this.querySelector('i').classList.add('fa-beat');
-        });
-        
-        loginButton.addEventListener('mouseleave', function() {
-            this.querySelector('i').classList.remove('fa-beat');
-        });
-        
-        // Animation lors de la soumission
-        document.getElementById('login-form').addEventListener('submit', function() {
-            loginButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Connexion...';
-            loginButton.disabled = true;
-        });
-    }
-});
-</script>
-
-<style>
-    /* Styles pour les gradients et effets modernes */
-    .bg-gradient-primary {
-        background: linear-gradient(45deg, #4e73df, #224abe);
-    }
-    
-    .btn-gradient-primary {
-        background: linear-gradient(45deg, #4e73df, #224abe);
-        color: white;
-        border: none;
-        transition: all 0.3s;
-    }
-    
-    .btn-gradient-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        color: white;
-    }
-    
-    .rounded-4 {
-        border-radius: 0.75rem !important;
-    }
-    
-    .form-control, .input-group-text {
-        border-radius: 0.5rem;
-    }
-    
-    .form-control:focus {
-        border-color: #4e73df;
-        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
-    }
-    
-    .input-group-text {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-    }
-    
-    .input-group-text:last-child {
-        border-top-right-radius: 0.5rem;
-        border-bottom-right-radius: 0.5rem;
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-        cursor: pointer;
-    }
-    
-    .avatar-circle {
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-weight: bold;
-        box-shadow: 0 5px 15px rgba(78, 115, 223, 0.2);
-    }
-    
-    /* Animations */
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .animate-fade-in {
-        opacity: 0;
-    }
-    
-    .form-group-animate {
-        transition: all 0.3s ease;
-    }
-    
-    .input-focused {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 15px rgba(78, 115, 223, 0.1);
-    }
-
-    .input-focused .input-group-text i {
-        color: #4e73df;
-        transform: scale(1.2);
-        transition: all 0.3s ease;
-    }
-    
-    .fa-beat {
-        animation: beat 0.75s infinite alternate;
-    }
-    
-    @keyframes beat {
-        to { transform: scale(1.2); }
-    }
-    
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-        20%, 40%, 60%, 80% { transform: translateX(5px); }
-    }
-    
-    .animate-shake {
-        animation: shake 0.6s ease-in-out;
-    }
-    
-    /* Style pour le footer de la carte */
-    .card-footer {
-        border-top: 1px solid rgba(0,0,0,0.05);
-    }
-    
-    /* Styles responsifs */
-    @media (max-width: 768px) {
-        .card {
-            margin-left: 1rem;
-            margin-right: 1rem;
-        }
-        
-        .input-focused {
-            transform: none;
-        }
-    }
-</style>
-{% endblock %}
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

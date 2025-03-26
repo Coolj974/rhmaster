@@ -280,6 +280,18 @@ class PasswordManager(models.Model):
         chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?'
         return get_random_string(length, chars)
 
+    def get_decrypted_password(self):
+        """Déchiffre et retourne le mot de passe"""
+        try:
+            # Créer une instance Fernet avec la clé d'encryption
+            cipher_suite = Fernet(self.encryption_key.encode('utf-8'))
+            # Déchiffrer le mot de passe
+            decrypted_password = cipher_suite.decrypt(self.password.encode('utf-8')).decode('utf-8')
+            return decrypted_password
+        except Exception as e:
+            # En cas d'erreur, retourner une indication
+            return "[Erreur de déchiffrement]"
+
 class PasswordShare(models.Model):
     """Model to handle password sharing between users."""
     password_entry = models.ForeignKey(PasswordManager, on_delete=models.CASCADE, related_name='shares')

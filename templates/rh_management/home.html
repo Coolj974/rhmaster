@@ -1,155 +1,114 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
-    <!-- Section Héro -->
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4 animate-fade-in">
-                <div class="card-header bg-gradient-primary text-white p-5 text-center">
-                    <h1 class="display-4 fw-bold mb-2"><i class="fas fa-building me-3"></i>CybeRH</h1>
-                    <p class="lead mb-0">Votre plateforme de gestion RH</p>
-                </div>
-                <div class="card-body p-5 text-center">
-                    <div class="mb-4">
-                        <i class="fas fa-tasks fa-4x text-primary mb-3"></i>
-                        <h2 class="h3 mb-4">Gérez vos congés et notes de frais facilement</h2>
-                        <p class="lead text-muted mb-5">Une solution complète pour simplifier vos démarches administratives</p>
+<div class="container py-5">
+    <!-- En-tête de bienvenue -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4 fw-bold mb-3">Bienvenue sur CybeRH</h1>
+            <p class="lead text-muted">
+                Votre plateforme centralisée pour gérer vos congés, notes de frais et documents RH.
+            </p>
+            <hr class="my-4">
+        </div>
+    </div>
+
+    <!-- Cartes d'accès rapide -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm hover-card">
+                <div class="card-body text-center p-4">
+                    <div class="icon-wrapper bg-primary text-white mb-3">
+                        <i class="fas fa-calendar-alt fa-2x"></i>
                     </div>
-                    
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'dashboard' %}" class="btn btn-gradient-primary btn-lg px-5 py-3 rounded-pill shadow-sm">
-                            <i class="fas fa-tachometer-alt me-2"></i>Accéder au Tableau de Bord
-                        </a>
+                    <h3 class="card-title h5 mb-3">Gestion des Congés</h3>
+                    <p class="card-text mb-4">Demandez et suivez vos congés en temps réel. Consultez votre solde et l'historique de vos demandes.</p>
+                    <a href="{% url 'leave_request' %}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Nouvelle demande
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm hover-card">
+                <div class="card-body text-center p-4">
+                    <div class="icon-wrapper bg-success text-white mb-3">
+                        <i class="fas fa-receipt fa-2x"></i>
+                    </div>
+                    <h3 class="card-title h5 mb-3">Notes de Frais</h3>
+                    <p class="card-text mb-4">Soumettez vos notes de frais en quelques clics. Suivez leur traitement et recevez vos remboursements rapidement.</p>
+                    <a href="{% url 'submit_expense' %}" class="btn btn-success">
+                        <i class="fas fa-plus-circle me-2"></i>Nouvelle note
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm hover-card">
+                <div class="card-body text-center p-4">
+                    <div class="icon-wrapper bg-info text-white mb-3">
+                        <i class="fas fa-key fa-2x"></i>
+                    </div>
+                    <h3 class="card-title h5 mb-3">Mots de Passe</h3>
+                    <p class="card-text mb-4">Gérez vos mots de passe de manière sécurisée. Partagez-les avec vos collègues en toute confiance.</p>
+                    <a href="/passwords/" class="btn btn-info">
+                        <i class="fas fa-lock me-2"></i>Gérer mes mots de passe
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- En attente de validation - Si l'utilisateur a des demandes en cours -->
+    <div class="row mb-5">
+        <div class="col-lg-10 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Vos demandes en attente</h5>
+                    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if pending_requests %}
+                    <div class="list-group list-group-flush">
+                        {% for request in pending_requests %}
+                        <div class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ request.type }} - {{ request.title }}</h6>
+                                    <p class="text-muted small mb-0">
+                                        <i class="fas fa-calendar-day me-1"></i> Soumis le {{ request.date|date:"d/m/Y" }}
+                                    </p>
+                                </div>
+                                <span class="badge bg-warning text-dark px-3 py-2">En attente</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                     {% else %}
-                        <a href="{% url 'login' %}" class="btn btn-gradient-success btn-lg px-5 py-3 rounded-pill shadow-sm">
-                            <i class="fas fa-sign-in-alt me-2"></i>Se Connecter
-                        </a>
+                    <div class="text-center py-5">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <p class="text-muted">Vous n'avez aucune demande en attente de validation.</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
-            
-            <!-- Fonctionnalités principales -->
-            <div class="row g-4 text-center mb-5">
-                <div class="col-md-4">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 feature-card">
-                        <div class="card-body p-4">
-                            <div class="feature-icon-circle mb-3">
-                                <i class="fas fa-calendar-check text-primary"></i>
-                            </div>
-                            <h3 class="h5">Gestion des congés</h3>
-                            <p class="text-muted small mb-0">Demandez et suivez vos congés en quelques clics</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 feature-card">
-                        <div class="card-body p-4">
-                            <div class="feature-icon-circle mb-3">
-                                <i class="fas fa-receipt text-success"></i>
-                            </div>
-                            <h3 class="h5">Notes de frais</h3>
-                            <p class="text-muted small mb-0">Soumettez et gérez vos dépenses professionnelles</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 feature-card">
-                        <div class="card-body p-4">
-                            <div class="feature-icon-circle mb-3">
-                                <i class="fas fa-car text-info"></i>
-                            </div>
-                            <h3 class="h5">Frais kilométriques</h3>
-                            <p class="text-muted small mb-0">Calculez et déclarez vos déplacements professionnels</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
-</div>
 
-<!-- Sections des fonctionnalités avancées -->
-<div class="bg-light py-5">
-    <div class="container">
-        <h2 class="text-center mb-4 text-primary fw-bold">Fonctionnalités clés</h2>
-        <div class="row g-4 justify-content-center">
-            <div class="col-6 col-md-3">
-                <div class="card border-0 h-100 feature-highlight">
-                    <div class="card-body text-center p-4">
-                        <div class="icon-circle bg-gradient-primary text-white mb-3">
-                            <i class="fas fa-rocket"></i>
-                        </div>
-                        <h3 class="h5">Rapidité</h3>
-                        <p class="small text-muted">Traitement accéléré de vos demandes</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card border-0 h-100 feature-highlight">
-                    <div class="card-body text-center p-4">
-                        <div class="icon-circle bg-gradient-success text-white mb-3">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <h3 class="h5">Sécurité</h3>
-                        <p class="small text-muted">Protection avancée de vos données</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card border-0 h-100 feature-highlight">
-                    <div class="card-body text-center p-4">
-                        <div class="icon-circle bg-gradient-warning text-white mb-3">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h3 class="h5">Analyses</h3>
-                        <p class="small text-muted">Tableaux de bord personnalisés</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card border-0 h-100 feature-highlight">
-                    <div class="card-body text-center p-4">
-                        <div class="icon-circle bg-gradient-danger text-white mb-3">
-                            <i class="fas fa-mobile-alt"></i>
-                        </div>
-                        <h3 class="h5">Mobile</h3>
-                        <p class="small text-muted">Accessible depuis n'importe où</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Gestionnaire de mots de passe -->
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-md-10 col-lg-8">
-            <div class="card border-0 shadow-lg rounded-4 bg-gradient-primary text-white overflow-hidden password-feature-card">
-                <div class="card-body p-4 p-md-5 position-relative">
+    <!-- Section d'aide -->
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card border-0 bg-light">
+                <div class="card-body p-4">
                     <div class="row align-items-center">
-                        <div class="col-md-7">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="feature-icon bg-white text-primary rounded-circle me-3">
-                                    <i class="fas fa-key"></i>
-                                </div>
-                                <h3 class="mb-0">Gestionnaire de mots de passe</h3>
-                            </div>
-                            <p>Sécurisez tous vos identifiants professionnels en un seul endroit avec notre nouveau gestionnaire de mots de passe chiffré.</p>
-                            
-                            <div class="mt-4 d-flex justify-content-center justify-content-md-start">
-                                <a href="{% url 'password_manager_list' %}" class="btn btn-light btn-lg rounded-pill">
-                                    <i class="fas fa-lock me-2"></i> Accéder maintenant
-                                </a>
-                            </div>
+                        <div class="col-md-8">
+                            <h4>Besoin d'aide ?</h4>
+                            <p class="mb-0">Notre équipe RH est disponible pour répondre à vos questions.</p>
                         </div>
-                        <div class="col-md-5 d-none d-md-block">
-                            <div class="password-manager-graphic">
-                                <i class="fas fa-fingerprint text-white-50"></i>
-                                <i class="fas fa-shield-alt text-white-50"></i>
-                                <i class="fas fa-lock text-white-50"></i>
-                            </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <a href="mailto:support@rhmaster.com" class="btn btn-outline-secondary">
+                                <i class="fas fa-envelope me-2"></i>Contacter le support
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -157,277 +116,47 @@
         </div>
     </div>
 </div>
-
-<!-- Témoignages -->
-<div class="bg-light py-5">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <h2 class="text-center mb-4 text-primary fw-bold">Témoignages</h2>
-                
-                <div id="testimonialCarousel" class="carousel slide" data-bs-ride="carousel">
-                    <div class="carousel-inner">
-                        <div class="carousel-item active">
-                            <div class="card border-0 shadow rounded-4 p-4">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-quote-left fa-2x text-primary opacity-25 mb-3"></i>
-                                    <p class="lead mb-3">CybeRH a considérablement simplifié la gestion administrative de nos équipes.</p>
-                                    <div class="d-flex justify-content-center align-items-center">
-                                        <div class="avatar-circle bg-gradient-primary text-white me-2">JD</div>
-                                        <div>
-                                            <h5 class="mb-0">Jean Dupont</h5>
-                                            <p class="small text-muted mb-0">Directeur RH</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="carousel-item">
-                            <div class="card border-0 shadow rounded-4 p-4">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-quote-left fa-2x text-primary opacity-25 mb-3"></i>
-                                    <p class="lead mb-3">Interface intuitive et performante, nous fait gagner un temps précieux.</p>
-                                    <div class="d-flex justify-content-center align-items-center">
-                                        <div class="avatar-circle bg-gradient-success text-white me-2">ML</div>
-                                        <div>
-                                            <h5 class="mb-0">Marie Leblanc</h5>
-                                            <p class="small text-muted mb-0">Manager</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-center mt-3">
-                        <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="0" class="mx-1 carousel-indicator" aria-current="true" aria-label="Testimonial 1"></button>
-                        <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="1" class="mx-1 carousel-indicator" aria-label="Testimonial 2"></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Appel à l'action -->
-<div class="bg-gradient-primary text-white py-5">
-    <div class="container text-center">
-        <h2 class="h3 mb-3">Prêt à simplifier votre gestion RH ?</h2>
-        <p class="mb-4">Rejoignez les entreprises qui optimisent leurs processus administratifs</p>
-        
-        {% if not user.is_authenticated %}
-            <a href="{% url 'login' %}" class="btn btn-light btn-lg px-4 py-2 rounded-pill shadow-sm">
-                <i class="fas fa-sign-in-alt me-2"></i>Commencer maintenant
-            </a>
-        {% else %}
-            <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg px-4 py-2 rounded-pill shadow-sm">
-                <i class="fas fa-tachometer-alt me-2"></i>Accéder à mon tableau de bord
-            </a>
-        {% endif %}
-    </div>
-</div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Optimisation : Utiliser IntersectionObserver pour les animations au défilement
-        const observerOptions = {
-            root: null,
-            rootMargin: '0px',
-            threshold: 0.1
-        };
-        
-        const animateOnScroll = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    animateOnScroll.unobserve(entry.target);
-                }
-            });
-        }, observerOptions);
-        
-        // Observer les éléments à animer
-        document.querySelectorAll('.feature-card, .feature-highlight, .password-feature-card').forEach(el => {
-            el.classList.add('animate-on-scroll');
-            animateOnScroll.observe(el);
-        });
-        
-        // Animation des icônes dans la section du gestionnaire de mots de passe
-        const icons = document.querySelectorAll('.password-manager-graphic i');
-        let delay = 0;
-        icons.forEach(icon => {
-            setTimeout(() => {
-                icon.classList.add('pulse-animation');
-            }, delay);
-            delay += 500;
-        });
-    });
-</script>
 
 <style>
-    /* Optimisation des styles */
-    .rounded-4 { border-radius: 0.75rem !important; }
-    
-    /* Gradient de couleurs */
-    .bg-gradient-primary { background: linear-gradient(135deg, #4e73df, #224abe); }
-    .bg-gradient-success { background: linear-gradient(135deg, #1cc88a, #13855c); }
-    .bg-gradient-warning { background: linear-gradient(135deg, #f6c23e, #dda20a); }
-    .bg-gradient-danger { background: linear-gradient(135deg, #e74a3b, #be392d); }
-    
-    /* Boutons */
-    .btn-gradient-primary {
-        background: linear-gradient(135deg, #4e73df, #224abe);
-        color: white;
-        border: none;
-        transition: all 0.3s;
+    /* Styles pour l'animation au survol des cartes */
+    .hover-card {
+        transition: all 0.3s ease;
     }
     
-    .btn-gradient-success {
-        background: linear-gradient(135deg, #1cc88a, #13855c);
-        color: white;
-        border: none;
-        transition: all 0.3s;
+    .hover-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
     }
     
-    .btn-gradient-primary:hover, .btn-gradient-success:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-        color: white;
-    }
-    
-    /* Icônes et cercles */
-    .feature-icon-circle {
-        width: 70px;
-        height: 70px;
-        background-color: rgba(78, 115, 223, 0.1);
+    /* Style pour les icônes */
+    .icon-wrapper {
+        width: 80px;
+        height: 80px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         margin: 0 auto;
-        font-size: 1.5rem;
     }
     
-    .icon-circle {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
-        font-size: 1.5rem;
+    /* Style pour la section d'aide */
+    .bg-light {
+        background-color: #f8f9fa !important;
     }
-    
-    .avatar-circle {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-weight: bold;
-    }
-    
-    /* Animations optimisées */
-    .animate-on-scroll {
-        opacity: 0;
-        transform: translateY(20px);
-        transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-    }
-    
-    .animate-on-scroll.visible {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    
-    /* Animations spécifiques */
-    .feature-card {
-        transition: all 0.3s ease;
-    }
-    
-    .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
-    
-    .feature-highlight {
-        transition: all 0.3s ease;
-    }
-    
-    .feature-highlight:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-    }
-    
-    /* Animation du gestionnaire de mots de passe */
-    .password-feature-card {
-        overflow: hidden;
-        position: relative;
-    }
-    
-    .password-feature-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 50%);
-        pointer-events: none;
-    }
-    
-    .password-manager-graphic {
-        position: relative;
-        height: 200px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .password-manager-graphic i {
-        position: absolute;
-        font-size: 3rem;
-        opacity: 0;
-        transform: translateY(20px);
-        transition: opacity 0.5s ease, transform 0.5s ease;
-    }
-    
-    .password-manager-graphic i:nth-child(1) { left: 20%; top: 20%; }
-    .password-manager-graphic i:nth-child(2) { left: 50%; top: 50%; }
-    .password-manager-graphic i:nth-child(3) { left: 70%; top: 30%; }
-    
-    .password-manager-graphic i.pulse-animation {
-        opacity: 0.7;
-        transform: translateY(0);
-    }
-    
-    /* Témoignages */
-    .carousel-indicator {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background-color: #4e73df;
-        opacity: 0.3;
-        border: none;
-        padding: 0;
-        transition: opacity 0.3s;
-    }
-    
-    .carousel-indicator[aria-current="true"] {
-        opacity: 1;
-    }
-    
-    /* Médias queries pour responsive */
-    @media (max-width: 767px) {
-        .icon-circle {
-            width: 50px;
-            height: 50px;
-            font-size: 1.2rem;
+
+    /* Media queries pour le responsive */
+    @media (max-width: 768px) {
+        .hover-card:hover {
+            transform: none;
         }
         
-        .feature-icon-circle {
+        .icon-wrapper {
             width: 60px;
             height: 60px;
-            font-size: 1.2rem;
+        }
+        
+        .icon-wrapper i {
+            font-size: 1.5rem !important;
         }
     }
 </style>

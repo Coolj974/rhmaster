@@ -24,6 +24,8 @@ from rh_management.views import (
     password_manager_list, password_manager_add, password_manager_edit, 
     password_manager_delete, password_manager_view, password_share, password_share_remove,
     api_leaves,
+    password_manager, password_add, password_view, password_edit, password_delete,
+    leave_action, expense_action, kilometric_expense_action
 )
 
 # Error handlers
@@ -87,6 +89,7 @@ urlpatterns = [
     path("approve-leave/<int:leave_id>/", approve_leave, name="approve_leave"),  # Approve leave
     path("reject-leave/<int:leave_id>/", reject_leave, name="reject_leave"),  # Reject leave
     path('delete_leave/<int:id>/', delete_leave, name='delete_leave'),
+    path('leave-action/<int:leave_id>/', leave_action, name='leave_action'),
 
     # Expense Management
     path("submit-expense/", submit_expense, name="submit_expense"),  # Submit expense
@@ -98,6 +101,7 @@ urlpatterns = [
     path("export-expenses/", export_expenses, name="export_expenses"),  # Export expenses
     path("cancel-expense/<int:expense_id>/", cancel_expense, name="cancel_expense"),
     path('delete_expense/<int:id>/', delete_expense, name='delete_expense'),
+    path('expense-action/<int:expense_id>/', expense_action, name='expense_action'),
 
     # Kilometric Expense Management
     path("submit-kilometric-expense/", submit_kilometric_expense, name="submit_kilometric_expense"),  # Submit kilometric expense
@@ -107,6 +111,7 @@ urlpatterns = [
     path("reject-kilometric-expense/<int:expense_id>/", reject_kilometric_expense, name="reject_kilometric_expense"),  # Reject kilometric expense
     path("edit-kilometric-expense/<int:expense_id>/", edit_kilometric_expense, name="edit_kilometric_expense"),  # Edit kilometric expense
     path('delete_kilometric_expense/<int:id>/', delete_kilometric_expense, name='delete_kilometric_expense'),
+    path('kilometric-expense-action/<int:expense_id>/', kilometric_expense_action, name='kilometric_expense_action'),
     
     # Password Manager
     path("password-manager/", password_manager_list, name="password_manager_list"),
@@ -116,6 +121,13 @@ urlpatterns = [
     path("password-manager/<int:pk>/view/", password_manager_view, name="password_manager_view"),
     path("password-manager/<int:pk>/share/", password_share, name="password_share"),
     path("password-manager/share/<int:share_id>/remove/", password_share_remove, name="password_share_remove"),
+    path('password-manager/', password_manager_list, name='password_manager'),  # Alias pour compatibilité
+    path('passwords/', password_manager, name='password_manager'),
+    path('passwords/add/', password_add, name='password_add'),
+    path('passwords/view/<int:pk>/', password_view, name='password_view'),
+    path('passwords/edit/<int:pk>/', password_edit, name='password_edit'),
+    path('passwords/delete/<int:pk>/', password_delete, name='password_delete'),
+    path('passwords/share/<int:pk>/', password_share, name='password_share'),
     
     # API
     path("api/leaves/", api_leaves, name="api_leaves"),

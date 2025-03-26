@@ -15,13 +15,14 @@ import json
 from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password
 from django.utils import timezone
-from django.db.models import Avg
+from django.db.models import Avg, Sum
 from .models import LeaveBalance, LeaveRequest
 from .models import PasswordManager
 from .forms import PasswordManagerForm
 from django.contrib.auth.models import User, Group
 from .models import PasswordShare
 from datetime import datetime
+from django.core.paginator import Paginator
 
 # Vérifie si l'utilisateur est un admin ou un RH
 def is_admin_or_hr(user):
@@ -74,8 +75,38 @@ def can_edit_profiles(user):
 
 # ✅ Page d'accueil
 def home_view(request):
-    """Affiche la page d'accueil."""
-    return render(request, 'rh_management/home.html')
+    """Vue de la page d'accueil."""
+    
+    # Ajouter les compteurs des notifications manquants
+    context = {
+        'new_expense_reports_count': 0,
+        'new_leave_requests_count': 0,
+        'new_kilometric_expenses_count': 0,
+    }
+    
+    # Si l'utilisateur est authentifié, calculer les compteurs réels
+    if request.user.is_authenticated:
+        # Vérifier si l'utilisateur est administrateur, RH ou encadrant
+        is_admin = request.user.is_superuser
+        is_rh = request.user.is_staff
+        is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+        
+        if is_admin or is_rh or is_encadrant:
+            # Compter les nouvelles demandes de congé
+            context['new_leave_requests_count'] = LeaveRequest.objects.filter(status='pending').count()
+            
+            # Compter les nouvelles notes de frais
+            context['new_expense_reports_count'] = ExpenseReport.objects.filter(status='pending').count()
+            
+            # Compter les nouveaux frais kilométriques
+            context['new_kilometric_expenses_count'] = KilometricExpense.objects.filter(status='pending').count()
+            
+        # Ajouter les flags de rôle au contexte pour les conditions dans le template
+        context['is_admin'] = is_admin
+        context['is_rh'] = is_rh
+        context['is_encadrant'] = is_encadrant
+    
+    return render(request, 'rh_management/home.html', context)
 
 # ✅ Connexion
 def login_view(request):
@@ -91,7 +122,17 @@ def login_view(request):
         else:
             messages.error(request, "Nom d'utilisateur ou mot de passe incorrect.")
 
-    return render(request, 'auth/login.html')
+    # Initialiser les variables de comptage des notifications à 0 pour les pages de connexion
+    context = {
+        'new_leave_requests_count': 0,
+        'new_expense_reports_count': 0,
+        'new_kilometric_expenses_count': 0,
+        'is_admin': False,
+        'is_rh': False,
+        'is_encadrant': False,
+    }
+    
+    return render(request, 'auth/login.html', context)
 
 # Restreindre la création de comptes aux administrateurs
 @login_required
@@ -380,6 +421,15 @@ def is_hr(user):
 @login_required
 def leave_request_view(request):
     """Vue pour soumettre une demande de congé."""
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Vérifier si l'utilisateur a un solde de congés
+    leave_balance, created = LeaveBalance.objects.get_or_create(
+        user=request.user,
+        defaults={'acquired': 25.0, 'taken': 0.0}
+    )
+    
     if request.method == 'POST':
         form = LeaveRequestForm(request.POST, request.FILES)
         if form.is_valid():
@@ -432,22 +482,38 @@ def leave_request_view(request):
     else:
         form = LeaveRequestForm()
     
-    # Récupérer le solde de congés de l'utilisateur
-    leave_balance, created = LeaveBalance.objects.get_or_create(
-        user=request.user,
-        defaults={'acquired': 25.0, 'taken': 0.0}
-    )
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
     
-    # Calculer le pourcentage de congés restants
-    if leave_balance:
-        if leave_balance.acquired > 0:
-            leave_balance.percentage = (leave_balance.available / leave_balance.acquired) * 100
-        else:
-            leave_balance.percentage = 0
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh or is_encadrant:
+        # Seuls les admins, RH et encadrants peuvent voir les compteurs
+        if is_admin or is_rh:
+            new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+            new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+            new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+        elif is_encadrant:
+            # Pour les encadrants, montrer uniquement les demandes de leur équipe
+            team_members = User.objects.filter(team_leader=request.user)
+            new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+            new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+            new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
     
     context = {
         'form': form,
-        'leave_balance': leave_balance
+        'leave_balance': leave_balance,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
     }
     
     return render(request, 'rh_management/leave_request.html', context)
@@ -535,43 +601,53 @@ def bulk_update_leave_balance(request):
 @login_required
 @user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def manage_leaves_view(request):
-    """Vue pour la gestion des congés."""
+    """Vue pour gérer les demandes de congés."""
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Vérifier les permissions
     is_admin = request.user.is_superuser
-    is_hr = request.user.groups.filter(name='HR').exists() or request.user.is_staff
+    is_hr = request.user.is_staff
     is_encadrant = request.user.groups.filter(name='Encadrant').exists()
     
-    if is_admin or is_hr or is_encadrant:
-        # Filtrer les demandes à afficher selon le rôle
-        leaves = LeaveRequest.objects.all()
-        
-        # Exclure les propres demandes de l'utilisateur pour éviter l'auto-validation
-        # Montrer uniquement les demandes en attente pour validation
-        pending_leaves = leaves.filter(status='pending').exclude(user=request.user)
-        
-        # Les demandes de l'utilisateur (pour information)
-        user_leaves = leaves.filter(user=request.user)
-        
-        # Autres demandes déjà traitées (pour information)
-        processed_leaves = leaves.exclude(status='pending').exclude(user=request.user)
-        
-        # Trier du plus récent au plus ancien
-        pending_leaves = pending_leaves.order_by('-created_at')
-        user_leaves = user_leaves.order_by('-created_at')
-        processed_leaves = processed_leaves.order_by('-created_at')
-        
-        context = {
-            'pending_leaves': pending_leaves,
-            'user_leaves': user_leaves,
-            'processed_leaves': processed_leaves,
-            'is_admin': is_admin,
-            'is_hr': is_hr,
-            'is_encadrant': is_encadrant
-        }
-        
-        return render(request, 'rh_management/manage_leaves.html', context)
-    else:
-        messages.error(request, "Vous n'avez pas l'autorisation d'accéder à cette page.")
+    if not (is_admin or is_hr or is_encadrant):
+        messages.error(request, "Vous n'avez pas les permissions nécessaires pour accéder à cette page.")
         return redirect('dashboard')
+    
+    # Filtrer les demandes de congés selon le rôle de l'utilisateur
+    if is_admin or is_hr:
+        pending_leaves = LeaveRequest.objects.filter(status='pending').order_by('-created_at')
+        processed_leaves = LeaveRequest.objects.exclude(status='pending').order_by('-updated_at')
+    elif is_encadrant:
+        # L'encadrant ne voit que les demandes de son équipe
+        team_members = User.objects.filter(team_leader=request.user)
+        pending_leaves = LeaveRequest.objects.filter(user__in=team_members, status='pending').order_by('-created_at')
+        processed_leaves = LeaveRequest.objects.filter(user__in=team_members).exclude(status='pending').order_by('-updated_at')
+    else:
+        pending_leaves = LeaveRequest.objects.none()
+        processed_leaves = LeaveRequest.objects.none()
+    
+    # Récupérer les demandes de l'utilisateur connecté
+    user_leaves = LeaveRequest.objects.filter(user=request.user).order_by('-created_at')
+    
+    # Ajouter les compteurs de notifications
+    new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+    new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+    new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    
+    context = {
+        'pending_leaves': pending_leaves,
+        'user_leaves': user_leaves,
+        'processed_leaves': processed_leaves,
+        'is_admin': is_admin,
+        'is_hr': is_hr,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/manage_leaves.html', context)
 
 @login_required
 @user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
@@ -620,6 +696,52 @@ def reject_leave(request, leave_id):
    # )
 
     messages.error(request, f"Congé refusé pour {leave.user.username}.")
+    return redirect('manage_leaves')
+
+def leave_action(request, leave_id):
+    """
+    Vue pour gérer les actions sur les demandes de congés (approbation/rejet avec commentaire).
+    Permet d'ajouter un commentaire lors de l'approbation ou du rejet d'une demande.
+    """
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Vérifier les permissions
+    if not (request.user.is_superuser or request.user.is_staff or request.user.groups.filter(name='Encadrant').exists()):
+        messages.error(request, "Vous n'avez pas les droits nécessaires pour effectuer cette action.")
+        return redirect('dashboard')
+    
+    # Récupérer la demande de congé
+    try:
+        leave_request = LeaveRequest.objects.get(id=leave_id)
+    except LeaveRequest.DoesNotExist:
+        messages.error(request, "La demande de congé n'existe pas.")
+        return redirect('manage_leaves')
+    
+    # Traiter la demande si c'est un POST
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        comment = request.POST.get('comment', '')
+        
+        if action == 'approve':
+            # Approuver la demande
+            leave_request.status = 'approved'
+            leave_request.comment = comment
+            leave_request.save()
+            
+            # Mettre à jour le solde de congés de l'utilisateur
+            update_leave_balance(leave_request.user, leave_request)
+            
+            messages.success(request, "La demande de congé a été approuvée.")
+        elif action == 'reject':
+            # Rejeter la demande
+            leave_request.status = 'rejected'
+            leave_request.comment = comment
+            leave_request.save()
+            messages.success(request, "La demande de congé a été rejetée.")
+        else:
+            messages.error(request, "Action non reconnue.")
+            
     return redirect('manage_leaves')
 
 ### 🌟 GESTION DES NOTES DE FRAIS ###
@@ -684,7 +806,40 @@ def submit_expense(request):
     else:
         form = ExpenseReportForm()
     
-    return render(request, 'rh_management/submit_expense.html', {'form': form})
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh or is_encadrant:
+        # Seuls les admins, RH et encadrants peuvent voir les compteurs
+        if is_admin or is_rh:
+            new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+            new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+            new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+        elif is_encadrant:
+            # Pour les encadrants, montrer uniquement les demandes de leur équipe
+            team_members = User.objects.filter(team_leader=request.user)
+            new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+            new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+            new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    context = {
+        'form': form,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/submit_expense.html', context)
 
 # ✅ Voir ses notes de frais
 @login_required
@@ -697,13 +852,59 @@ def my_expenses_view(request):
 @login_required
 @user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def manage_expenses_view(request):
-    """Gère l'affichage des notes de frais en attente pour les RH et encadrants."""
-    pending_expenses = ExpenseReport.objects.filter(status='pending')
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    if not (request.user.is_superuser or request.user.is_staff or request.user.groups.filter(name='Encadrant').exists()):
+        messages.error(request, "Vous n'avez pas les droits nécessaires pour accéder à cette page.")
+        return redirect('dashboard')
+    
+    # Filtrer les dépenses selon le rôle de l'utilisateur
+    if request.user.is_superuser or request.user.is_staff:
+        pending_expenses = ExpenseReport.objects.filter(status='pending')
+    else:  # Encadrant
+        team_members = User.objects.filter(team_leader=request.user)
+        pending_expenses = ExpenseReport.objects.filter(user__in=team_members, status='pending')
+    
+    # Calcul des statistiques
     approved_count = ExpenseReport.objects.filter(status='approved').count()
     rejected_count = ExpenseReport.objects.filter(status='rejected').count()
-    total_amount = sum(expense.amount for expense in pending_expenses)
+    total_amount = ExpenseReport.objects.filter(status='approved').aggregate(total=Sum('amount'))['total'] or 0
     
-    return render(request, 'rh_management/manage_expenses.html', {'pending_expenses': pending_expenses, 'approved_count': approved_count, 'rejected_count': rejected_count, 'total_amount': total_amount})
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh:
+        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    elif is_encadrant:
+        team_members = User.objects.filter(team_leader=request.user)
+        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    context = {
+        'pending_expenses': pending_expenses,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+        'total_amount': total_amount,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/manage_expenses.html', context)
 
 # ✅ Approuver une note de frais
 @login_required
@@ -780,9 +981,79 @@ def export_expenses(request):
 @login_required
 @user_passes_test(is_admin)
 def manage_users_view(request):
-    """Gère l'affichage de tous les utilisateurs (Admin)."""
+    """Vue pour la gestion des utilisateurs (administrateurs uniquement)."""
+    if not request.user.is_superuser:
+        messages.error(request, "Vous n'avez pas les permissions nécessaires pour accéder à cette page.")
+        return redirect('dashboard')
+    
+    # Filtrage des utilisateurs
     users = User.objects.all()
-    return render(request, 'rh_management/manage_users.html', {'users': users})
+    
+    # Filtres appliqués si présents dans la requête
+    if 'q' in request.GET and request.GET['q']:
+        query = request.GET['q']
+        users = users.filter(
+            Q(username__icontains=query) | 
+            Q(first_name__icontains=query) | 
+            Q(last_name__icontains=query) | 
+            Q(email__icontains=query)
+        )
+    
+    if 'role' in request.GET and request.GET['role']:
+        role = request.GET['role']
+        if role == 'admin':
+            users = users.filter(is_superuser=True)
+        elif role == 'hr':
+            users = users.filter(is_staff=True, is_superuser=False)
+        elif role == 'encadrant':
+            users = users.filter(groups__name='Encadrant')
+        elif role == 'stp':
+            users = users.filter(groups__name='STP')
+        elif role == 'employee':
+            # Filtrer les employés simples (pas d'autre rôle)
+            users = users.exclude(is_superuser=True).exclude(is_staff=True).exclude(groups__name__in=['Encadrant', 'STP'])
+    
+    if 'status' in request.GET and request.GET['status']:
+        status = request.GET['status']
+        users = users.filter(is_active=(status == 'active'))
+    
+    # Pagination
+    paginator = Paginator(users, 10)  # 10 utilisateurs par page
+    page_number = request.GET.get('page', 1)
+    users_page = paginator.get_page(page_number)
+    
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh:
+        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    elif is_encadrant:
+        team_members = User.objects.filter(team_leader=request.user)
+        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    context = {
+        'users': users_page,
+        'all_groups': Group.objects.all(),
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/manage_users.html', context)
 
 @login_required
 @user_passes_test(is_admin)
@@ -828,7 +1099,38 @@ def submit_kilometric_expense(request):
     else:
         form = KilometricExpenseForm()
 
-    return render(request, 'rh_management/submit_kilometric_expense.html', {'form': form})
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh or is_encadrant:
+        if is_admin or is_rh:
+            new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+            new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+            new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+        elif is_encadrant:
+            team_members = User.objects.filter(team_leader=request.user)
+            new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+            new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+            new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    context = {
+        'form': form,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/submit_kilometric_expense.html', context)
 
 @login_required
 def my_kilometric_expenses(request):
@@ -896,8 +1198,51 @@ def export_expenses_pdf(request):
 @user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
 def manage_kilometric_expenses(request):
     """Affiche tous les frais kilométriques pour validation (Admin/RH/Encadrants)."""
-    expenses = KilometricExpense.objects.all().order_by("-date")
-    return render(request, "rh_management/manage_kilometric_expenses.html", {"expenses": expenses})
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    if not (request.user.is_superuser or request.user.is_staff or request.user.groups.filter(name='Encadrant').exists()):
+        messages.error(request, "Vous n'avez pas les droits nécessaires pour accéder à cette page.")
+        return redirect('dashboard')
+    
+    # Filtrer les dépenses en fonction du rôle de l'utilisateur
+    if request.user.is_superuser or request.user.is_staff:
+        expenses = KilometricExpense.objects.all().order_by('-date')
+    else:  # Encadrant
+        team_members = User.objects.filter(team_leader=request.user)
+        expenses = KilometricExpense.objects.filter(user__in=team_members).order_by('-date')
+    
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh:
+        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    elif is_encadrant:
+        team_members = User.objects.filter(team_leader=request.user)
+        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    context = {
+        'expenses': expenses,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/manage_kilometric_expenses.html', context)
 
 @login_required
 @user_passes_test(is_admin_hr_or_encadrant)  # Mise à jour pour inclure les encadrants
@@ -1178,11 +1523,39 @@ def password_manager_add(request):
     else:
         form = PasswordManagerForm(user=request.user)
     
-    return render(request, 'rh_management/password_form.html', {
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh or is_encadrant:
+        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    elif is_encadrant:
+        team_members = User.objects.filter(team_leader=request.user)
+        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    context = {
         'form': form,
         'title': 'Ajouter un mot de passe',
-        'is_add': True
-    })
+        'is_add': True,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/password_form.html', context)  # Ajout du return manquant ici
 
 @login_required
 def password_manager_edit(request, pk):
@@ -1217,13 +1590,39 @@ def password_manager_edit(request, pk):
     else:
         form = PasswordManagerForm(instance=password_entry, user=request.user)
     
-    return render(request, 'rh_management/password_form.html', {
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh or is_encadrant:
+        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    elif is_encadrant:
+        team_members = User.objects.filter(team_leader=request.user)
+        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    context = {
         'form': form,
-        'title': 'Modifier le mot de passe',
+        'title': 'Modifier un mot de passe',
         'is_add': False,
-        'password_entry': password_entry,
-        'is_owner': is_owner
-    })
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/password_form.html', context)
 
 @login_required
 def password_manager_delete(request, pk):
@@ -1236,9 +1635,37 @@ def password_manager_delete(request, pk):
         messages.success(request, "Mot de passe supprimé avec succès.")
         return redirect('password_manager_list')
     
-    return render(request, 'rh_management/password_confirm_delete.html', {
-        'password_entry': password_entry
-    })
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh or is_encadrant:
+        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    elif is_encadrant:
+        team_members = User.objects.filter(team_leader=request.user)
+        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    context = {
+        'password_entry': password_entry,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/password_confirm_delete.html', context)
 
 @login_required
 def password_manager_view(request, pk):
@@ -1266,54 +1693,130 @@ def password_manager_view(request, pk):
     if is_owner:
         shares = PasswordShare.objects.filter(password_entry=password_entry)
     
-    return render(request, 'rh_management/password_view.html', {
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh or is_encadrant:
+        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    elif is_encadrant:
+        team_members = User.objects.filter(team_leader=request.user)
+        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    context = {
         'password_entry': password_entry,
         'decrypted_password': decrypted_password,
         'is_owner': is_owner,
         'can_edit': can_edit,
-        'shares': shares
-    })
+        'shares': shares,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/password_view.html', context)
 
 @login_required
 def password_share(request, pk):
-    """View to share a password with other users."""
-    password_entry = get_object_or_404(PasswordManager, pk=pk, user=request.user)
+    """Vue pour partager un mot de passe avec d'autres utilisateurs."""
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Récupérer le mot de passe
+    try:
+        password_entry = PasswordManager.objects.get(pk=pk)
+        if password_entry.user != request.user and not request.user.is_superuser:
+            messages.error(request, "Vous n'avez pas la permission de partager ce mot de passe.")
+            return redirect('password_manager')
+    except PasswordManager.DoesNotExist:
+        messages.error(request, "Ce mot de passe n'existe pas.")
+        return redirect('password_manager')
+    
+    # Liste des partages existants
+    existing_shares = password_entry.shares.all()
+    
+    # Liste des utilisateurs disponibles pour le partage (exclure ceux qui ont déjà un partage)
+    shared_users = existing_shares.values_list('shared_with', flat=True)
+    available_users = User.objects.exclude(id__in=shared_users).exclude(id=request.user.id)
     
     if request.method == 'POST':
-        user_ids = request.POST.getlist('users')
-        can_edit = request.POST.get('can_edit') == 'on'
+        # Traiter le formulaire de partage
+        user_id = request.POST.get('user_id')
+        can_edit = request.POST.get('permission') == 'edit'
         
-        # Supprimer les partages existants si l'option est cochée
-        if request.POST.get('replace_existing') == 'on':
-            PasswordShare.objects.filter(password_entry=password_entry).delete()
-        
-        # Créer les nouveaux partages
-        for user_id in user_ids:
-            if int(user_id) != request.user.id:  # Ne pas partager avec soi-même
-                PasswordShare.objects.update_or_create(
+        if user_id:
+            try:
+                user = User.objects.get(id=user_id)
+                PasswordShare.objects.create(
                     password_entry=password_entry,
-                    shared_with_id=user_id,
-                    defaults={'can_edit': can_edit}
+                    shared_with=user,
+                    can_edit=can_edit
                 )
+                messages.success(request, f"Mot de passe partagé avec {user.get_full_name() or user.username}.")
+            except User.DoesNotExist:
+                messages.error(request, "Utilisateur invalide.")
         
-        messages.success(request, f"Le mot de passe '{password_entry.title}' a été partagé avec {len(user_ids)} utilisateur(s).")
-        return redirect('password_manager_view', pk=pk)
+        # Traiter les suppressions de partage
+        for key in request.POST:
+            if key.startswith('delete_share_'):
+                share_id = key.replace('delete_share_', '')
+                try:
+                    share = PasswordShare.objects.get(id=share_id, password_entry=password_entry)
+                    share.delete()
+                    messages.success(request, f"Partage supprimé pour {share.shared_with.get_full_name() or share.shared_with.username}.")
+                except PasswordShare.DoesNotExist:
+                    pass
+        
+        return redirect('password_share', pk=pk)
     
-    # Obtenir tous les utilisateurs pour le formulaire de partage (excluant l'utilisateur actuel)
-    users = User.objects.exclude(id=request.user.id).order_by('username')
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
     
-    # Obtenir les partages existants
-    current_shares = PasswordShare.objects.filter(password_entry=password_entry)
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
     
-    # Extraire les IDs des utilisateurs avec qui le mot de passe est déjà partagé
-    shared_with_ids = [share.shared_with_id for share in current_shares]
+    if is_admin or is_rh:
+        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    elif is_encadrant:
+        # Assuming we're looking for users in the same team or department
+        team_members = User.objects.filter(groups__in=request.user.groups.all())
+        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
     
-    return render(request, 'rh_management/password_share.html', {
+    context = {
         'password_entry': password_entry,
-        'users': users,
-        'current_shares': current_shares,
-        'shared_with_ids': shared_with_ids
-    })
+        'existing_shares': existing_shares,
+        'available_users': available_users,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    # Assurez-vous que cette ligne est bien présente à la fin de la fonction
+    return render(request, 'rh_management/password_share.html', context)
 
 @login_required
 def password_share_remove(request, share_id):
@@ -1397,7 +1900,6 @@ def api_leaves(request):
             'reason': leave.reason or '',
             'color': status_color.get(leave.status, '#f6c23e')
         })
-    
     return JsonResponse(leave_data, safe=False)
 
 @login_required
@@ -1425,7 +1927,6 @@ def mass_action(request):
                 users = users.exclude(is_superuser=True)
             users.update(is_active=False)
             messages.success(request, f"{len(users)} utilisateur(s) désactivé(s) avec succès.")
-        
         elif action in ['add_group', 'remove_group'] and group_id:
             try:
                 group = Group.objects.get(id=group_id)
@@ -1435,7 +1936,7 @@ def mass_action(request):
                     # Skip superusers for non-superuser admins
                     if user.is_superuser and not request.user.is_superuser:
                         continue
-                    
+                        
                     if action == 'add_group':
                         user.groups.add(group)
                     else:  # remove_group
@@ -1480,7 +1981,6 @@ def reset_password(request, user_id):
 def toggle_user_status(request, user_id):
     """Active ou désactive un utilisateur."""
     user_to_modify = get_object_or_404(User, id=user_id)
-    
     # Empêcher la désactivation d'un super-utilisateur par un non-super-utilisateur
     if user_to_modify.is_superuser and not request.user.is_superuser:
         messages.error(request, "Vous n'avez pas l'autorisation de modifier le statut d'un administrateur.")
@@ -1493,9 +1993,328 @@ def toggle_user_status(request, user_id):
     
     # Basculer le statut de l'utilisateur
     user_to_modify.is_active = not user_to_modify.is_active
-    user_to_modify.save()
-    
+    # Basculer le statut de l'utilisateur
+    user_to_modify.is_active = not user_to_modify.is_active
     status_text = "activé" if user_to_modify.is_active else "désactivé"
     messages.success(request, f"L'utilisateur {user_to_modify.username} a été {status_text} avec succès.")
     
     return redirect('manage_users')
+
+def password_manager(request):
+    """Vue pour afficher la liste des mots de passe de l'utilisateur."""
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Récupérer les mots de passe propres à l'utilisateur
+    user_passwords = PasswordManager.objects.filter(user=request.user)
+    
+    # Récupérer les mots de passe partagés avec l'utilisateur
+    # Utiliser la relation "shares" au lieu de "passwordshare"
+    shared_passwords = PasswordManager.objects.filter(
+        shares__shared_with=request.user
+    )
+    
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh:
+        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    elif is_encadrant:
+        # Filter users who have this user as their manager (adjust field name as per your model)
+        team_members = User.objects.filter(userprofile__team_leader=request.user)
+        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+
+    context = {
+        'user_passwords': user_passwords,
+        'shared_passwords': shared_passwords,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/password_manager.html', context)
+
+@login_required
+def password_add(request):
+    """Vue pour ajouter un nouveau mot de passe."""
+    if request.method == 'POST':
+        form = PasswordManagerForm(request.POST)
+        if form.is_valid():
+            password_entry = form.save(commit=False)
+            password_entry.user = request.user
+            
+            # Générer une clé de chiffrement
+            from cryptography.fernet import Fernet
+            encryption_key = Fernet.generate_key()
+            password_entry.encryption_key = encryption_key.decode('utf-8')
+            
+            password_entry.save()
+            messages.success(request, "Mot de passe ajouté avec succès.")
+            return redirect('password_manager')
+    else:
+        form = PasswordManagerForm()
+    
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh:
+        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    elif is_encadrant:
+        team_members = User.objects.filter(userprofile__team_leader=request.user)
+        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    context = {
+        'form': form,
+        'title': 'Ajouter un mot de passe',
+        'is_add': True,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/password_form.html', context)  # Ajout du return manquant ici
+
+def password_view(request, pk):
+    """Vue pour voir les détails d'un mot de passe."""
+    if not request.user.is_authenticated:
+        return redirect('login')
+    # Récupérer le mot de passe
+    try:
+        password_entry = PasswordManager.objects.get(pk=pk)
+        if password_entry.user != request.user and not request.user.is_superuser:
+            # Vérifier si l'utilisateur a accès (partagé)
+            shared = password_entry.shares.filter(shared_with=request.user).exists()
+            if not shared:
+                messages.error(request, "Vous n'avez pas la permission de voir ce mot de passe.")
+                return redirect('password_manager')
+    except PasswordManager.DoesNotExist:
+        messages.error(request, "Ce mot de passe n'existe pas.")
+        return redirect('password_manager')
+    
+    # Vérifier si l'utilisateur peut modifier (propriétaire, admin ou partagé avec droits d'édition)
+    can_edit = (password_entry.user == request.user) or request.user.is_superuser
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh:
+        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+    elif is_encadrant:
+        team_members = User.objects.filter(userprofile__team_leader=request.user)
+        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    context = {
+        'password_entry': password_entry,
+        'can_edit': can_edit,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/password_view.html', context)  # Ajout du return manquant ici
+
+def password_edit(request, pk):
+    """Vue pour modifier un mot de passe existant."""
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Récupérer le mot de passe
+    try:
+        password_entry = PasswordManager.objects.get(pk=pk)
+        if password_entry.user != request.user and not request.user.is_superuser:
+            # Vérifier si l'utilisateur peut modifier (partagé avec droits d'édition)
+            shared = password_entry.shares.filter(shared_with=request.user, can_edit=True).exists()
+            if not shared:
+                messages.error(request, "Vous n'avez pas la permission de modifier ce mot de passe.")
+                return redirect('password_manager')
+    except PasswordManager.DoesNotExist:
+        messages.error(request, "Ce mot de passe n'existe pas.")
+        return redirect('password_manager')
+    
+    if request.method == 'POST':
+        form = PasswordManagerForm(request.POST, instance=password_entry)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Mot de passe modifié avec succès.")
+            return redirect('password_manager')
+    else:
+        form = PasswordManagerForm(instance=password_entry)
+    
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Compter les notifications
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh:
+        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    elif is_encadrant:
+        team_members = User.objects.filter(userprofile__team_leader=request.user)
+        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    context = {
+        'form': form,
+        'title': 'Modifier un mot de passe',
+        'is_add': False,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/password_form.html', context)
+
+def password_delete(request, pk):
+    """Vue pour supprimer un mot de passe."""
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Code pour supprimer un mot de passe
+    # Ajouter les compteurs de notification au contexte
+    # ...
+
+def password_share(request, pk):
+    """Vue pour partager un mot de passe avec d'autres utilisateurs."""
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Code pour partager un mot de passe
+    # Ajouter les compteurs de notification au contexte
+    # ...
+
+def expense_action(request, expense_id):
+    """
+    Vue pour gérer les actions sur les notes de frais (approbation/rejet avec commentaire).
+    Permet d'ajouter un commentaire lors de l'approbation ou du rejet d'une demande.
+    """
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Vérifier les permissions
+    if not (request.user.is_superuser or request.user.is_staff or request.user.groups.filter(name='Encadrant').exists()):
+        messages.error(request, "Vous n'avez pas les droits nécessaires pour effectuer cette action.")
+        return redirect('dashboard')
+    
+    # Récupérer la note de frais
+    try:
+        expense = ExpenseReport.objects.get(id=expense_id)
+    except ExpenseReport.DoesNotExist:
+        messages.error(request, "La note de frais n'existe pas.")
+        return redirect('manage_expenses')
+    
+    # Traiter la demande si c'est un POST
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        comment = request.POST.get('comment', '')
+        
+        if action == 'approve':
+            # Approuver la note de frais
+            expense.status = 'approved'
+            expense.comment = comment
+            expense.save()
+            
+            messages.success(request, "La note de frais a été approuvée.")
+        elif action == 'reject':
+            # Rejeter la note de frais
+            expense.status = 'rejected'
+            expense.comment = comment
+            expense.save()
+            messages.success(request, "La note de frais a été rejetée.")
+        else:
+            messages.error(request, "Action non reconnue.")
+            
+    return redirect('manage_expenses')
+
+def kilometric_expense_action(request, expense_id):
+    """
+    Vue pour gérer les actions sur les frais kilométriques (approbation/rejet avec commentaire).
+    Permet d'ajouter un commentaire lors de l'approbation ou du rejet d'une demande.
+    """
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Vérifier les permissions
+    if not (request.user.is_superuser or request.user.is_staff or request.user.groups.filter(name='Encadrant').exists()):
+        messages.error(request, "Vous n'avez pas les droits nécessaires pour effectuer cette action.")
+        return redirect('dashboard')
+    
+    # Récupérer la demande de frais kilométriques
+    try:
+        expense = KilometricExpense.objects.get(id=expense_id)
+    except KilometricExpense.DoesNotExist:
+        messages.error(request, "La demande de frais kilométriques n'existe pas.")
+        return redirect('manage_kilometric_expenses')
+    
+    # Traiter la demande si c'est un POST
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        comment = request.POST.get('comment', '')
+        
+        if action == 'approve':
+            # Approuver la demande
+            expense.status = 'approved'
+            expense.comment = comment
+            expense.save()
+            
+            messages.success(request, "La demande de frais kilométriques a été approuvée.")
+        elif action == 'reject':
+            # Rejeter la demande
+            expense.status = 'rejected'
+            expense.comment = comment
+            expense.save()
+            messages.success(request, "La demande de frais kilométriques a été rejetée.")
+        else:
+            messages.error(request, "Action non reconnue.")
+            
+    return redirect('manage_kilometric_expenses')

@@ -1,398 +1,220 @@
 {% extends "base.html" %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css">
 <style>
-    /* Optimisations des styles */
-    .dashboard-card {
-        transition: transform 0.3s, box-shadow 0.3s;
-        border: none;
-        border-radius: 0.75rem;
-        overflow: hidden;
-        height: 100%;
-    }
-    
-    .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-    }
-    
+    /* Styles simples */
     .stat-card {
-        border-radius: 0.75rem;
-        border: none;
-        overflow: hidden;
-        transition: all 0.3s;
+        border-radius: 0.5rem;
+        background-color: #fff;
+        border: 1px solid #e3e6f0;
+        height: 100%;
+        transition: all 0.2s;
     }
     
     .stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        border-color: #4e73df;
+        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
     }
     
     .stat-icon {
-        width: 60px;
-        height: 60px;
+        width: 45px;
+        height: 45px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 20px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        margin-right: 15px;
+        color: white;
     }
-    
-    .stat-primary { background: linear-gradient(135deg, #4e73df, #224abe); }
-    .stat-success { background: linear-gradient(135deg, #1cc88a, #13855c); }
-    .stat-danger { background: linear-gradient(135deg, #e74a3b, #be392d); }
-    .stat-warning { background: linear-gradient(135deg, #f6c23e, #dda20a); }
-    .stat-info { background: linear-gradient(135deg, #36b9cc, #258391); }
     
     .status-badge {
-        display: inline-block;
-        padding: 0.25rem 0.5rem;
-        border-radius: 50rem;
         font-size: 0.75rem;
-        font-weight: 600;
-    }
-    
-    .status-pending { background-color: rgba(246, 194, 62, 0.15); color: #f6c23e; }
-    .status-approved { background-color: rgba(28, 200, 138, 0.15); color: #1cc88a; }
-    .status-rejected { background-color: rgba(231, 74, 59, 0.15); color: #e74a3b; }
-    
-    .notification-badge {
-        position: absolute;
-        top: -5px;
-        right: -5px;
         padding: 0.25rem 0.5rem;
-        border-radius: 50%;
-        font-size: 0.75rem;
-        background-color: #e74a3b;
-        color: white;
-        border: 2px solid white;
-    }
-    
-    .date-badge {
-        font-size: 0.8rem;
-        background-color: rgba(78, 115, 223, 0.1);
-        color: #4e73df;
         border-radius: 0.25rem;
-        padding: 0.25rem 0.5rem;
     }
     
-    .bg-gradient-primary { background: linear-gradient(135deg, #4e73df, #224abe); }
-    .bg-gradient-success { background: linear-gradient(135deg, #1cc88a, #13855c); }
-    .bg-gradient-danger { background: linear-gradient(135deg, #e74a3b, #be392d); }
-    .bg-gradient-warning { background: linear-gradient(135deg, #f6c23e, #dda20a); }
-    .bg-gradient-info { background: linear-gradient(135deg, #36b9cc, #258391); }
+    .status-pending { background-color: #fff3cd; color: #856404; }
+    .status-approved { background-color: #d4edda; color: #155724; }
+    .status-rejected { background-color: #f8d7da; color: #721c24; }
     
-    .list-group-item {
-        transition: all 0.2s;
-        border-left: 3px solid transparent;
-    }
-    
-    .list-group-item:hover {
-        background-color: rgba(78, 115, 223, 0.05);
-        border-left-color: #4e73df;
-    }
-    
-    .list-group-item.pending:hover {
-        border-left-color: #f6c23e;
-    }
-    
-    .list-group-item.approved:hover {
-        border-left-color: #1cc88a;
-    }
-    
-    .list-group-item.rejected:hover {
-        border-left-color: #e74a3b;
-    }
-    
-    /* Animations */
-    .animate-fade-in {
-        animation: fadeIn 0.8s ease-in-out;
-    }
-    
-    .animate-fade-up {
-        animation: fadeUp 0.5s ease-out;
-        animation-fill-mode: both;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    
-    @keyframes fadeUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    /* Placeholders pour les graphiques en cas de chargement lent */
-    .chart-placeholder {
-        background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: loading 1.5s infinite;
-        border-radius: 0.75rem;
-        height: 250px;
-    }
-    
-    @keyframes loading {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-        .stat-icon {
-            width: 45px;
-            height: 45px;
-            font-size: 1.2rem;
-        }
-        
-        .dashboard-actions {
-            flex-direction: column;
-        }
-        
-        .action-button {
-            margin-bottom: 0.5rem;
-            width: 100%;
-        }
-    }
-    
-    @media (max-width: 576px) {
-        .stats-row [class*="col-"] {
-            margin-bottom: 1rem;
-        }
-    }
-    
-    /* Optimisation pour le lazy loading */
-    .lazy-section {
-        opacity: 0;
-        transform: translateY(20px);
-        transition: opacity 0.5s ease, transform 0.5s ease;
-    }
-    
-    .lazy-section.visible {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    /* Correction pour les boutons avec gradient */
-    .btn-gradient-primary {
-        background: linear-gradient(135deg, #4e73df, #224abe) !important;
-        color: white !important;
-        border: none !important;
-        transition: all 0.3s !important;
-    }
-    
-    .btn-gradient-success {
-        background: linear-gradient(135deg, #1cc88a, #13855c) !important;
-        color: white !important;
-        border: none !important;
-        transition: all 0.3s !important;
-    }
-    
-    .btn-gradient-info {
-        background: linear-gradient(135deg, #36b9cc, #258391) !important;
-        color: white !important;
-        border: none !important;
-        transition: all 0.3s !important;
-    }
-    
-    .btn-gradient-warning {
-        background: linear-gradient(135deg, #f6c23e, #dda20a) !important;
-        color: white !important;
-        border: none !important;
-        transition: all 0.3s !important;
-    }
-    
-    .btn-gradient-primary:hover, 
-    .btn-gradient-success:hover,
-    .btn-gradient-info:hover,
-    .btn-gradient-warning:hover {
-        transform: translateY(-3px) !important;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important;
-        color: white !important;
-    }
-    
-    /* S'assurer que les badges sur les boutons sont bien visibles */
-    .btn-gradient-primary .badge,
-    .btn-gradient-info .badge {
-        color: #4e73df !important;
-        background-color: white !important;
-        font-weight: bold !important;
-    }
+    /* Couleurs de base */
+    .bg-lighter-primary { background-color: #eaecf4; }
+    .bg-lighter-success { background-color: #e0f5ea; }
+    .bg-lighter-warning { background-color: #fff3cd; }
+    .bg-lighter-info { background-color: #e0f5ff; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-tachometer-alt me-2"></i>Tableau de bord</h1>
-        
-        <div class="dashboard-actions d-flex">
-            {% if is_admin or is_rh or is_encadrant %}
-            <a href="{% url 'manage_leaves' %}" class="btn btn-gradient-primary rounded-pill me-2 action-button">
-            <i class="fas fa-calendar-check me-1"></i> Gérer les congés
-            {% if new_leave_requests_count > 0 %}
-            <span class="badge bg-white text-primary ms-1">{{ new_leave_requests_count }}</span>
-            {% endif %}
-            </a>
-            <a href="{% url 'manage_expenses' %}" class="btn btn-gradient-info rounded-pill me-2 action-button">
-            <i class="fas fa-receipt me-1"></i> Gérer les notes de frais
-            {% if new_expense_reports_count > 0 %}
-            <span class="badge bg-white text-info ms-1">{{ new_expense_reports_count }}</span>
-            {% endif %}
-            </a>
-            <a href="{% url 'manage_kilometric_expenses' %}" class="btn btn-gradient-warning rounded-pill me-2 action-button">
-            <i class="fas fa-car me-1"></i> Gérer les frais kilométriques
-            {% if new_kilometric_expenses_count > 0 %}
-            <span class="badge bg-white text-warning ms-1">{{ new_kilometric_expenses_count }}</span>
-            {% endif %}
-            </a>
-            {% endif %}
-            
-            <div class="dropdown">
-                <button class="btn btn-gradient-success dropdown-toggle action-button" type="button" id="newRequestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-plus-circle me-1"></i> Nouvelle demande
-                </button>
-                <ul class="dropdown-menu shadow border-0 rounded-3" aria-labelledby="newRequestDropdown">
-                    <li><a class="dropdown-item" href="{% url 'leave_request' %}"><i class="fas fa-calendar-plus me-2 text-primary"></i>Demande de congé</a></li>
-                    <li><a class="dropdown-item" href="{% url 'submit_expense' %}"><i class="fas fa-receipt me-2 text-info"></i>Note de frais</a></li>
-                    <li><a class="dropdown-item" href="{% url 'submit_kilometric_expense' %}"><i class="fas fa-car me-2 text-success"></i>Frais kilométriques</a></li>
-                </ul>
+<div class="container py-4">
+    <!-- En-tête avec actions -->
+    <div class="row mb-3 align-items-center">
+        <div class="col">
+            <h1 class="h3 mb-0 text-gray-800">Tableau de bord</h1>
+            <p class="text-muted small">Bienvenue dans votre espace cybeRH</p>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                {% if is_admin or is_rh or is_encadrant %}
+                <a href="{% url 'manage_leaves' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-calendar-check me-1"></i> Gérer les congés
+                    {% if new_leave_requests_count > 0 %}
+                    <span class="badge bg-danger ms-1">{{ new_leave_requests_count }}</span>
+                    {% endif %}
+                </a>
+                {% endif %}
+                <a href="{% url 'leave_request' %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus me-1"></i> Demande de congé
+                </a>
             </div>
         </div>
     </div>
 
-    <div class="row g-4">
-
-        <!-- Demandes de congés -->
-        <div class="col-lg-6 lazy-section" data-delay="0.4">
-            <div class="card dashboard-card shadow-sm">
-                <div class="card-header bg-gradient-primary text-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Demandes de congés récentes</h5>
-                    {% if is_admin or is_rh or is_encadrant %}
-                    <a href="{% url 'manage_leaves' %}" class="btn btn-sm btn-light rounded-pill">
-                        <i class="fas fa-external-link-alt me-1"></i>Tout voir
-                    </a>
-                    {% endif %}
+    <!-- Cartes statistiques -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card p-3">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-primary">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div>
+                        <div class="fs-5 fw-bold text-primary" id="leave-count">{{ leave_balance.available|default:"0" }}</div>
+                        <div class="text-muted small">Congés disponibles</div>
+                    </div>
                 </div>
-                <div class="card-body p-0">
+                <div class="progress mt-3" style="height: 5px;">
+                    <div class="progress-bar bg-primary" style="width: {{ leave_balance.percentage|default:"0" }}%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card p-3">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-success">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <div>
+                        <div class="fs-5 fw-bold text-success" id="expense-count">{{ expense_count|default:"0" }}</div>
+                        <div class="text-muted small">Notes de frais</div>
+                    </div>
+                </div>
+                <div class="text-end mt-3">
+                    <a href="{% url 'submit_expense' %}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-plus me-1"></i> Ajouter
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card p-3">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-warning">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <div>
+                        <div class="fs-5 fw-bold text-warning" id="km-expense-count">{{ km_expense_count|default:"0" }}</div>
+                        <div class="text-muted small">Frais kilométriques</div>
+                    </div>
+                </div>
+                <div class="text-end mt-3">
+                    <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-sm btn-outline-warning">
+                        <i class="fas fa-plus me-1"></i> Ajouter
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card p-3">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-info">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <div>
+                        <div class="fs-5 fw-bold text-info" id="password-count">{{ password_count|default:"0" }}</div>
+                        <div class="text-muted small">Mots de passe</div>
+                    </div>
+                </div>
+                <div class="text-end mt-3">
+                    <a href="/passwords/" class="btn btn-sm btn-outline-info">
+                        <i class="fas fa-unlock-alt me-1"></i> Gérer
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vos demandes récentes -->
+    <div class="row g-3">
+        <!-- Congés récents -->
+        <div class="col-lg-6">
+            <div class="card border-0 mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center bg-lighter-primary">
+                    <h5 class="mb-0 text-primary"><i class="fas fa-calendar-alt me-2"></i>Congés récents</h5>
+                    <a href="{% url 'leave_request' %}" class="btn btn-sm btn-link">Voir plus</a>
+                </div>
+                <div class="list-group list-group-flush">
                     {% if leave_requests %}
-                    <div class="list-group list-group-flush">
                         {% for leave in leave_requests|slice:":5" %}
-                        <div class="list-group-item list-group-item-action {{ leave.status }} p-3">
-                            <div class="d-flex w-100 justify-content-between align-items-center">
+                        <div class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="mb-1">{{ leave.user.get_full_name|default:leave.user.username }} - {{ leave.get_leave_type_display }}</h6>
-                                    <p class="mb-1 small text-muted">
+                                    <div class="fw-bold">{{ leave.get_leave_type_display }}</div>
+                                    <div class="small text-muted">
                                         <i class="fas fa-calendar-day me-1"></i> {{ leave.start_date|date:"d/m/Y" }} au {{ leave.end_date|date:"d/m/Y" }}
-                                    </p>
+                                    </div>
                                 </div>
                                 <span class="status-badge status-{{ leave.status }}">{{ leave.get_status_display }}</span>
                             </div>
                         </div>
                         {% endfor %}
-                    </div>
                     {% else %}
-                    <div class="text-center py-5">
-                        <div class="empty-state">
-                            <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
-                            <p>Aucune demande de congé récente</p>
+                        <div class="list-group-item p-4 text-center">
+                            <p class="text-muted mb-2"><i class="fas fa-calendar-times fa-2x mb-2"></i></p>
+                            <p class="mb-2">Aucune demande de congé récente</p>
+                            <a href="{% url 'leave_request' %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus me-1"></i> Nouvelle demande
+                            </a>
                         </div>
-                    </div>
                     {% endif %}
                 </div>
             </div>
         </div>
         
-        <!-- Notes de frais -->
-        <div class="col-lg-6 lazy-section" data-delay="0.5">
-            <div class="card dashboard-card shadow-sm">
-                <div class="card-header bg-gradient-success text-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Notes de frais récentes</h5>
-                    {% if is_admin or is_rh or is_encadrant %}
-                    <a href="{% url 'manage_expenses' %}" class="btn btn-sm btn-light rounded-pill">
-                        <i class="fas fa-external-link-alt me-1"></i>Tout voir
-                    </a>
-                    {% endif %}
+        <!-- Notes de frais récentes -->
+        <div class="col-lg-6">
+            <div class="card border-0 mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center bg-lighter-success">
+                    <h5 class="mb-0 text-success"><i class="fas fa-receipt me-2"></i>Notes de frais récentes</h5>
+                    <a href="{% url 'submit_expense' %}" class="btn btn-sm btn-link">Voir plus</a>
                 </div>
-                <div class="card-body p-0">
+                <div class="list-group list-group-flush">
                     {% if expense_reports %}
-                    <div class="list-group list-group-flush">
                         {% for expense in expense_reports|slice:":5" %}
-                        <div class="list-group-item list-group-item-action {{ expense.status }} p-3">
-                            <div class="d-flex w-100 justify-content-between align-items-center">
+                        <div class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="mb-1">{{ expense.user.get_full_name|default:expense.user.username }} - {{ expense.description }}</h6>
-                                    <p class="mb-1 small text-muted">
+                                    <div class="fw-bold">{{ expense.description }}</div>
+                                    <div class="small text-muted">
                                         <i class="fas fa-euro-sign me-1"></i> {{ expense.amount }} € 
-                                        <span class="date-badge ms-2"><i class="far fa-calendar me-1"></i>{{ expense.date|date:"d/m/Y" }}</span>
-                                    </p>
+                                        <span class="ms-2"><i class="far fa-calendar me-1"></i>{{ expense.date|date:"d/m/Y" }}</span>
+                                    </div>
                                 </div>
                                 <span class="status-badge status-{{ expense.status }}">{{ expense.get_status_display }}</span>
                             </div>
                         </div>
                         {% endfor %}
-                    </div>
                     {% else %}
-                    <div class="text-center py-5">
-                        <div class="empty-state">
-                            <i class="fas fa-file-invoice-dollar fa-4x text-muted mb-3"></i>
-                            <p>Aucune note de frais récente</p>
+                        <div class="list-group-item p-4 text-center">
+                            <p class="text-muted mb-2"><i class="fas fa-file-invoice fa-2x mb-2"></i></p>
+                            <p class="mb-2">Aucune note de frais récente</p>
+                            <a href="{% url 'submit_expense' %}" class="btn btn-sm btn-success">
+                                <i class="fas fa-plus me-1"></i> Nouvelle note
+                            </a>
                         </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Frais kilométriques -->
-        <div class="col-12 lazy-section" data-delay="0.6">
-            <div class="card dashboard-card shadow-sm">
-                <div class="card-header bg-gradient-warning text-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-car me-2"></i>Frais kilométriques récents</h5>
-                    {% if is_admin or is_rh or is_encadrant %}
-                    <a href="{% url 'manage_kilometric_expenses' %}" class="btn btn-sm btn-light rounded-pill">
-                        <i class="fas fa-external-link-alt me-1"></i>Tout voir
-                    </a>
-                    {% endif %}
-                </div>
-                <div class="card-body p-0">
-                    {% if kilometric_expenses %}
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th>Employé</th>
-                                    <th>Trajet</th>
-                                    <th>Distance</th>
-                                    <th>Date</th>
-                                    <th>Projet</th>
-                                    <th>Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for expense in kilometric_expenses|slice:":5" %}
-                                <tr class="{{ expense.status }}">
-                                    <td>{{ expense.user.get_full_name|default:expense.user.username }}</td>
-                                    <td>{{ expense.departure }} → {{ expense.arrival }}</td>
-                                    <td>{{ expense.distance }} km</td>
-                                    <td>{{ expense.date|date:"d/m/Y" }}</td>
-                                    <td>{{ expense.project }}</td>
-                                    <td><span class="status-badge status-{{ expense.status }}">{{ expense.get_status_display }}</span></td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <div class="empty-state">
-                            <i class="fas fa-route fa-4x text-muted mb-3"></i>
-                            <p>Aucun frais kilométrique récent</p>
-                        </div>
-                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -402,195 +224,24 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
+// Script minimal pour récupérer les statistiques actualisées
 document.addEventListener('DOMContentLoaded', function() {
-    // Animation d'entrée progressive des sections
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const delay = entry.target.getAttribute('data-delay') || 0;
-                setTimeout(() => {
-                    entry.target.classList.add('visible');
-                }, delay * 1000);
-                observer.unobserve(entry.target);
-            }
+    fetch('/api/dashboard-stats/')
+        .then(response => {
+            if (response.ok) return response.json();
+            throw new Error('Erreur réseau');
+        })
+        .then(data => {
+            // Mise à jour des compteurs si disponibles
+            if (data.leave_count) document.getElementById('leave-count').textContent = data.leave_count;
+            if (data.expense_count) document.getElementById('expense-count').textContent = data.expense_count;
+            if (data.km_expense_count) document.getElementById('km-expense-count').textContent = data.km_expense_count;
+            if (data.password_count) document.getElementById('password-count').textContent = data.password_count;
+        })
+        .catch(error => {
+            console.log('Erreur API:', error);
         });
-    }, {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0.1
-    });
-    
-    document.querySelectorAll('.lazy-section').forEach(section => {
-        observer.observe(section);
-    });
-    
-    // Masquer les placeholders quand les graphiques sont prêts
-    function hideChartPlaceholder(placeholderId) {
-        const placeholder = document.getElementById(placeholderId);
-        if (placeholder) {
-            placeholder.style.display = 'none';
-        }
-    }
-    
-    // Initialisation du graphique de répartition des demandes
-    const requestsChartCtx = document.getElementById('requestsChart').getContext('2d');
-    const requestsChart = new Chart(requestsChartCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Congés', 'Notes de frais', 'Frais kilométriques'],
-            datasets: [{
-                data: [
-                    {{ leave_requests|length|default:"0" }}, 
-                    {{ expense_reports|length|default:"0" }}, 
-                    {{ kilometric_expenses|length|default:"0" }}
-                ],
-                backgroundColor: [
-                    'rgba(78, 115, 223, 0.8)',
-                    'rgba(28, 200, 138, 0.8)',
-                    'rgba(246, 194, 62, 0.8)'
-                ],
-                borderColor: [
-                    'rgba(78, 115, 223, 1)',
-                    'rgba(28, 200, 138, 1)',
-                    'rgba(246, 194, 62, 1)'
-                ],
-                borderWidth: 1,
-                hoverOffset: 10
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        usePointStyle: true,
-                        padding: 20
-                    }
-                },
-                tooltip: {
-                    displayColors: false,
-                    bodyFont: {
-                        size: 14
-                    },
-                    callbacks: {
-                        label: function(context) {
-                            return context.parsed + ' demandes';
-                        }
-                    }
-                }
-            }
-        }
-    });
-    hideChartPlaceholder('chart-placeholder-1');
-    
-    // Initialisation du graphique d'activité récente (simplifiée)
-    const activityChartCtx = document.getElementById('activityChart').getContext('2d');
-    
-    // Simulation de données d'activité (à remplacer par des données réelles)
-    const activityData = {
-        labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
-        datasets: [{
-            label: 'Congés',
-            data: [3, 1, 4, 2, 5, 0, 0],
-            borderColor: 'rgba(78, 115, 223, 1)',
-            backgroundColor: 'rgba(78, 115, 223, 0.3)',
-            tension: 0.4,
-            fill: true
-        }, {
-            label: 'Notes de frais',
-            data: [2, 4, 1, 6, 3, 1, 0],
-            borderColor: 'rgba(28, 200, 138, 1)',
-            backgroundColor: 'rgba(28, 200, 138, 0.3)',
-            tension: 0.4,
-            fill: true
-        }]
-    };
-    
-    const activityChart = new Chart(activityChartCtx, {
-        type: 'line',
-        data: activityData,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        usePointStyle: true,
-                        padding: 20
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
-                    }
-                }
-            },
-            interaction: {
-                mode: 'nearest',
-                axis: 'x',
-                intersect: false
-            }
-        }
-    });
-    hideChartPlaceholder('chart-placeholder-2');
-    
-    // Optimisation: mise en cache des statistiques
-    cacheStatistics();
-    
-    // Fonction pour mettre en cache les statistiques
-    function cacheStatistics() {
-        const cacheKey = 'dashboard_stats';
-        const cacheTime = 60 * 5; // 5 minutes
-        
-        // Essayer de récupérer les statistiques du cache
-        const cachedStats = localStorage.getItem(cacheKey);
-        
-        if (cachedStats) {
-            const data = JSON.parse(cachedStats);
-            const now = Math.floor(Date.now() / 1000);
-            
-            // Si les données sont encore valides, utiliser le cache
-            if (data.expiry > now) {
-                updateStatsUI(data.stats);
-                return;
-            }
-        }
-        
-        // Sinon, récupérer les nouvelles statistiques
-        fetch('/api/dashboard-stats/')
-            .then(response => response.json())
-            .then(data => {
-                // Mettre à jour l'interface
-                updateStatsUI(data);
-                
-                // Mettre à jour le cache
-                const now = Math.floor(Date.now() / 1000);
-                localStorage.setItem(cacheKey, JSON.stringify({
-                    stats: data,
-                    expiry: now + cacheTime
-                }));
-            })
-            .catch(error => {
-                console.error('Erreur lors de la récupération des statistiques:', error);
-            });
-    }
-    
-    // Mettre à jour l'interface avec les statistiques
-    function updateStatsUI(data) {
-        if (data.leave_count) document.getElementById('leave-count').textContent = data.leave_count;
-        if (data.expense_count) document.getElementById('expense-count').textContent = data.expense_count;
-        if (data.km_expense_count) document.getElementById('km-expense-count').textContent = data.km_expense_count;
-        if (data.password_count) document.getElementById('password-count').textContent = data.password_count;
-    }
 });
 </script>
 {% endblock %}

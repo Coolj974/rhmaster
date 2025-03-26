@@ -1,581 +1,565 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block content %}
-<div class="container mt-5">
-    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
-        <div class="card-header bg-gradient-info text-white p-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2 class="mb-0"><i class="fas fa-car me-2"></i> Gestion des frais kilométriques</h2>
-                <a href="{% url 'dashboard' %}" class="btn btn-light rounded-pill shadow-sm">
-                    <i class="fas fa-home me-1"></i> Tableau de bord
-                </a>
-            </div>
-        </div>
-        <div class="card-body p-4">
-            <!-- Filtres et recherche -->
-            <div class="row mb-4">
-                <div class="col-md-8">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-outline-info active" id="filter-all">
-                            <i class="fas fa-list-ul me-1"></i> Tous
-                        </button>
-                        <button type="button" class="btn btn-outline-warning" id="filter-pending">
-                            <i class="fas fa-clock me-1"></i> En attente
-                        </button>
-                        <button type="button" class="btn btn-outline-success" id="filter-approved">
-                            <i class="fas fa-check me-1"></i> Approuvés
-                        </button>
-                        <button type="button" class="btn btn-outline-danger" id="filter-rejected">
-                            <i class="fas fa-times me-1"></i> Refusés
-                        </button>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="search-input" placeholder="Rechercher...">
-                        <button class="btn btn-info" type="button" id="search-button">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Statistiques rapides -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card bg-gradient-warning text-white shadow-sm rounded-4">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0">En attente</h6>
-                                    <h3 class="mb-0">{{ pending_count|default:"0" }}</h3>
-                                </div>
-                                <i class="fas fa-hourglass-half fa-2x opacity-50"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-gradient-success text-white shadow-sm rounded-4">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0">Approuvés</h6>
-                                    <h3 class="mb-0">{{ approved_count|default:"0" }}</h3>
-                                </div>
-                                <i class="fas fa-check-circle fa-2x opacity-50"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-gradient-danger text-white shadow-sm rounded-4">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0">Refusés</h6>
-                                    <h3 class="mb-0">{{ rejected_count|default:"0" }}</h3>
-                                </div>
-                                <i class="fas fa-times-circle fa-2x opacity-50"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-gradient-info text-white shadow-sm rounded-4">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0">Distance totale</h6>
-                                    <h3 class="mb-0">{{ total_distance|default:"0" }} km</h3>
-                                </div>
-                                <i class="fas fa-route fa-2x opacity-50"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tableau des frais kilométriques -->
-            <div class="table-responsive">
-                <table class="table table-hover align-middle datatable">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="border-0"><i class="fas fa-user me-2 text-info"></i>Employé</th>
-                            <th class="border-0"><i class="fas fa-calendar me-2 text-info"></i>Date</th>
-                            <th class="border-0"><i class="fas fa-map-marked-alt me-2 text-info"></i>Trajet</th>
-                            <th class="border-0"><i class="fas fa-road me-2 text-info"></i>Distance</th>
-                            <th class="border-0"><i class="fas fa-car me-2 text-info"></i>Véhicule</th>
-                            <th class="border-0"><i class="fas fa-euro-sign me-2 text-info"></i>Montant</th>
-                            <th class="border-0"><i class="fas fa-tag me-2 text-info"></i>Statut</th>
-                            <th class="border-0"><i class="fas fa-cog me-2 text-info"></i>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for expense in expenses %}
-                        <tr class="expense-row" data-status="{{ expense.status }}">
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-circle bg-gradient-secondary text-white me-2">
-                                        {{ expense.user.username|first|upper }}
-                                    </div>
-                                    <div>
-                                        <span class="fw-bold d-block">{{ expense.user.get_full_name|default:expense.user.username }}</span>
-                                        <small class="text-muted">
-                                            {% now "d/m/Y" as today_date %}
-                                            Soumis le {{ expense.created_at|date:"d/m/Y"|default:today_date }}
-                                        </small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-light text-dark rounded-pill border">
-                                    <i class="fas fa-calendar-day text-muted me-1"></i> {{ expense.date|date:"d/m/Y" }}
-                                </span>
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-outline-info view-map-btn" data-bs-toggle="modal" data-bs-target="#mapModal{{ expense.id }}">
-                                    <i class="fas fa-map-marker-alt text-danger me-1"></i>
-                                    <i class="fas fa-arrow-right mx-1"></i>
-                                    <i class="fas fa-flag-checkered text-success me-1"></i> Voir trajet
-                                </button>
-                            </td>
-                            <td>
-                                <strong>{{ expense.distance }}</strong> km
-                            </td>
-                            <td>
-                                {% if expense.vehicle_type == 'car' %}
-                                    <span class="badge bg-primary rounded-pill">
-                                        <i class="fas fa-car me-1"></i> Voiture
-                                    </span>
-                                {% elif expense.vehicle_type == 'electric_car' %}
-                                    <span class="badge bg-success rounded-pill">
-                                        <i class="fas fa-charging-station me-1"></i> Électrique
-                                    </span>
-                                {% elif expense.vehicle_type == 'motorbike' %}
-                                    <span class="badge bg-warning rounded-pill">
-                                        <i class="fas fa-motorcycle me-1"></i> Moto
-                                    </span>
-                                {% elif expense.vehicle_type == 'bicycle' %}
-                                    <span class="badge bg-info rounded-pill">
-                                        <i class="fas fa-bicycle me-1"></i> Vélo
-                                    </span>
-                                {% endif %}
-                                <small class="text-muted d-block">{{ expense.fiscal_power }} CV</small>
-                            </td>
-                            <td>
-                                <span class="fw-bold fs-5">{{ expense.amount }} €</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-gradient-{% if expense.status == 'approved' %}success{% elif expense.status == 'rejected' %}danger{% else %}warning{% endif %} rounded-pill px-3 py-2">
-                                    {% if expense.status == 'approved' %}
-                                        <i class="fas fa-check-circle me-1"></i> Approuvé
-                                    {% elif expense.status == 'rejected' %}
-                                        <i class="fas fa-times-circle me-1"></i> Refusé
-                                    {% else %}
-                                        <i class="fas fa-clock me-1"></i> En attente
-                                    {% endif %}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionDropdown{{ expense.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Actions
-                                    </button>
-                                    <ul class="dropdown-menu shadow" aria-labelledby="actionDropdown{{ expense.id }}">
-                                        {% if expense.status == "pending" %}
-                                            <li>
-                                                <button class="dropdown-item text-success approve-btn" data-expense-id="{{ expense.id }}" data-bs-toggle="modal" data-bs-target="#approveModal">
-                                                    <i class="fas fa-check me-2"></i>Approuver
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button class="dropdown-item text-danger reject-btn" data-expense-id="{{ expense.id }}" data-bs-toggle="modal" data-bs-target="#rejectModal">
-                                                    <i class="fas fa-times me-2"></i>Rejeter
-                                                </button>
-                                            </li>
-                                        {% endif %}
-                                        {% if expense.status == "approved" %}
-                                            <li>
-                                                <a href="{% url 'export_expenses_excel' %}" class="dropdown-item text-primary">
-                                                    <i class="fas fa-file-excel me-2"></i>Exporter
-                                                </a>
-                                            </li>
-                                        {% endif %}
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#mapModal{{ expense.id }}">
-                                                <i class="fas fa-map me-2"></i>Voir la carte
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
-                        
-                        <!-- Modal Carte pour chaque trajet -->
-                        <div class="modal fade" id="mapModal{{ expense.id }}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-lg modal-dialog-centered">
-                                <div class="modal-content rounded-4">
-                                    <div class="modal-header bg-gradient-info text-white">
-                                        <h5 class="modal-title"><i class="fas fa-route me-2"></i>Détails du trajet</h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="row mb-4">
-                                            <div class="col-md-6">
-                                                <div class="card border-0 shadow-sm mb-3">
-                                                    <div class="card-body">
-                                                        <h6 class="card-title"><i class="fas fa-info-circle me-2 text-info"></i>Informations</h6>
-                                                        <p class="mb-1"><strong>Date:</strong> {{ expense.date|date:"d/m/Y" }}</p>
-                                                        <p class="mb-1"><strong>Distance:</strong> {{ expense.distance }} km</p>
-                                                        <p class="mb-1"><strong>Montant:</strong> {{ expense.amount }} €</p>
-                                                        <p class="mb-1"><strong>Véhicule:</strong> {% if expense.get_vehicle_type_display %}{{ expense.get_vehicle_type_display }}{% else %}{{ expense.vehicle_type }}{% endif %} ({{ expense.fiscal_power }} CV)</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="card border-0 shadow-sm">
-                                                    <div class="card-body">
-                                                        <h6 class="card-title"><i class="fas fa-map-signs me-2 text-info"></i>Points de passage</h6>
-                                                        <p class="mb-2">
-                                                            <strong><i class="fas fa-map-marker-alt text-danger me-2"></i>Départ:</strong><br>
-                                                            {{ expense.departure }}
-                                                        </p>
-                                                        <p class="mb-0">
-                                                            <strong><i class="fas fa-flag-checkered text-success me-2"></i>Arrivée:</strong><br>
-                                                            {{ expense.arrival }}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Utilisation d'une iframe à la place de Leaflet -->
-                                        <div class="rounded-4 shadow-sm overflow-hidden">
-                                            <iframe id="mapFrame{{ expense.id }}" 
-                                                width="100%" 
-                                                height="350" 
-                                                frameborder="0" 
-                                                scrolling="no" 
-                                                marginheight="0" 
-                                                marginwidth="0" 
-                                                src="https://www.openstreetmap.org/export/embed.html?bbox={{ expense.departure_lng|default:55.5364|add:-0.1 }},{{ expense.departure_lat|default:-21.1151|add:-0.1 }},{{ expense.arrival_lng|default:55.5364|add:0.1 }},{{ expense.arrival_lat|default:-21.1151|add:0.1 }}&amp;layer=mapnik"
-                                                class="border-0">
-                                            </iframe>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <a href="https://www.openstreetmap.org/directions?from={{ expense.departure_lat|default:-21.1151 }},{{ expense.departure_lng|default:55.5364 }}&to={{ expense.arrival_lat|default:-21.1151 }},{{ expense.arrival_lng|default:55.5364 }}" 
-                                           target="_blank" class="btn btn-outline-info rounded-pill">
-                                            <i class="fas fa-external-link-alt me-1"></i> Voir l'itinéraire complet
-                                        </a>
-                                        <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Fermer</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <tr>
-                            <td colspan="9" class="text-center py-5">
-                                <div class="d-flex flex-column align-items-center">
-                                    <div class="empty-state mb-4">
-                                        <i class="fas fa-route fa-5x text-muted"></i>
-                                    </div>
-                                    <h4 class="mb-2">Aucun frais kilométrique à afficher</h4>
-                                    <p class="text-muted mb-4">Tous les frais ont été traités ou aucune demande n'a été soumise.</p>
-                                    <a href="{% url 'dashboard' %}" class="btn btn-gradient-primary rounded-pill">
-                                        <i class="fas fa-home me-2"></i> Retour au tableau de bord
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal d'approbation -->
-<div class="modal fade" id="approveModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 shadow">
-            <form action="" method="post" id="approve-form">
-                {% csrf_token %}
-                <div class="modal-header bg-gradient-success text-white">
-                    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i>Approuver le frais</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <p>Vous êtes sur le point d'approuver ce frais kilométrique.</p>
-                    <div class="form-group mb-3">
-                        <label for="approve-comment" class="form-label">Commentaire (optionnel)</label>
-                        <textarea class="form-control" id="approve-comment" name="comment" rows="3" 
-                                  placeholder="Ajouter un commentaire pour l'employé..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-gradient-success rounded-pill">
-                        <i class="fas fa-check me-1"></i> Confirmer l'approbation
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de rejet -->
-<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 shadow">
-            <form action="" method="post" id="reject-form">
-                {% csrf_token %}
-                <div class="modal-header bg-gradient-danger text-white">
-                    <h5 class="modal-title"><i class="fas fa-times-circle me-2"></i>Rejeter le frais</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <p>Vous êtes sur le point de rejeter ce frais kilométrique.</p>
-                    <div class="form-group mb-3">
-                        <label for="reject-reason" class="form-label">Motif du rejet <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="reject-reason" name="reason" rows="3" required
-                                  placeholder="Expliquez le motif du rejet..."></textarea>
-                        <div class="form-text">Cette information sera communiquée à l'employé.</div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-gradient-danger rounded-pill">
-                        <i class="fas fa-times me-1"></i> Confirmer le rejet
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Animation d'entrée pour la carte
-        const card = document.querySelector('.animate-fade-in');
-        if (card) {
-            card.style.animation = 'fadeIn 0.8s ease-in-out';
-        }
-        
-        // Filtrage par statut
-        document.querySelectorAll('#filter-all, #filter-pending, #filter-approved, #filter-rejected').forEach(button => {
-            button.addEventListener('click', function() {
-                document.querySelectorAll('#filter-all, #filter-pending, #filter-approved, #filter-rejected').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                this.classList.add('active');
-                
-                const filterStatus = this.id.replace('filter-', '');
-                const rows = document.querySelectorAll('.expense-row');
-                
-                rows.forEach(row => {
-                    if (filterStatus === 'all' || row.dataset.status === filterStatus) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-            });
-        });
-        
-        // Recherche 
-        document.getElementById('search-button').addEventListener('click', searchExpense);
-        document.getElementById('search-input').addEventListener('keyup', function(event) {
-            if (event.key === 'Enter') searchExpense();
-        });
-        
-        function searchExpense() {
-            const searchValue = document.getElementById('search-input').value.toLowerCase();
-            const rows = document.querySelectorAll('.expense-row');
-            
-            rows.forEach(row => {
-                if (row.textContent.toLowerCase().includes(searchValue)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-        
-        // Gestion des modales
-        document.querySelectorAll('.approve-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                document.getElementById('approve-form').action = `{% url 'approve_kilometric_expense' 0 %}`.replace('0', this.dataset.expenseId);
-            });
-        });
-        
-        document.querySelectorAll('.reject-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                document.getElementById('reject-form').action = `{% url 'reject_kilometric_expense' 0 %}`.replace('0', this.dataset.expenseId);
-            });
-        });
-        
-        // Animation pour les cartes de statistiques
-        document.querySelectorAll('.card.bg-gradient-warning, .card.bg-gradient-success, .card.bg-gradient-danger, .card.bg-gradient-info').forEach(card => {
-            card.addEventListener('mouseenter', function() { this.classList.add('card-hover'); });
-            card.addEventListener('mouseleave', function() { this.classList.remove('card-hover'); });
-        });
-        
-        // Supprimer l'initialisation des cartes Leaflet
-        {% for expense in expenses %}
-        // S'assurer que les modales fonctionnent correctement
-        const mapModal{{ expense.id }} = document.getElementById('mapModal{{ expense.id }}');
-        const modalInstance{{ expense.id }} = new bootstrap.Modal(mapModal{{ expense.id }}, {
-            backdrop: true,
-            keyboard: true,
-            focus: true
-        });
-        
-        // Ajouter des gestionnaires d'événements explicites pour ouvrir et fermer la modale
-        document.querySelectorAll('[data-bs-target="#mapModal{{ expense.id }}"]').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                modalInstance{{ expense.id }}.show();
-            });
-        });
-        
-        mapModal{{ expense.id }}.querySelectorAll('[data-bs-dismiss="modal"]').forEach(button => {
-            button.addEventListener('click', function() {
-                modalInstance{{ expense.id }}.hide();
-            });
-        });
-        {% endfor %}
-    });
-</script>
-
+{% block extra_css %}
 <style>
-    /* Styles de base */
-    .bg-gradient-primary { background: linear-gradient(45deg, #4e73df, #224abe); }
-    .bg-gradient-success { background: linear-gradient(45deg, #1cc88a, #13855c); }
-    .bg-gradient-info { background: linear-gradient(45deg, #36b9cc, #258391); }
-    .bg-gradient-warning { background: linear-gradient(45deg, #f6c23e, #dda20a); }
-    .bg-gradient-danger { background: linear-gradient(45deg, #e74a3b, #be392d); }
-    .bg-gradient-secondary { background: linear-gradient(45deg, #858796, #60616f); }
-    
-    /* Boutons */
-    .btn-gradient-success, .btn-gradient-danger, .btn-gradient-info, .btn-gradient-primary {
-        color: white;
-        border: none;
-        transition: all 0.3s;
+    /* Styles simples pour la gestion des frais kilométriques */
+    .filter-card {
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e3e6f0;
+        padding: 10px;
     }
     
-    .btn-gradient-success { background: linear-gradient(45deg, #1cc88a, #13855c); }
-    .btn-gradient-danger { background: linear-gradient(45deg, #e74a3b, #be392d); }
-    .btn-gradient-info { background: linear-gradient(45deg, #36b9cc, #258391); }
-    .btn-gradient-primary { background: linear-gradient(45deg, #4e73df, #224abe); }
-    
-    .btn-gradient-success:hover, .btn-gradient-danger:hover,
-    .btn-gradient-info:hover, .btn-gradient-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        color: white;
+    .filter-header {
+        padding: 0.75rem 1rem;
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+        font-weight: 600;
+        color: #4e73df;
     }
     
-    /* Interface et animations */
-    .rounded-4 { border-radius: 0.75rem !important; }
-    
-    .avatar-circle {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-weight: bold;
-        font-size: 16px;
+    .expense-table {
+        border-radius: 0.5rem;
+        overflow: hidden;
     }
     
-    .table th { font-weight: 600; color: #5a5c69; }
-    .table tbody tr { transition: all 0.2s; }
-    .table tbody tr:hover { background-color: rgba(54, 185, 204, 0.05); }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 30px;
+        font-weight: 600;
     }
     
-    .animate-fade-in { animation: fadeIn 0.8s ease-in-out; }
-    
-    .card-hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        transition: all 0.3s;
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
     }
     
-    .empty-state { animation: float 3s ease-in-out infinite; }
-    
-    @keyframes float {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
-        100% { transform: translateY(0px); }
+    .status-approved {
+        background-color: #d4edda;
+        color: #155724;
     }
     
-    /* Styles de base pour l'iframe de la carte */
-    iframe {
-        border: none;
-        display: block;
+    .status-rejected {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .expense-row {
+        transition: background-color 0.2s;
+    }
+    
+    .expense-row:hover {
+        background-color: #f8f9fc;
+    }
+    
+    .action-buttons {
+        white-space: nowrap;
+    }
+    
+    .action-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .btn-view {
+        color: #4e73df;
+        background-color: #eaecf4;
+        border-color: #eaecf4;
+    }
+    
+    .btn-approve {
+        color: #fff;
+        background-color: #1cc88a;
+        border-color: #1cc88a;
+    }
+    
+    .btn-reject {
+        color: #fff;
+        background-color: #e74a3b;
+        border-color: #e74a3b;
+    }
+    
+    .expense-details {
+        background-color: #f8f9fc;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #d1d3e2;
+    }
+    
+    #map-view {
+        height: 300px;
         width: 100%;
-        height: 350px;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
     }
     
-    /* Assurer que les modales sont visibles et interactives */
-    .modal {
-        z-index: 1050 !important;
+    .vehicle-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        margin-right: 0.5rem;
     }
     
-    .modal-dialog {
-        z-index: 1051 !important;
+    .vehicle-car {
+        background-color: #e8f0fe;
+        color: #4285f4;
     }
     
-    .modal-content {
-        z-index: 1052 !important;
+    .vehicle-motorbike {
+        background-color: #fce8e6;
+        color: #ea4335;
     }
     
-    .modal-backdrop {
-        z-index: 1040 !important;
+    .vehicle-electric {
+        background-color: #e6f4ea;
+        color: #34a853;
     }
     
-    /* Assurer que les boutons dans les modales sont cliquables */
-    .modal-header .btn-close,
-    .modal-footer .btn {
-        position: relative;
-        z-index: 1060;
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-        .card:hover { transform: none; }
-    }
-    
-    /* Correction pour le problème de fond noir sur les modals */
-    .modal-backdrop {
-        z-index: 1040 !important;
-    }
-    
-    .modal {
-        z-index: 1050 !important;
-    }
-    
-    .modal-content {
-        z-index: 1051 !important;
-    }
-    
-    .modal-header, .modal-footer {
-        z-index: 1052 !important;
-        position: relative;
-    }
-    
-    .btn-close, .map-modal-close {
-        position: relative;
-        z-index: 1053 !important;
+    .vehicle-bicycle {
+        background-color: #fef6e0;
+        color: #fbbc04;
     }
 </style>
+
+<!-- Leaflet CSS pour la carte -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- En-tête et statistiques -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-car me-2"></i>Gestion des frais kilométriques</h1>
+            <p class="text-muted small mb-0">Visualisez et gérez les demandes de frais kilométriques</p>
+        </div>
+        <div class="d-none d-md-block">
+            <div class="bg-light rounded-pill px-3 py-2 d-flex align-items-center">
+                <div class="me-3">
+                    <span class="badge status-pending me-2"></span>
+                    <span class="small">{{ pending_count|default:"0" }} en attente</span>
+                </div>
+                <div class="me-3">
+                    <span class="badge status-approved me-2"></span>
+                    <span class="small">{{ approved_count|default:"0" }} approuvés</span>
+                </div>
+                <div>
+                    <span class="badge status-rejected me-2"></span>
+                    <span class="small">{{ rejected_count|default:"0" }} refusés</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Filtres -->
+        <div class="col-lg-3 mb-4">
+            <div class="filter-card">
+                <div class="filter-header">
+                    <i class="fas fa-filter me-2"></i>Filtres
+                </div>
+                <div class="card-body">
+                    <form method="get">
+                        <div class="mb-3">
+                            <label for="user" class="form-label">Employé</label>
+                            <select name="user" id="user" class="form-select">
+                                <option value="">Tous les employés</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}" {% if request.GET.user == user.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ user.get_full_name|default:user.username }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Statut</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="">Tous les statuts</option>
+                                <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>En attente</option>
+                                <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Approuvé</option>
+                                <option value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Rejeté</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="vehicle_type" class="form-label">Type de véhicule</label>
+                            <select name="vehicle_type" id="vehicle_type" class="form-select">
+                                <option value="">Tous les véhicules</option>
+                                <option value="car" {% if request.GET.vehicle_type == 'car' %}selected{% endif %}>Voiture</option>
+                                <option value="electric_car" {% if request.GET.vehicle_type == 'electric_car' %}selected{% endif %}>Voiture électrique</option>
+                                <option value="motorbike" {% if request.GET.vehicle_type == 'motorbike' %}selected{% endif %}>Moto</option>
+                                <option value="bicycle" {% if request.GET.vehicle_type == 'bicycle' %}selected{% endif %}>Vélo</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="date_from" class="form-label">Date de début</label>
+                            <input type="date" name="date_from" id="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="date_to" class="form-label">Date de fin</label>
+                            <input type="date" name="date_to" id="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="min_distance" class="form-label">Distance minimum (km)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-road"></i></span>
+                                <input type="number" name="min_distance" id="min_distance" class="form-control" value="{{ request.GET.min_distance }}" min="0">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="max_distance" class="form-label">Distance maximum (km)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-road"></i></span>
+                                <input type="number" name="max_distance" id="max_distance" class="form-control" value="{{ request.GET.max_distance }}" min="0">
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i> Filtrer
+                            </button>
+                            
+                            {% if request.GET %}
+                            <a href="{% url 'manage_kilometric_expenses' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-undo me-1"></i> Réinitialiser
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Liste des frais kilométriques -->
+        <div class="col-lg-9">
+            <div class="card expense-table mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-list me-2"></i>Liste des frais kilométriques</h6>
+                    <span class="small text-muted">{{ expenses|length }} demande(s) trouvée(s)</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if expenses %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Employé</th>
+                                    <th>Date</th>
+                                    <th>Itinéraire</th>
+                                    <th>Véhicule</th>
+                                    <th>Distance</th>
+                                    <th>Montant</th>
+                                    <th>Statut</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for expense in expenses %}
+                                <tr class="expense-row" id="expense-{{ expense.id }}">
+                                    <td>
+                                        <div class="fw-bold">{{ expense.user.get_full_name|default:expense.user.username }}</div>
+                                        <div class="small text-muted">{{ expense.user.email }}</div>
+                                    </td>
+                                    <td>{{ expense.date|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <div class="small text-truncate" style="max-width: 150px;">
+                                            <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ expense.departure }}
+                                        </div>
+                                        <div class="small text-truncate" style="max-width: 150px;">
+                                            <i class="fas fa-flag-checkered text-success me-1"></i> {{ expense.arrival }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if expense.vehicle_type == 'car' %}
+                                        <span class="vehicle-badge vehicle-car">
+                                            <i class="fas fa-car me-1"></i> Voiture
+                                        </span>
+                                        {% elif expense.vehicle_type == 'electric_car' %}
+                                        <span class="vehicle-badge vehicle-electric">
+                                            <i class="fas fa-charging-station me-1"></i> Électrique
+                                        </span>
+                                        {% elif expense.vehicle_type == 'motorbike' %}
+                                        <span class="vehicle-badge vehicle-motorbike">
+                                            <i class="fas fa-motorcycle me-1"></i> Moto
+                                        </span>
+                                        {% elif expense.vehicle_type == 'bicycle' %}
+                                        <span class="vehicle-badge vehicle-bicycle">
+                                            <i class="fas fa-bicycle me-1"></i> Vélo
+                                        </span>
+                                        {% endif %}
+                                        <div class="small text-muted">{{ expense.fiscal_power }} CV</div>
+                                    </td>
+                                    <td>{{ expense.distance }} km</td>
+                                    <td>
+                                        <div class="fw-bold">{{ expense.reimbursement|default:"0.00" }} €</div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ expense.status }}">{{ expense.get_status_display }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="action-buttons">
+                                            <button type="button" class="btn action-btn btn-view view-details" data-expense-id="{{ expense.id }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            
+                                            {% if expense.status == 'pending' %}
+                                            <a href="{% url 'approve_kilometric_expense' expense.id %}" class="btn action-btn btn-approve">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                            <a href="{% url 'reject_kilometric_expense' expense.id %}" class="btn action-btn btn-reject">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="expense-details-row" id="details-{{ expense.id }}" style="display: none;">
+                                    <td colspan="8">
+                                        <div class="expense-details">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6 class="mb-3">Détails du trajet</h6>
+                                                    <p><strong>Départ:</strong> {{ expense.departure }}</p>
+                                                    <p><strong>Arrivée:</strong> {{ expense.arrival }}</p>
+                                                    <p><strong>Distance:</strong> {{ expense.distance }} km</p>
+                                                    <p><strong>Projet:</strong> {{ expense.project }}</p>
+                                                    <p><strong>Véhicule:</strong> 
+                                                        {% if expense.vehicle_type == 'car' %}Voiture
+                                                        {% elif expense.vehicle_type == 'electric_car' %}Voiture électrique
+                                                        {% elif expense.vehicle_type == 'motorbike' %}Moto
+                                                        {% elif expense.vehicle_type == 'bicycle' %}Vélo
+                                                        {% endif %}
+                                                        ({{ expense.fiscal_power }} CV)
+                                                    </p>
+                                                    <p><strong>Montant:</strong> {{ expense.reimbursement|default:"0.00" }} €</p>
+                                                    <p><strong>Soumis le:</strong> {{ expense.created_at|date:"d/m/Y H:i" }}</p>
+                                                    
+                                                    <div id="map-{{ expense.id }}" class="map-view mb-3"></div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {% if expense.status == 'pending' %}
+                                                    <form method="post" action="{% url 'kilometric_expense_action' expense.id %}" class="mt-3">
+                                                        {% csrf_token %}
+                                                        <div class="mb-3">
+                                                            <label for="comment-{{ expense.id }}" class="form-label">Commentaire</label>
+                                                            <textarea name="comment" id="comment-{{ expense.id }}" class="form-control" rows="3"></textarea>
+                                                        </div>
+                                                        <div class="d-flex gap-2">
+                                                            <button type="submit" name="action" value="approve" class="btn btn-success">
+                                                                <i class="fas fa-check me-1"></i> Approuver
+                                                            </button>
+                                                            <button type="submit" name="action" value="reject" class="btn btn-danger">
+                                                                <i class="fas fa-times me-1"></i> Refuser
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                    {% else %}
+                                                    <h6 class="mb-3">Traitement</h6>
+                                                    <p><strong>Statut:</strong> <span class="status-badge status-{{ expense.status }}">{{ expense.get_status_display }}</span></p>
+                                                    <p><strong>Date de traitement:</strong> {{ expense.updated_at|date:"d/m/Y H:i" }}</p>
+                                                    {% if expense.comment %}
+                                                    <p><strong>Commentaire:</strong> {{ expense.comment }}</p>
+                                                    {% endif %}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-car"></i>
+                        <h5>Aucun frais kilométrique trouvé</h5>
+                        <p class="text-muted">Aucun frais ne correspond à vos critères de recherche</p>
+                        
+                        {% if request.GET %}
+                        <a href="{% url 'manage_kilometric_expenses' %}" class="btn btn-outline-primary mt-3">
+                            <i class="fas fa-undo me-1"></i> Réinitialiser les filtres
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            {% if expenses.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if expenses.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ expenses.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&laquo;</span>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in expenses.paginator.page_range %}
+                        {% if num == expenses.number %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > expenses.number|add:'-3' and num < expenses.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if expenses.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ expenses.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&raquo;</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Leaflet JS pour la carte -->
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Afficher/masquer les détails des frais kilométriques
+    const viewButtons = document.querySelectorAll('.view-details');
+    const maps = {};
+    
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const expenseId = this.getAttribute('data-expense-id');
+            const detailsRow = document.getElementById(`details-${expenseId}`);
+            
+            if (detailsRow.style.display === 'none') {
+                detailsRow.style.display = 'table-row';
+                this.innerHTML = '<i class="fas fa-chevron-up"></i>';
+                
+                // Initialiser la carte quand on ouvre les détails
+                setTimeout(() => {
+                    initMap(expenseId);
+                }, 100); // Petit délai pour s'assurer que le conteneur est affiché
+            } else {
+                detailsRow.style.display = 'none';
+                this.innerHTML = '<i class="fas fa-eye"></i>';
+            }
+        });
+    });
+    
+    // Initialiser une carte pour un trajet spécifique
+    function initMap(expenseId) {
+        const mapContainer = document.getElementById(`map-${expenseId}`);
+        if (!mapContainer) return;
+        
+        // Si la carte existe déjà, pas besoin de la réinitialiser
+        if (maps[expenseId]) return;
+        
+        // Créer la carte
+        const map = L.map(`map-${expenseId}`).setView([-21.1151, 55.5364], 10); // Centré sur La Réunion par défaut
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Récupérer les coordonnées de départ et d'arrivée depuis les attributs data
+        const departLat = parseFloat(mapContainer.getAttribute('data-depart-lat')) || -21.1151;
+        const departLng = parseFloat(mapContainer.getAttribute('data-depart-lng')) || 55.5364;
+        const arrivalLat = parseFloat(mapContainer.getAttribute('data-arrival-lat')) || -21.1310;
+        const arrivalLng = parseFloat(mapContainer.getAttribute('data-arrival-lng')) || 55.4733;
+        
+        // Ajouter les marqueurs
+        const departMarker = L.marker([departLat, departLng]).addTo(map);
+        departMarker.bindPopup('<b>Départ</b>').openPopup();
+        
+        const arrivalMarker = L.marker([arrivalLat, arrivalLng]).addTo(map);
+        arrivalMarker.bindPopup('<b>Arrivée</b>');
+        
+        // Tracer une ligne simple entre les deux points
+        const routeLine = L.polyline([[departLat, departLng], [arrivalLat, arrivalLng]], {
+            color: 'blue',
+            weight: 3,
+            opacity: 0.7
+        }).addTo(map);
+        
+        // Ajuster la vue pour montrer tout l'itinéraire
+        map.fitBounds(routeLine.getBounds(), { padding: [30, 30] });
+        
+        // Stocker la référence à la carte
+        maps[expenseId] = map;
+    }
+    
+    // Validation des dates
+    const dateFromInput = document.getElementById('date_from');
+    const dateToInput = document.getElementById('date_to');
+    
+    function validateDateRange() {
+        const dateFrom = dateFromInput.value ? new Date(dateFromInput.value) : null;
+        const dateTo = dateToInput.value ? new Date(dateToInput.value) : null;
+        
+        if (dateFrom && dateTo && dateFrom > dateTo) {
+            dateToInput.setCustomValidity('La date de fin doit être postérieure à la date de début');
+        } else {
+            dateToInput.setCustomValidity('');
+        }
+    }
+    
+    if (dateFromInput && dateToInput) {
+        dateFromInput.addEventListener('change', validateDateRange);
+        dateToInput.addEventListener('change', validateDateRange);
+    }
+    
+    // Validation des distances
+    const minDistanceInput = document.getElementById('min_distance');
+    const maxDistanceInput = document.getElementById('max_distance');
+    
+    function validateDistanceRange() {
+        const minDistance = minDistanceInput.value ? parseFloat(minDistanceInput.value) : null;
+        const maxDistance = maxDistanceInput.value ? parseFloat(maxDistanceInput.value) : null;
+        
+        if (minDistance !== null && maxDistance !== null && minDistance > maxDistance) {
+            maxDistanceInput.setCustomValidity('La distance maximum doit être supérieure à la distance minimum');
+        } else {
+            maxDistanceInput.setCustomValidity('');
+        }
+    }
+    
+    if (minDistanceInput && maxDistanceInput) {
+        minDistanceInput.addEventListener('change', validateDistanceRange);
+        maxDistanceInput.addEventListener('change', validateDistanceRange);
+    }
+});
+</script>
 {% endblock %}
