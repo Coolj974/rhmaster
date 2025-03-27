@@ -1,0 +1,50 @@
+<!-- filepath: c:\Users\Cyberun 002\OneDrive\RHCYBER\hr_tool\rhmaster\templates\rh_management\partials\notification_dropdown.html -->
+<li><h6 class="dropdown-header">Notifications ({{ unread_count }} non lues)</h6></li>
+
+{% if notifications %}
+    {% for notification in notifications %}
+    <li>
+        <a class="dropdown-item notification-item {% if not notification.read %}fw-bold{% endif %}" 
+           href="{% if notification.url %}{{ notification.url }}{% else %}#{% endif %}"
+           data-notification-id="{{ notification.id }}">
+            <div class="d-flex align-items-center">
+                <div class="notification-icon bg-{{ notification.color }} text-white rounded-circle p-2 me-2">
+                    <i class="fas {{ notification.icon }}"></i>
+                </div>
+                <div class="notification-content flex-grow-1">
+                    <div class="small fw-bold text-truncate">{{ notification.title }}</div>
+                    <div class="small text-muted">{{ notification.created_at|timesince }}</div>
+                </div>
+                {% if not notification.read %}
+                <div class="ms-2">
+                    <span class="badge bg-{{ notification.color }} rounded-circle">&nbsp;</span>
+                </div>
+                {% endif %}
+            </div>
+        </a>
+    </li>
+    {% endfor %}
+    
+    {% if more_notifications %}
+    <li><hr class="dropdown-divider"></li>
+    <li>
+        <a class="dropdown-item text-center small" href="{% url 'notifications' %}">
+            <i class="fas fa-bell me-1"></i> Voir toutes les notifications
+        </a>
+    </li>
+    {% endif %}
+    
+    <li><hr class="dropdown-divider"></li>
+    <li>
+        <a class="dropdown-item text-center small mark-all-read" href="{% url 'mark_all_read' %}">
+            <i class="fas fa-check-double me-1"></i> Marquer tout comme lu
+        </a>
+    </li>
+{% else %}
+    <li>
+        <span class="dropdown-item text-muted">
+            <i class="fas fa-check-circle"></i>
+            Aucune nouvelle notification
+        </span>
+    </li>
+{% endif %}

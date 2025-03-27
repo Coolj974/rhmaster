@@ -1,0 +1,225 @@
+<!-- filepath: c:\Users\Cyberun 002\OneDrive\RHCYBER\hr_tool\rhmaster\templates\rh_management\notifications.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-bell me-2"></i>Mes notifications</h1>
+        <div>
+            <a href="{% url 'mark_all_read' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-check-double me-1"></i> Tout marquer comme lu
+            </a>
+            <a href="{% url 'delete_all_read' %}" class="btn btn-sm btn-outline-danger">
+                <i class="fas fa-trash me-1"></i> Supprimer toutes les notifications lues
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-arrow-left me-1"></i> Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistiques des notifications -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-bell fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Non lues</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.unread }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-bell-slash fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Congés</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.leave }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Frais</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.expense|add:stats.km_expense }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-invoice fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des notifications -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Toutes mes notifications</h6>
+            <div class="dropdown no-arrow">
+                <a class="dropdown-toggle" href="#" role="button" id="filterDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-filter fa-sm"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="filterDropdown">
+                    <a class="dropdown-item" href="?filter=all">Toutes</a>
+                    <a class="dropdown-item" href="?filter=unread">Non lues</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="?filter=leave">Congés</a>
+                    <a class="dropdown-item" href="?filter=expense">Notes de frais</a>
+                    <a class="dropdown-item" href="?filter=km_expense">Frais kilométriques</a>
+                    <a class="dropdown-item" href="?filter=system">Système</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if notifications %}
+                <ul class="list-group list-group-flush notification-list">
+                    {% for notification in notifications %}
+                        <li class="list-group-item notification-item {% if not notification.read %}bg-light{% endif %}">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <div class="notification-icon bg-{{ notification.color }} text-white rounded-circle p-3">
+                                        <i class="fas {{ notification.icon }} fa-lg"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h6 class="mb-1 {% if not notification.read %}fw-bold{% endif %}">{{ notification.title }}</h6>
+                                        <div class="d-flex">
+                                            {% if not notification.read %}
+                                                <a href="{% url 'mark_notification_read' notification.id %}" class="btn btn-sm btn-outline-success me-1" title="Marquer comme lu">
+                                                    <i class="fas fa-check"></i>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{% url 'delete_notification' notification.id %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <p class="mb-1">{{ notification.message }}</p>
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
+                                        {% if notification.url %}
+                                            <a href="{{ notification.url }}" class="btn btn-sm btn-link">
+                                                Voir détails <i class="fas fa-angle-right ms-1"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+                
+                <!-- Pagination -->
+                {% if notifications.has_other_pages %}
+                    <div class="p-3">
+                        <nav>
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if notifications.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1">&laquo; Début</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ notifications.previous_page_number }}">&lsaquo;</a>
+                                    </li>
+                                {% endif %}
+            
+                                {% for page_num in notifications.paginator.page_range %}
+                                    {% if notifications.number == page_num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ page_num }}</span>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+            
+                                {% if notifications.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ notifications.next_page_number }}">&rsaquo;</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ notifications.paginator.num_pages }}">Fin &raquo;</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+                
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                    <p class="lead text-muted">Aucune notification à afficher</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirmation pour la suppression
+    const deleteButtons = document.querySelectorAll('.notification-list a[href^="/notifications/delete"]');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
+                e.preventDefault();
+            }
+        });
+    });
+    
+    // Confirmation pour la suppression de toutes les notifications lues
+    const deleteAllReadBtn = document.querySelector('a[href="{% url "delete_all_read" %}"]');
+    if (deleteAllReadBtn) {
+        deleteAllReadBtn.addEventListener('click', function(e) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer toutes les notifications lues ?')) {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

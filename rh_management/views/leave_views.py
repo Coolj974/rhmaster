@@ -68,6 +68,31 @@ def leave_request_view(request):
             # Enregistrer la demande
             leave_request.save()
             
+            # Trouver tous les RH et managers
+            from django.contrib.auth.models import User, Group
+            rh_group = Group.objects.filter(name='RH').first()
+            admin_users = User.objects.filter(is_superuser=True)
+            rh_users = User.objects.filter(groups=rh_group) if rh_group else User.objects.none()
+            
+            # Si l'utilisateur a un superviseur, notifier aussi le superviseur
+            supervisor = None
+            try:
+                if request.user.userprofile.supervisor:
+                    supervisor = request.user.userprofile.supervisor
+            except:
+                pass
+                
+            # Créer des notifications pour les RH, les admins et le superviseur
+            from ..models import Notification
+            for user in set(list(admin_users) + list(rh_users) + ([supervisor] if supervisor else [])):
+                if user:  # Vérifier que l'utilisateur existe
+                    Notification.create_leave_notification(
+                        user,
+                        leave_request,
+                        f"Nouvelle demande de congé de {leave_request.user.get_full_name() or leave_request.user.username} du {leave_request.start_date} au {leave_request.end_date}.",
+                        is_manager=True
+                    )
+            
             messages.success(request, "Votre demande de congé a été soumise avec succès.")
             return redirect('my_leaves')  # Rediriger vers la liste des congés
         except ValueError as e:
@@ -358,12 +383,13 @@ def approve_leave(request, leave_id):
     leave.status = 'approved'
     leave.save()
 
-   # send_mail(
-   #     subject="Votre demande de congé a été approuvée",
-   #     message=f"Bonjour {leave.user.username},\n\nVotre demande de congé du {leave.start_date} au {leave.end_date} a été approuvée.",
-   #     from_email="no-reply@cyberun.info",
-   #     recipient_list=[leave.user.email]
-   # )
+    # Créer une notification pour l'employé
+    from ..models import Notification
+    Notification.create_leave_notification(
+        leave.user,
+        leave,
+        f"Votre demande de congé du {leave.start_date} au {leave.end_date} a été approuvée."
+    )
 
     messages.success(request, f"Congé approuvé pour {leave.user.username}.")
     return redirect('manage_leaves')
@@ -376,12 +402,13 @@ def reject_leave(request, leave_id):
     leave.status = 'rejected'
     leave.save()
 
-   # send_mail(
-   #     subject="Votre demande de congé a été refusée",
-   #     message=f"Bonjour {leave.user.username},\n\nVotre demande de congé du {leave.start_date} au {leave.end_date} a été refusée.",
-   #     from_email="no-reply@cyberun.info",
-   #     recipient_list=[leave.user.email]
-   # )
+    # Créer une notification pour l'employé
+    from ..models import Notification
+    Notification.create_leave_notification(
+        leave.user,
+        leave,
+        f"Votre demande de congé du {leave.start_date} au {leave.end_date} a été refusée."
+    )
 
     messages.error(request, f"Congé refusé pour {leave.user.username}.")
     return redirect('manage_leaves')
@@ -543,3 +570,33 @@ def cancel_leave(request, id):
         
     # Rediriger vers la page précédente si disponible, sinon vers my_leaves
     return redirect(request.META.get('HTTP_REFERER', 'my_leaves'))
+
+@login_required
+@user_passes_test(is_admin_hr_or_encadrant)
+def approve_all_leaves(request):
+    """Approuve toutes les demandes de congé en attente."""
+    # Compter les congés approuvés pour le message
+    pending_leaves = LeaveRequest.objects.filter(status='pending')
+    count = pending_leaves.count()
+    
+    # Mettre à jour tous les congés en attente
+    pending_leaves.update(status='approved')
+    
+    # Créer des notifications pour chaque utilisateur concerné
+    for leave in pending_leaves:
+        try:
+            from ..models import Notification
+            Notification.create_leave_notification(
+                leave.user,
+                leave,
+                f"Votre demande de congé du {leave.start_date.strftime('%d/%m/%Y')} au {leave.end_date.strftime('%d/%m/%Y')} a été approuvée."
+            )
+        except Exception as e:
+            # Gérer silencieusement les erreurs de notification
+            print(f"Erreur lors de la création de notification: {str(e)}")
+    
+    # Message de succès
+    messages.success(request, f"{count} demande(s) de congé approuvée(s) avec succès.")
+    
+    # Rediriger vers la page de gestion des congés
+    return redirect('manage_leaves')

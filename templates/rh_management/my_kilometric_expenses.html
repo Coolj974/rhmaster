@@ -1,134 +1,314 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 animate-fade-in">
-        <div class="card-header bg-gradient-info text-white p-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2 class="mb-0"><i class="fas fa-car me-2"></i> Mes Frais Kilométriques</h2>
-                <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-light rounded-pill">
-                    <i class="fas fa-plus-circle me-1"></i> Nouveau
-                </a>
-            </div>
+<div class="container py-4">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-route me-2"></i>Mes frais kilométriques</h1>
+        <div>
+            <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-plus fa-sm me-1"></i> Nouveau trajet
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary shadow-sm ms-2">
+                <i class="fas fa-arrow-left fa-sm me-1"></i> Retour au tableau de bord
+            </a>
         </div>
-        <div class="card-body p-4">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th class="border-0">Date</th>
-                            <th class="border-0">Projet</th>
-                            <th class="border-0">Départ</th>
-                            <th class="border-0">Arrivée</th>
-                            <th class="border-0">Distance</th>
-                            <th class="border-0">Montant</th>
-                            <th class="border-0">Statut</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for expense in expenses %}
-                        <tr>
-                            <td>{{ expense.date }}</td>
-                            <td>{% if expense.project %} {{ expense.project }} {% else %} <span class="text-muted">Non spécifié</span> {% endif %}</td>
-                            <td><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ expense.departure }}</td>
-                            <td><i class="fas fa-flag-checkered text-success me-1"></i> {{ expense.arrival }}</td>
-                            <td>{% if expense.distance %}<strong>{{ expense.distance|floatformat:2 }}</strong> km{% else %}N/A{% endif %}</td>
-                            <td><strong>{{ expense.amount|floatformat:2 }} €</strong></td>
-                            <td>
-                                <span class="badge bg-{% if expense.status == 'approved' %}gradient-success{% elif expense.status == 'pending' %}gradient-warning{% else %}gradient-danger{% endif %} rounded-pill px-3 py-2">
-                                    {{ expense.get_status_display }}
-                                </span>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="7" class="text-center py-5">
-                                <div class="d-flex flex-column align-items-center">
-                                    <i class="fas fa-route fa-3x mb-3 text-muted"></i>
-                                    <p class="lead">Aucun frais kilométrique enregistré.</p>
-                                    <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-gradient-info mt-2 rounded-pill">
-                                        <i class="fas fa-plus-circle me-2"></i> Ajouter un frais kilométrique
+    </div>
+
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="card shadow">
+        <div class="card-header py-3 bg-gradient-primary">
+            <h6 class="m-0 font-weight-bold text-white">Historique des trajets</h6>
+        </div>
+        <div class="card-body">
+            {% if expenses %}
+                <div class="table-responsive">
+                    <table class="table table-hover" id="kilometricExpensesTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Départ</th>
+                                <th>Arrivée</th>
+                                <th>Distance (km)</th>
+                                <th>Véhicule</th>
+                                <th>Montant</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in expenses %}
+                            <tr>
+                                <td>{{ expense.date|date:"d/m/Y" }}</td>
+                                <td>{{ expense.departure }}</td>
+                                <td>{{ expense.arrival }}</td>
+                                <td>{{ expense.distance }} km</td>
+                                <td>{{ expense.get_vehicle_type_display }}</td>
+                                <td>{{ expense.amount|floatformat:2 }} €</td>
+                                <td>
+                                    <span class="badge {% if expense.status == 'approved' %}bg-success
+                                        {% elif expense.status == 'rejected' %}bg-danger
+                                        {% else %}bg-warning{% endif %}">
+                                        {{ expense.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if expense.status == "pending" %}
+                                    <a href="{% url 'cancel_kilometric_expense' expense.id %}" 
+                                       class="btn btn-danger btn-sm"
+                                       onclick="return confirm('Êtes-vous sûr de vouloir annuler ce trajet ?')">
+                                        <i class="fas fa-times"></i> Annuler
                                     </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                    {% endif %}
+                                    
+                                    <button type="button" class="btn btn-info btn-sm view-trip" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#viewTripModal"
+                                            data-departure="{{ expense.departure }}"
+                                            data-arrival="{{ expense.arrival }}"
+                                            data-distance="{{ expense.distance }}"
+                                            data-amount="{{ expense.amount|floatformat:2 }}"
+                                            data-date="{{ expense.date|date:'d/m/Y' }}"
+                                            data-vehicle="{{ expense.get_vehicle_type_display }}"
+                                            data-status="{{ expense.get_status_display }}"
+                                            data-project="{{ expense.project|default:'Non spécifié' }}"
+                                            data-comment="{{ expense.comment|default:'' }}"
+                                            data-lat1="{{ expense.departure_lat }}"
+                                            data-lng1="{{ expense.departure_lng }}"
+                                            data-lat2="{{ expense.arrival_lat }}"
+                                            data-lng2="{{ expense.arrival_lng }}">
+                                        <i class="fas fa-search"></i> Détails
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-route fa-3x text-muted mb-3"></i>
+                    <p class="mb-3">Vous n'avez pas encore soumis de frais kilométriques.</p>
+                    <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Déclarer un trajet
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de détails du trajet -->
+<div class="modal fade" id="viewTripModal" tabindex="-1" aria-labelledby="viewTripModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewTripModalLabel">Détails du trajet</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title text-primary"><i class="fas fa-info-circle me-2"></i>Informations de base</h6>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Date :</span>
+                                        <span id="modal-date"></span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Véhicule :</span>
+                                        <span id="modal-vehicle"></span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Projet :</span>
+                                        <span id="modal-project"></span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Statut :</span>
+                                        <span id="modal-status"></span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-title text-success"><i class="fas fa-route me-2"></i>Détails du trajet</h6>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Départ :</span>
+                                        <span id="modal-departure"></span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Arrivée :</span>
+                                        <span id="modal-arrival"></span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Distance :</span>
+                                        <span id="modal-distance"></span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Montant :</span>
+                                        <span class="text-success fw-bold" id="modal-amount"></span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="map-container" class="mb-3">
+                    <h6 class="text-primary mb-2"><i class="fas fa-map-marked-alt me-2"></i>Carte du trajet</h6>
+                    <div id="trip-map" style="height: 300px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                </div>
+                
+                <div id="comment-section" class="d-none">
+                    <h6 class="text-primary mb-2"><i class="fas fa-comment-alt me-2"></i>Commentaire</h6>
+                    <div class="card">
+                        <div class="card-body">
+                            <p id="modal-comment" class="mb-0 font-italic"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
             </div>
         </div>
     </div>
 </div>
 
+{% block extra_scripts %}
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initializeMap" async defer></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Animation d'entrée pour la carte
-        const card = document.querySelector('.animate-fade-in');
-        if (card) {
-            card.style.animation = 'fadeIn 0.8s ease-in-out';
+let map;
+let directionsService;
+let directionsRenderer;
+
+function initializeMap() {
+    // Initialiser les services de Google Maps
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer();
+    
+    // Options par défaut pour la carte
+    const mapOptions = {
+        zoom: 7,
+        center: { lat: 46.227638, lng: 2.213749 }, // Centre de la France
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+    
+    // Créer la carte
+    map = new google.maps.Map(document.getElementById("trip-map"), mapOptions);
+    directionsRenderer.setMap(map);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser DataTable si présent
+    if ($.fn.DataTable && document.getElementById('kilometricExpensesTable')) {
+        $('#kilometricExpensesTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
+            },
+            order: [[0, 'desc']], // Trier par date décroissante
+            pageLength: 10
+        });
+    }
+    
+    // Gestion du modal de détails de trajet
+    const viewTripButtons = document.querySelectorAll('.view-trip');
+    
+    viewTripButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Récupérer les données du trajet
+            const departure = this.getAttribute('data-departure');
+            const arrival = this.getAttribute('data-arrival');
+            const distance = this.getAttribute('data-distance');
+            const amount = this.getAttribute('data-amount');
+            const date = this.getAttribute('data-date');
+            const vehicle = this.getAttribute('data-vehicle');
+            const status = this.getAttribute('data-status');
+            const project = this.getAttribute('data-project');
+            const comment = this.getAttribute('data-comment');
+            const lat1 = parseFloat(this.getAttribute('data-lat1'));
+            const lng1 = parseFloat(this.getAttribute('data-lng1'));
+            const lat2 = parseFloat(this.getAttribute('data-lat2'));
+            const lng2 = parseFloat(this.getAttribute('data-lng2'));
+            
+            // Mettre à jour les informations dans le modal
+            document.getElementById('modal-departure').textContent = departure;
+            document.getElementById('modal-arrival').textContent = arrival;
+            document.getElementById('modal-distance').textContent = distance + ' km';
+            document.getElementById('modal-amount').textContent = amount + ' €';
+            document.getElementById('modal-date').textContent = date;
+            document.getElementById('modal-vehicle').textContent = vehicle;
+            document.getElementById('modal-project').textContent = project;
+            document.getElementById('modal-status').textContent = status;
+            
+            // Afficher/masquer la section de commentaire
+            const commentSection = document.getElementById('comment-section');
+            if (comment && comment.trim() !== '') {
+                document.getElementById('modal-comment').textContent = comment;
+                commentSection.classList.remove('d-none');
+            } else {
+                commentSection.classList.add('d-none');
+            }
+            
+            // Afficher le trajet sur la carte
+            if (lat1 && lng1 && lat2 && lng2 && map && directionsService) {
+                const origin = { lat: lat1, lng: lng1 };
+                const destination = { lat: lat2, lng: lng2 };
+                
+                directionsService.route(
+                    {
+                        origin: origin,
+                        destination: destination,
+                        travelMode: google.maps.TravelMode.DRIVING
+                    },
+                    function(response, status) {
+                        if (status === "OK") {
+                            directionsRenderer.setDirections(response);
+                        } else {
+                            // Si l'itinéraire échoue, placer des marqueurs simples
+                            map.setCenter(origin);
+                            
+                            new google.maps.Marker({
+                                position: origin,
+                                map: map,
+                                title: "Départ: " + departure
+                            });
+                            
+                            new google.maps.Marker({
+                                position: destination,
+                                map: map,
+                                title: "Arrivée: " + arrival
+                            });
+                        }
+                    }
+                );
+            }
+        });
+    });
+    
+    // Déclencher l'initialisation de la carte quand le modal s'ouvre
+    document.getElementById('viewTripModal').addEventListener('shown.bs.modal', function() {
+        // Forcer le redimensionnement de la carte
+        if (map) {
+            google.maps.event.trigger(map, 'resize');
         }
     });
+});
 </script>
-
-<style>
-    /* Styles pour les gradients et effets modernes */
-    .bg-gradient-primary {
-        background: linear-gradient(45deg, #4e73df, #224abe);
-    }
-    
-    .bg-gradient-success {
-        background: linear-gradient(45deg, #1cc88a, #13855c);
-    }
-    
-    .bg-gradient-info {
-        background: linear-gradient(45deg, #36b9cc, #258391);
-    }
-    
-    .bg-gradient-warning {
-        background: linear-gradient(45deg, #f6c23e, #dda20a);
-    }
-    
-    .bg-gradient-danger {
-        background: linear-gradient(45deg, #e74a3b, #be392d);
-    }
-    
-    .btn-gradient-info {
-        background: linear-gradient(45deg, #36b9cc, #258391);
-        color: white;
-        border: none;
-        transition: all 0.3s;
-    }
-    
-    .btn-gradient-info:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        color: white;
-    }
-    
-    .rounded-4 {
-        border-radius: 0.75rem !important;
-    }
-    
-    .table th {
-        font-weight: 600;
-        color: #5a5c69;
-    }
-    
-    .table tbody tr {
-        transition: all 0.2s;
-    }
-    
-    .table tbody tr:hover {
-        background-color: rgba(78, 115, 223, 0.05);
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .animate-fade-in {
-        animation: fadeIn 0.8s ease-in-out;
-    }
-</style>
+{% endblock %}
 {% endblock %}

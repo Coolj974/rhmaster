@@ -30,6 +30,21 @@ from rh_management.views import (
     update_leave_balance, dashboard_stats_api
 )
 
+# Import les nouvelles vues de notification
+from rh_management.views.notification_views import (
+    notifications_view, mark_notification_read, mark_all_read,
+    delete_notification, delete_all_read, get_notifications_count,
+    get_notifications_dropdown
+)
+
+# Import pour la nouvelle vue
+from rh_management.views.leave_views import (
+    leave_request_view, cancel_leave, manage_leaves_view, 
+    approve_leave, reject_leave, delete_leave, leave_action, 
+    export_leaves, manage_leave_balances, update_leave_balance, 
+    my_leaves, approve_all_leaves
+)
+
 # Error handlers
 def error_404(request, exception):
     return render(request, 'errors/404.html', status=404)
@@ -104,16 +119,17 @@ urlpatterns = [
     
     # Leave Management
     path("leave-request/", leave_request_view, name="leave_request"),  # Leave request page
-    path("cancel-leave/<int:id>/", cancel_leave, name="cancel_leave"),  # Ajout de cette ligne
-    path("manage-leaves/", manage_leaves_view, name="manage_leaves"),  # Manage leaves
-    path("approve-leave/<int:leave_id>/", approve_leave, name="approve_leave"),  # Approve leave
-    path("reject-leave/<int:leave_id>/", reject_leave, name="reject_leave"),  # Reject leave
+    path("cancel-leave/<int:id>/", cancel_leave, name="cancel_leave"),
+    path("manage-leaves/", manage_leaves_view, name="manage_leaves"),
+    path("approve-leave/<int:leave_id>/", approve_leave, name="approve_leave"),
+    path("reject-leave/<int:leave_id>/", reject_leave, name="reject_leave"),
     path('delete_leave/<int:id>/', delete_leave, name='delete_leave'),
     path('leave-action/<int:leave_id>/', leave_action, name='leave_action'),
     path('export/', export_leaves, name='export_leaves'),
     path('leave-balance/', manage_leave_balances, name='manage_leave_balances'),
     path('update-leave-balance/<int:user_id>/', update_leave_balance, name='update_leave_balance'),
     path('my-leaves/', my_leaves, name='my_leaves'),
+    path('approve-all-leaves/', approve_all_leaves, name='approve_all_leaves'),  # Nouvelle URL
 
     # Expense Management
     path("submit-expense/", submit_expense, name="submit_expense"),  # Submit expense
@@ -155,9 +171,18 @@ urlpatterns = [
     path('passwords/delete/<int:pk>/', password_delete, name='password_delete'),
     path('passwords/share/<int:pk>/', password_share, name='password_share'),
     
+    # Notifications
+    path("notifications/", notifications_view, name="notifications"),
+    path("notifications/mark-read/<int:notification_id>/", mark_notification_read, name="mark_notification_read"),
+    path("notifications/mark-all-read/", mark_all_read, name="mark_all_read"),
+    path("notifications/delete/<int:notification_id>/", delete_notification, name="delete_notification"),
+    path("notifications/delete-all-read/", delete_all_read, name="delete_all_read"),
+    path("api/notifications/count/", get_notifications_count, name="get_notifications_count"),
+    path("api/notifications/dropdown/", get_notifications_dropdown, name="get_notifications_dropdown"),
+
     # API
-        path("api/leaves/", api_leaves, name="api_leaves"),
-        path('api/dashboard-stats/', dashboard_stats_api, name='dashboard_stats_api'),
+    path("api/leaves/", api_leaves, name="api_leaves"),
+    path('api/dashboard-stats/', dashboard_stats_api, name='dashboard_stats_api'),
 ]
 
 # Add static and media URL patterns

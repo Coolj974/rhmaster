@@ -368,3 +368,112 @@ class PermissionGroup(models.Model):
 
     def __str__(self):
         return self.name
+
+class Notification(models.Model):
+    """Modèle pour stocker les notifications envoyées aux utilisateurs."""
+    NOTIFICATION_TYPES = (
+        ('leave', 'Congé'),
+        ('expense', 'Note de frais'),
+        ('km_expense', 'Frais kilométrique'),
+        ('system', 'Système'),
+        ('password', 'Mot de passe partagé'),
+        ('profile', 'Profil')
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='system')
+    object_id = models.IntegerField(null=True, blank=True)  # ID de l'objet concerné (congé, note de frais, etc.)
+    read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    icon = models.CharField(max_length=50, default='fa-bell')  # Classe d'icône Font Awesome
+    color = models.CharField(max_length=20, default='primary')  # Classe de couleur Bootstrap
+    url = models.CharField(max_length=255, blank=True, null=True)  # URL associée à la notification
+    
+    class Meta:
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"{self.title} - {self.user.username}"
+    
+    @classmethod
+    def create_leave_notification(cls, user, leave_request, message, is_manager=False):
+        """Crée une notification pour une demande de congé."""
+        if is_manager:
+            title = f"Nouvelle demande de congé de {leave_request.user.get_full_name() or leave_request.user.username}"
+            icon = "fa-calendar-check"
+            url = f"/manage-leaves/?user_id={leave_request.user.id}"
+        else:
+            title = f"Mise à jour de votre demande de congé"
+            icon = "fa-calendar-alt"
+            url = "/my-leaves/"
+            
+        return cls.objects.create(
+            user=user,
+            title=title,
+            message=message,
+            notification_type='leave',
+            object_id=leave_request.id,
+            icon=icon,
+            color='success',
+            url=url
+        )
+    
+    @classmethod
+    def create_expense_notification(cls, user, expense, message, is_manager=False):
+        """Crée une notification pour une note de frais."""
+        if is_manager:
+            title = f"Nouvelle note de frais de {expense.user.get_full_name() or expense.user.username}"
+            icon = "fa-file-invoice-dollar"
+            url = f"/manage-expenses/?user_id={expense.user.id}"
+        else:
+            title = f"Mise à jour de votre note de frais"
+            icon = "fa-receipt"
+            url = "/my-expenses/"
+            
+        return cls.objects.create(
+            user=user,
+            title=title,
+            message=message,
+            notification_type='expense',
+            object_id=expense.id,
+            icon=icon,
+            color='warning',
+            url=url
+        )
+    
+    @classmethod
+    def create_km_expense_notification(cls, user, km_expense, message, is_manager=False):
+        """Crée une notification pour des frais kilométriques."""
+        if is_manager:
+            title = f"Nouveaux frais kilométriques de {km_expense.user.get_full_name() or km_expense.user.username}"
+            icon = "fa-car"
+            url = f"/manage-kilometric-expenses/?user_id={km_expense.user.id}"
+        else:
+            title = f"Mise à jour de vos frais kilométriques"
+            icon = "fa-route"
+            url = "/my-kilometric-expenses/"
+            
+        return cls.objects.create(
+            user=user,
+            title=title,
+            message=message,
+            notification_type='km_expense',
+            object_id=km_expense.id,
+            icon=icon,
+            color='danger',
+            url=url
+        )
+        
+    @classmethod
+    def create_system_notification(cls, user, title, message):
+        """Crée une notification système."""
+        return cls.objects.create(
+            user=user,
+            title=title,
+            message=message,
+            notification_type='system',
+            icon="fa-info-circle",
+            color='info'
+        )
