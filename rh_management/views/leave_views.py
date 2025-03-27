@@ -10,17 +10,19 @@ from ..forms import LeaveRequestForm
 from .permissions import is_admin_or_hr, is_admin_hr_or_encadrant, can_approve_leaves
 from datetime import datetime, timedelta
 
-def calculate_working_days(start_date, end_date):
-    """Calculate the number of working days (Monday to Friday) between two dates."""
+def calculate_working_days(start_date, end_date, half_day=False):
+    """Calcule le nombre de jours ouvrés entre deux dates."""
+    if half_day:
+        return 0.5
+    
     working_days = 0
     current_date = start_date
     
     while current_date <= end_date:
-        # If it's a weekday (0 = Monday, 6 = Sunday)
-        if current_date.weekday() < 5:  # 0-4 represents Monday to Friday
+        if current_date.weekday() < 5:  # 0-4 pour lundi à vendredi
             working_days += 1
         current_date += timedelta(days=1)
-        
+    
     return working_days
 
 @login_required
@@ -345,21 +347,27 @@ def reject_leave(request, leave_id):
 
 @login_required
 def leave_action(request, leave_id):
-    """
-    Vue pour gérer les actions sur les demandes de congés (approbation/rejet avec commentaire).
-    Permet d'ajouter un commentaire lors de l'approbation ou du rejet d'une demande.
-    """
+    """Vue pour gérer les actions sur les demandes de congés."""
     if not request.user.is_authenticated:
         return redirect('login')
     
     # Vérifier les permissions
-    if not (request.user.is_superuser or request.user.is_staff or request.user.groups.filter(name='Encadrant').exists()):
+    if not (request.user.is_superuser or request.user.is_staff or 
+            request.user.groups.filter(name='Encadrant').exists()):
         messages.error(request, "Vous n'avez pas les droits nécessaires pour effectuer cette action.")
         return redirect('dashboard')
     
     # Récupérer la demande de congé
     try:
         leave_request = LeaveRequest.objects.get(id=leave_id)
+        # Calculer days_requested si non défini
+        if not leave_request.days_requested:
+            leave_request.days_requested = calculate_working_days(
+                leave_request.start_date, 
+                leave_request.end_date,
+                leave_request.half_day
+            )
+            leave_request.save()
     except LeaveRequest.DoesNotExist:
         messages.error(request, "La demande de congé n'existe pas.")
         return redirect('manage_leaves')
@@ -376,7 +384,9 @@ def leave_action(request, leave_id):
             leave_request.save()
             
             # Mettre à jour le solde de congés de l'utilisateur
-            update_leave_balance(leave_request.user, leave_request)
+            balance, created = LeaveBalance.objects.get_or_create(user=leave_request.user)
+            balance.taken += leave_request.days_requested
+            balance.save()
             
             messages.success(request, "La demande de congé a été approuvée.")
         elif action == 'reject':
@@ -426,3 +436,69 @@ def export_leaves(request):
     else:
         messages.error(request, "Format d'export non supporté")
         return redirect('manage_leaves')
+
+@login_required
+def my_leaves(request):
+    leave_requests = LeaveRequest.objects.filter(user=request.user)
+    
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Initialiser les compteurs
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh or is_encadrant:
+        from ..models import ExpenseReport, KilometricExpense
+        if is_admin or is_rh:
+            new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+            new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+            new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+        elif is_encadrant:
+            from django.contrib.auth.models import User
+            team_members = User.objects.filter(team_leader=request.user)
+            new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+            new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+            new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+
+    context = {
+        'leave_requests': leave_requests,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/my_leaves.html', context)
+
+@login_required
+def cancel_leave(request, id):
+    """Annule une demande de congé."""
+    try:
+        leave = get_object_or_404(LeaveRequest, id=id)
+        
+        # Vérifier que l'utilisateur est le propriétaire de la demande
+        if leave.user != request.user:
+            messages.error(request, "Vous n'êtes pas autorisé à annuler cette demande.")
+            return redirect('my_leaves')
+            
+        # Vérifier que la demande est en attente
+        if leave.status != 'pending':
+            messages.error(request, "Seules les demandes en attente peuvent être annulées.")
+            return redirect('my_leaves')
+            
+        leave.delete()
+        messages.success(request, "Votre demande de congé a été annulée.")
+        
+    except LeaveRequest.DoesNotExist:
+        messages.error(request, "La demande de congé n'existe pas ou a déjà été supprimée.")
+    except Exception as e:
+        messages.error(request, f"Une erreur s'est produite lors de l'annulation: {str(e)}")
+        
+    # Rediriger vers la page précédente si disponible, sinon vers my_leaves
+    return redirect(request.META.get('HTTP_REFERER', 'my_leaves'))

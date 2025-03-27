@@ -4,51 +4,54 @@ from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib import messages
-from ..models import LeaveRequest, ExpenseReport, KilometricExpense, UserProfile, PasswordManager
+from ..models import LeaveRequest, ExpenseReport, KilometricExpense, UserProfile, PasswordManager, LeaveBalance
 from .permissions import is_rh, is_encadrant, is_stp, is_admin_or_hr
 
 @login_required
 def dashboard_view(request):
-    new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
-    new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
-    new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    """Vue pour le tableau de bord."""
+    user = request.user
 
-    # Déterminer clairement les rôles de l'utilisateur
-    is_superuser = request.user.is_superuser
-    is_hr = is_rh(request.user)
+    # Récupérer le solde des congés
+    leave_balance, created = LeaveBalance.objects.get_or_create(
+        user=user,
+        defaults={'acquired': 25.0, 'taken': 0.0}
+    )
     
-    is_admin_flag = request.user.is_superuser
-    is_rh_flag = is_rh(request.user)
-    is_encadrant_flag = is_encadrant(request.user)
-    is_stp_flag = is_stp(request.user)
-    is_employee_flag = (request.user.groups.filter(name="Employé").exists() or 
-                       not (is_admin_flag or is_rh_flag or is_encadrant_flag or is_stp_flag))
+    # Calculer les compteurs
+    expense_count = ExpenseReport.objects.filter(user=user).count()
+    km_expense_count = KilometricExpense.objects.filter(user=user).count()
+    password_count = PasswordManager.objects.filter(user=user).count()
     
-    # Correction de la logique de détermination des demandes à afficher
-    if is_admin_flag or is_rh_flag or is_encadrant_flag:
-        # Logique pour admins, RH et encadrants
-        leave_requests = LeaveRequest.objects.all().order_by('-created_at')[:10]
-        expense_reports = ExpenseReport.objects.all().order_by('-date')[:10]
-        kilometric_expenses = KilometricExpense.objects.all().order_by('-date')[:10]
-    else:
-        # Logique pour employés
-        leave_requests = LeaveRequest.objects.filter(user=request.user).order_by('-created_at')
-        expense_reports = ExpenseReport.objects.filter(user=request.user).order_by('-date')
-        kilometric_expenses = KilometricExpense.objects.filter(user=request.user).order_by('-date')
+    # Récupérer les dernières demandes
+    leave_requests = LeaveRequest.objects.filter(user=user).order_by('-created_at')[:5]
+    expense_reports = ExpenseReport.objects.filter(user=user).order_by('-date')[:5]
+    kilometric_expenses = KilometricExpense.objects.filter(user=user).order_by('-date')[:5]
 
     context = {
-        "is_admin": is_admin_flag,
-        "is_rh": is_rh_flag,
-        "is_encadrant": is_encadrant_flag,
-        "is_stp": is_stp_flag,
-        "is_employee": is_employee_flag,
-        "leave_requests": leave_requests,
-        "expense_reports": expense_reports,
-        "kilometric_expenses": kilometric_expenses,
-        "new_leave_requests_count": new_leave_requests_count,
-        "new_expense_reports_count": new_expense_reports_count,
-        "new_kilometric_expenses_count": new_kilometric_expenses_count,
+        'leave_balance': {
+            'available': leave_balance.available,
+            'taken': leave_balance.taken,
+            'acquired': leave_balance.acquired,
+            'percentage': (leave_balance.taken / leave_balance.acquired * 100) if leave_balance.acquired > 0 else 0
+        },
+        'expense_count': expense_count,
+        'km_expense_count': km_expense_count,
+        'password_count': password_count,
+        'leave_requests': leave_requests,
+        'expense_reports': expense_reports,
+        'kilometric_expenses': kilometric_expenses,
+        "is_admin": request.user.is_superuser,
+        "is_rh": is_rh(request.user),
+        "is_encadrant": is_encadrant(request.user),
+        "is_stp": is_stp(request.user),
+        "is_employee": (request.user.groups.filter(name="Employé").exists() or 
+                       not (request.user.is_superuser or is_rh(request.user) or is_encadrant(request.user) or is_stp(request.user))),
+        "new_leave_requests_count": LeaveRequest.objects.filter(status='pending').count(),
+        "new_expense_reports_count": ExpenseReport.objects.filter(status='pending').count(),
+        "new_kilometric_expenses_count": KilometricExpense.objects.filter(status='pending').count(),
     }
+    
     return render(request, 'rh_management/dashboard.html', context)
 
 @login_required
@@ -143,8 +146,15 @@ def dashboard_stats_api(request):
     """API endpoint pour les statistiques du tableau de bord."""
     try:
         user = request.user
+        
+        # Récupérer le solde des congés
+        leave_balance = LeaveBalance.objects.get_or_create(
+            user=user,
+            defaults={'acquired': 25.0, 'taken': 0.0}
+        )[0]
+        
         stats = {
-            'leave_count': LeaveRequest.objects.filter(user=user).count(),
+            'leave_count': leave_balance.available,
             'expense_count': ExpenseReport.objects.filter(user=user).count(),
             'km_expense_count': KilometricExpense.objects.filter(user=user).count(),
             'password_count': PasswordManager.objects.filter(user=user).count(),

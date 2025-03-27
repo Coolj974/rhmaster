@@ -8,16 +8,17 @@ from django.contrib.auth.views import LogoutView  # Ajout de l'import manquant
 # Import all views directly to ensure they're available
 from rh_management.views import (
     home_view, login_view, register_view, logout_view, dashboard_view,
-    leave_request_view, manage_leaves_view, approve_leave, reject_leave,
+    leave_request_view, manage_leaves_view, approve_leave, reject_leave, cancel_leave,
     submit_expense, manage_expenses_view, approve_expense, reject_expense, cancel_expense,
     profile_view, update_profile, change_password, edit_preferences,
     manage_users_view, edit_user, delete_user, toggle_user_status, mass_action, 
     reset_password,
     submit_kilometric_expense, my_kilometric_expenses, manage_kilometric_expenses,
     approve_kilometric_expense, reject_kilometric_expense, edit_kilometric_expense,
+    cancel_kilometric_expense,
     export_expenses, export_expenses_excel, export_expenses_pdf, export_leaves,
     delete_leave, delete_expense, delete_kilometric_expense,
-    dashboard_filtered,
+    dashboard_filtered, my_leaves, my_expenses_view,
     # Important - explicitly import these two views
     manage_roles_view, delete_role,
     # Password Manager views
@@ -87,6 +88,7 @@ urlpatterns = [
     
     # Leave Management
     path("leave-request/", leave_request_view, name="leave_request"),  # Leave request page
+    path("cancel-leave/<int:id>/", cancel_leave, name="cancel_leave"),  # Ajout de cette ligne
     path("manage-leaves/", manage_leaves_view, name="manage_leaves"),  # Manage leaves
     path("approve-leave/<int:leave_id>/", approve_leave, name="approve_leave"),  # Approve leave
     path("reject-leave/<int:leave_id>/", reject_leave, name="reject_leave"),  # Reject leave
@@ -94,9 +96,11 @@ urlpatterns = [
     path('leave-action/<int:leave_id>/', leave_action, name='leave_action'),
     path('export/', export_leaves, name='export_leaves'),
     path('leave-balance/', manage_leave_balances, name='manage_leave_balances'),
+    path('my-leaves/', my_leaves, name='my_leaves'),
 
     # Expense Management
     path("submit-expense/", submit_expense, name="submit_expense"),  # Submit expense
+    path("my-expenses/", my_expenses_view, name="my_expenses"),  # Modification de l'URL name
     path("manage-expenses/", manage_expenses_view, name="manage_expenses"),  # Manage expenses
     path("approve-expense/<int:expense_id>/", approve_expense, name="approve_expense"),  # Approve expense
     path("reject-expense/<int:expense_id>/", reject_expense, name="reject_expense"),  # Reject expense
@@ -114,6 +118,7 @@ urlpatterns = [
     path("approve-kilometric-expense/<int:expense_id>/", approve_kilometric_expense, name="approve_kilometric_expense"),  # Approve kilometric expense
     path("reject-kilometric-expense/<int:expense_id>/", reject_kilometric_expense, name="reject_kilometric_expense"),  # Reject kilometric expense
     path("edit-kilometric-expense/<int:expense_id>/", edit_kilometric_expense, name="edit_kilometric_expense"),  # Edit kilometric expense
+    path("cancel-kilometric-expense/<int:expense_id>/", cancel_kilometric_expense, name="cancel_kilometric_expense"),  # Ajout de cette ligne
     path('delete_kilometric_expense/<int:id>/', delete_kilometric_expense, name='delete_kilometric_expense'),
     path('kilometric-expense-action/<int:expense_id>/', kilometric_expense_action, name='kilometric_expense_action'),
     

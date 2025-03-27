@@ -1,9 +1,11 @@
 from django.contrib.auth.models import User, Group
+from django.shortcuts import redirect
+from django.contrib import messages
 
 # Fonctions de vérification des permissions
 def is_admin_or_hr(user):
     """Vérifie si l'utilisateur est un admin ou un RH."""
-    return user.is_superuser or user.is_staff or user.groups.filter(name="HR").exists()
+    return user.is_superuser or user.is_staff
 
 def is_employee(user):
     """Vérifie si l'utilisateur est un employé."""
@@ -28,14 +30,11 @@ def is_stp(user):
 
 def is_admin_hr_or_encadrant(user):
     """Vérifie si l'utilisateur est un admin, un RH ou un encadrant."""
-    return (user.is_superuser or 
-            is_rh(user) or
-            user.groups.filter(name="Encadrant").exists())
+    return user.is_superuser or user.is_staff or user.groups.filter(name='Encadrant').exists()
 
 def can_approve_leaves(user):
     """Vérifie si l'utilisateur peut approuver des congés."""
-    return (is_admin_hr_or_encadrant(user) or 
-            user.groups.filter(name="CanApproveLeaves").exists())
+    return is_admin_hr_or_encadrant(user)
 
 def can_edit_profiles(user):
     """Vérifie si l'utilisateur peut modifier des profils."""

@@ -303,7 +303,16 @@
                 <!-- Profil utilisateur -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown">
-                        <div class="user-avatar">{{ request.user.username|first|upper }}</div>
+                        {% if request.user.userprofile.profile_picture %}
+                            <img src="{{ request.user.userprofile.profile_picture.url }}" 
+                                 alt="Photo de profil"
+                                 class="rounded-circle me-2"
+                                 style="width: 32px; height: 32px; object-fit: cover;">
+                        {% else %}
+                            <div class="user-avatar bg-primary">
+                                {{ request.user.username|first|upper }}
+                            </div>
+                        {% endif %}
                         <span class="d-none d-md-inline">{{ request.user.get_full_name|default:request.user.username }}</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">

@@ -69,7 +69,7 @@ def submit_expense(request):
             expense.save()
             
             messages.success(request, "Votre note de frais a été soumise avec succès.")
-            return redirect('my_expenses_view')
+            return redirect('my_expenses')  # Changé de 'my_expenses_view' à 'my_expenses'
         
         except ValueError:
             messages.error(request, "Format de montant ou de date invalide.")
@@ -116,9 +116,43 @@ def submit_expense(request):
 
 @login_required
 def my_expenses_view(request):
-    """Affiche les notes de frais de l'utilisateur connecté."""
-    expenses = ExpenseReport.objects.filter(user=request.user)
-    return render(request, 'rh_management/my_expenses.html', {'expenses': expenses})
+    """Vue pour afficher les notes de frais de l'utilisateur."""
+    expenses = ExpenseReport.objects.filter(user=request.user).order_by('-created_at')
+    
+    # Ajouter les compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Initialiser les compteurs
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin or is_rh or is_encadrant:
+        from ..models import LeaveRequest, KilometricExpense
+        if is_admin or is_rh:
+            new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+            new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+            new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+        elif is_encadrant:
+            from django.contrib.auth.models import User
+            team_members = User.objects.filter(team_leader=request.user)
+            new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+            new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+            new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    context = {
+        'expenses': expenses,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/my_expenses.html', context)
 
 @login_required
 @user_passes_test(is_admin_hr_or_encadrant)

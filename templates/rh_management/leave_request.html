@@ -453,7 +453,128 @@
                 updateCalendarSelection();
             },
             events: [
-                // Charger les congés existants (à compléter avec les données réelles)
+                // Jours fériés 2025
+                {
+                    title: 'Jour de l\'an',
+                    start: '2025-01-01',
+                    allDay: true,
+                    display: 'background',
+                    color: '#ff9f89'
+                },
+                {
+                    title: 'Lundi de Pâques',
+                    start: '2025-04-21',
+                    allDay: true,
+                    display: 'background',
+                    color: '#ff9f89'
+                },
+                {
+                    title: 'Fête du Travail',
+                    start: '2025-05-01',
+                    allDay: true,
+                    display: 'background',
+                    color: '#ff9f89'
+                },
+                {
+                    title: 'Victoire 1945',
+                    start: '2025-05-08',
+                    allDay: true,
+                    display: 'background',
+                    color: '#ff9f89'
+                },
+                {
+                    title: 'Ascension',
+                    start: '2025-05-29',
+                    allDay: true,
+                    display: 'background',
+                    color: '#ff9f89'
+                },
+                {
+                    title: 'Lundi de Pentecôte',
+                    start: '2025-06-09',
+                    allDay: true,
+                    display: 'background',
+                    color: '#ff9f89'
+                },
+                {
+                    title: 'Fête Nationale',
+                    start: '2025-07-14',
+                    allDay: true,
+                    display: 'background',
+                    color: '#ff9f89'
+                },
+                {
+                    title: 'Assomption',
+                    start: '2025-08-15',
+                    allDay: true,
+                    display: 'background',
+                    color: '#ff9f89'
+                },
+                {
+                    title: 'Toussaint',
+                    start: '2025-11-01',
+                    allDay: true,
+                    display: 'background',
+                    color: '#ff9f89'
+                },
+                {
+                    title: 'Armistice',
+                    start: '2025-11-11',
+                    allDay: true,
+                    display: 'background',
+                    color: '#ff9f89'
+                },
+                {
+                    title: 'Noël',
+                    start: '2025-12-25',
+                    allDay: true,
+                    display: 'background',
+                    color: '#ff9f89'
+                },
+                // Vacances scolaires Réunion 2025
+                {
+                    title: 'Vacances d\'été',
+                    start: '2025-01-01',
+                    end: '2025-01-23',
+                    display: 'background',
+                    color: '#e8f4f8'
+                },
+                {
+                    title: 'Vacances de Mars',
+                    start: '2025-03-09',
+                    end: '2025-03-24',
+                    display: 'background',
+                    color: '#e8f4f8'
+                },
+                {
+                    title: 'Vacances de Mai',
+                    start: '2025-05-08',
+                    end: '2025-05-19',
+                    display: 'background',
+                    color: '#e8f4f8'
+                },
+                {
+                    title: 'Vacances de Juillet',
+                    start: '2025-07-06',
+                    end: '2025-07-21',
+                    display: 'background',
+                    color: '#e8f4f8'
+                },
+                {
+                    title: 'Vacances d\'Octobre',
+                    start: '2025-10-12',
+                    end: '2025-10-27',
+                    display: 'background',
+                    color: '#e8f4f8'
+                },
+                {
+                    title: 'Vacances d\'été',
+                    start: '2025-12-14',
+                    end: '2025-12-31',
+                    display: 'background',
+                    color: '#e8f4f8'
+                },
+                // Conserver les événements de congés existants
                 {% for leave in existing_leaves %}
                 {
                     title: '{{ leave.user.get_full_name|default:leave.user.username }} - {{ leave.get_leave_type_display }}',

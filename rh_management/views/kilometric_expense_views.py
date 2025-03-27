@@ -327,3 +327,16 @@ def kilometric_expense_action(request, expense_id):
             messages.error(request, "Action non reconnue.")
             
     return redirect('manage_kilometric_expenses')
+
+@login_required
+def cancel_kilometric_expense(request, expense_id):
+    """Annule une demande de frais kilométriques."""
+    expense = get_object_or_404(KilometricExpense, id=expense_id, user=request.user)
+    
+    if expense.status == 'pending':
+        expense.delete()
+        messages.success(request, "Vos frais kilométriques ont été annulés avec succès.")
+    else:
+        messages.error(request, "Vous ne pouvez annuler que des frais en attente de validation.")
+    
+    return redirect('dashboard')

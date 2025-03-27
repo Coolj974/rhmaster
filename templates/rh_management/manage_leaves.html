@@ -103,6 +103,95 @@
         margin-bottom: 1rem;
         color: #d1d3e2;
     }
+
+    /* Animations et transitions */
+    .leave-row {
+        transition: all 0.3s ease;
+    }
+    
+    .leave-row:hover {
+        transform: translateX(5px);
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    .action-btn {
+        transition: all 0.2s ease;
+        margin: 0 2px;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .action-btn:hover {
+        transform: scale(1.1);
+    }
+    
+    .dashboard-card {
+        transition: all 0.3s ease;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .status-badge {
+        transition: all 0.3s ease;
+        font-size: 0.75rem;
+        padding: 0.35rem 1rem;
+        border-radius: 30px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .leave-details {
+        transition: all 0.3s ease;
+        border-radius: 0.5rem;
+        margin: 0.5rem 1rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    /* Animation pour l'affichage des détails */
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .leave-details-visible {
+        animation: slideDown 0.3s ease forwards;
+    }
+    
+    /* Amélioration des filtres */
+    .filter-card {
+        background: linear-gradient(to right, #ffffff, #f8f9fc);
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    /* Style amélioré pour le tableau */
+    .leaves-table th {
+        background-color: #f8f9fc;
+        border-bottom: 2px solid #e3e6f0;
+        padding: 1rem;
+    }
+    
+    .leaves-table td {
+        padding: 1rem;
+    }
+    
+    /* Style pour les boutons d'action */
+    .btn-group-actions {
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+    }
+    
+    .leave-row:hover .btn-group-actions {
+        opacity: 1;
+    }
 </style>
 {% endblock %}
 
@@ -378,9 +467,19 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             const leaveId = this.getAttribute('data-leave-id');
             const detailsRow = document.getElementById(`details-${leaveId}`);
+            const allDetails = document.querySelectorAll('.leave-details-row');
+            
+            // Ferme les autres détails
+            allDetails.forEach(row => {
+                if (row.id !== `details-${leaveId}` && row.style.display !== 'none') {
+                    row.style.display = 'none';
+                    row.previousElementSibling.querySelector('.view-details').innerHTML = '<i class="fas fa-eye"></i>';
+                }
+            });
             
             if (detailsRow.style.display === 'none') {
                 detailsRow.style.display = 'table-row';
+                detailsRow.querySelector('.leave-details').classList.add('leave-details-visible');
                 this.innerHTML = '<i class="fas fa-chevron-up"></i>';
             } else {
                 detailsRow.style.display = 'none';
@@ -406,6 +505,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     dateFromInput.addEventListener('change', validateDateRange);
     dateToInput.addEventListener('change', validateDateRange);
+
+    // Actualisation avec animation
+    const refreshButton = document.getElementById('refreshTable');
+    refreshButton.addEventListener('click', function() {
+        this.classList.add('fa-spin');
+        setTimeout(() => {
+            location.reload();
+        }, 500);
+    });
 });
 </script>
 {% endblock %}

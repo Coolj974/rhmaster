@@ -9,36 +9,58 @@ from .permissions import is_admin, is_rh, is_encadrant
 @login_required
 def profile_view(request):
     """Affiche la page de profil de l'utilisateur."""
-    # Récupérer les compteurs de notifications
-    is_admin_flag = request.user.is_superuser
-    is_rh_flag = is_rh(request.user)
-    is_encadrant_flag = is_encadrant(request.user)
+    # S'assurer que l'utilisateur a un profil
+    try:
+        profile = request.user.userprofile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile(user=request.user)
+        profile.save()
+
+    if request.method == 'POST':
+        if 'update_picture' in request.POST and request.FILES.get('profile_picture'):
+            # Gérer l'upload de la photo de profil
+            profile_picture = request.FILES['profile_picture']
+            
+            # Vérifier la taille et le type du fichier
+            if profile_picture.size > 5 * 1024 * 1024:  # 5 Mo
+                messages.error(request, "L'image est trop volumineuse. Taille maximale : 5 Mo")
+            elif not profile_picture.content_type.startswith('image/'):
+                messages.error(request, "Le fichier doit être une image (JPEG, PNG, etc.)")
+            else:
+                profile.profile_picture = profile_picture
+                profile.save()
+                messages.success(request, "Photo de profil mise à jour avec succès.")
+        
+        return redirect('profile')
+
+    # Ajout des compteurs de notifications au contexte
+    is_admin = request.user.is_superuser
+    is_rh = request.user.is_staff
+    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
     
+    # Initialiser les compteurs
     new_leave_requests_count = 0
     new_expense_reports_count = 0
     new_kilometric_expenses_count = 0
     
-    if is_admin_flag or is_rh_flag or is_encadrant_flag:
-        if is_admin_flag or is_rh_flag:
+    if is_admin or is_rh or is_encadrant:
+        from ..models import LeaveRequest, ExpenseReport, KilometricExpense
+        if is_admin or is_rh:
             new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
             new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
             new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
-        elif is_encadrant_flag:
-            # Pour les encadrants, limiter aux membres de leur équipe
+        elif is_encadrant:
+            from django.contrib.auth.models import User
             team_members = User.objects.filter(team_leader=request.user)
             new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
             new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
             new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
     
-    # Récupérer les informations du profil utilisateur - Approche corrigée
-    # Utiliser get_or_create pour obtenir ou créer le profil si nécessaire
-    user_profile, created = UserProfile.objects.get_or_create(user=request.user)
-    
     context = {
-        'user_profile': user_profile,
-        'is_admin': is_admin_flag,
-        'is_rh': is_rh_flag,
-        'is_encadrant': is_encadrant_flag,
+        'profile': profile,
+        'is_admin': is_admin,
+        'is_rh': is_rh,
+        'is_encadrant': is_encadrant,
         'new_leave_requests_count': new_leave_requests_count,
         'new_expense_reports_count': new_expense_reports_count,
         'new_kilometric_expenses_count': new_kilometric_expenses_count,

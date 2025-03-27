@@ -30,7 +30,9 @@ from .leave_views import (
     reject_leave,
     leave_action,
     delete_leave,
-    export_leaves  # Ajout de l'import
+    export_leaves,  # Ajout de l'import
+    my_leaves,
+    cancel_leave  # Ajout de cette ligne
 )
 
 # Importation des vues de gestion des notes de frais
@@ -58,7 +60,8 @@ from .kilometric_expense_views import (
     reject_kilometric_expense,
     edit_kilometric_expense,
     delete_kilometric_expense,
-    kilometric_expense_action
+    kilometric_expense_action,
+    cancel_kilometric_expense  # Ajout de cette ligne
 )
 
 # Importation des vues de gestion des utilisateurs

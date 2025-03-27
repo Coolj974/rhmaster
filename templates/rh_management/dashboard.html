@@ -84,7 +84,7 @@
                     </div>
                 </div>
                 <div class="progress mt-3" style="height: 5px;">
-                    <div class="progress-bar bg-primary" style="width: {{ leave_balance.percentage|default:"0" }}%"></div>
+                    <div class="progress-bar bg-primary" style="width: {{ leave_balance.percentage|default:0 }}%"></div>
                 </div>
             </div>
         </div>
@@ -96,7 +96,7 @@
                         <i class="fas fa-file-invoice-dollar"></i>
                     </div>
                     <div>
-                        <div class="fs-5 fw-bold text-success" id="expense-count">{{ expense_count|default:"0" }}</div>
+                        <div class="fs-5 fw-bold text-success" id="expense-count">{{ expense_count|default:0 }}</div>
                         <div class="text-muted small">Notes de frais</div>
                     </div>
                 </div>
@@ -115,7 +115,7 @@
                         <i class="fas fa-car"></i>
                     </div>
                     <div>
-                        <div class="fs-5 fw-bold text-warning" id="km-expense-count">{{ km_expense_count|default:"0" }}</div>
+                        <div class="fs-5 fw-bold text-warning" id="km-expense-count">{{ km_expense_count|default:0 }}</div>
                         <div class="text-muted small">Frais kilométriques</div>
                     </div>
                 </div>
@@ -134,7 +134,7 @@
                         <i class="fas fa-key"></i>
                     </div>
                     <div>
-                        <div class="fs-5 fw-bold text-info" id="password-count">{{ password_count|default:"0" }}</div>
+                        <div class="fs-5 fw-bold text-info" id="password-count">{{ password_count|default:0 }}</div>
                         <div class="text-muted small">Mots de passe</div>
                     </div>
                 </div>
@@ -153,8 +153,22 @@
         <div class="col-lg-6">
             <div class="card border-0 mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center bg-lighter-primary">
-                    <h5 class="mb-0 text-primary"><i class="fas fa-calendar-alt me-2"></i>Congés récents</h5>
-                    <a href="{% url 'manage_leaves' %}" class="btn btn-sm btn-link">Voir plus</a>
+                    <h5 class="mb-0 text-primary">
+                        <i class="fas fa-calendar-alt me-2"></i>Congés récents 
+                        {% if new_leave_requests_count > 0 %}
+                            <span class="badge bg-danger ms-2">{{ new_leave_requests_count }}</span>
+                        {% endif %}
+                    </h5>
+                    <div>
+                        {% if is_admin or is_rh or is_encadrant %}
+                        <a href="{% url 'manage_leaves' %}" class="btn btn-sm btn-outline-primary me-2">
+                            <i class="fas fa-tasks me-1"></i> Gérer
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'leave_request' %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus me-1"></i> Nouvelle demande
+                        </a>
+                    </div>
                 </div>
                 <div class="list-group list-group-flush">
                     {% if leave_requests %}
@@ -167,7 +181,15 @@
                                         <i class="fas fa-calendar-day me-1"></i> {{ leave.start_date|date:"d/m/Y" }} au {{ leave.end_date|date:"d/m/Y" }}
                                     </div>
                                 </div>
-                                <span class="status-badge status-{{ leave.status }}">{{ leave.get_status_display }}</span>
+                                <div class="d-flex align-items-center">
+                                    <span class="status-badge status-{{ leave.status }} me-2">{{ leave.get_status_display }}</span>
+                                    {% if leave.status == "pending" %}
+                                        <a href="{% url 'cancel_leave' leave.id %}" class="btn btn-sm btn-outline-danger" 
+                                           onclick="return confirm('Êtes-vous sûr de vouloir annuler cette demande ?')">
+                                            <i class="fas fa-times"></i> Annuler
+                                        </a>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
@@ -188,8 +210,22 @@
         <div class="col-lg-6">
             <div class="card border-0 mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center bg-lighter-success">
-                    <h5 class="mb-0 text-success"><i class="fas fa-receipt me-2"></i>Notes de frais récentes</h5>
-                    <a href="{% url 'manage_expenses' %}" class="btn btn-sm btn-link">Voir plus</a>
+                    <h5 class="mb-0 text-success">
+                        <i class="fas fa-receipt me-2"></i>Notes de frais 
+                        {% if new_expense_reports_count > 0 %}
+                            <span class="badge bg-danger ms-2">{{ new_expense_reports_count }}</span>
+                        {% endif %}
+                    </h5>
+                    <div>
+                        {% if is_admin or is_rh or is_encadrant %}
+                        <a href="{% url 'manage_expenses' %}" class="btn btn-sm btn-outline-success me-2">
+                            <i class="fas fa-tasks me-1"></i> Gérer
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'submit_expense' %}" class="btn btn-sm btn-success">
+                            <i class="fas fa-plus me-1"></i> Nouvelle note
+                        </a>
+                    </div>
                 </div>
                 <div class="list-group list-group-flush">
                     {% if expense_reports %}
@@ -201,9 +237,23 @@
                                     <div class="small text-muted">
                                         <i class="fas fa-euro-sign me-1"></i> {{ expense.amount }} € 
                                         <span class="ms-2"><i class="far fa-calendar me-1"></i>{{ expense.date|date:"d/m/Y" }}</span>
+                                        <span class="ms-2"><i class="fas fa-tag me-1"></i>{{ expense.get_expense_type_display }}</span>
                                     </div>
                                 </div>
-                                <span class="status-badge status-{{ expense.status }}">{{ expense.get_status_display }}</span>
+                                <div class="d-flex align-items-center">
+                                    <span class="status-badge status-{{ expense.status }} me-2">{{ expense.get_status_display }}</span>
+                                    {% if expense.status == "pending" %}
+                                        <a href="{% url 'cancel_expense' expense.id %}" class="btn btn-sm btn-outline-danger" 
+                                           onclick="return confirm('Êtes-vous sûr de vouloir annuler cette note de frais ?')">
+                                            <i class="fas fa-times"></i> Annuler
+                                        </a>
+                                    {% endif %}
+                                    {% if expense.receipt %}
+                                        <a href="{{ expense.receipt.url }}" class="btn btn-sm btn-outline-info ms-2" target="_blank">
+                                            <i class="fas fa-file-alt"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
@@ -213,6 +263,68 @@
                             <p class="mb-2">Aucune note de frais récente</p>
                             <a href="{% url 'submit_expense' %}" class="btn btn-sm btn-success">
                                 <i class="fas fa-plus me-1"></i> Nouvelle note
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Frais kilométriques récents -->
+        <div class="col-lg-6">
+            <div class="card border-0 mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center bg-lighter-warning">
+                    <h5 class="mb-0 text-warning">
+                        <i class="fas fa-car me-2"></i>Frais kilométriques 
+                        {% if new_kilometric_expenses_count > 0 %}
+                            <span class="badge bg-danger ms-2">{{ new_kilometric_expenses_count }}</span>
+                        {% endif %}
+                    </h5>
+                    <div>
+                        {% if is_admin or is_rh or is_encadrant %}
+                        <a href="{% url 'manage_kilometric_expenses' %}" class="btn btn-sm btn-outline-warning me-2">
+                            <i class="fas fa-tasks me-1"></i> Gérer
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-plus me-1"></i> Nouvelle demande
+                        </a>
+                    </div>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% if kilometric_expenses %}
+                        {% for expense in kilometric_expenses|slice:":5" %}
+                        <div class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold">{{ expense.departure }} → {{ expense.arrival }}</div>
+                                    <div class="small text-muted">
+                                        <i class="fas fa-route me-1"></i> {{ expense.distance }} km
+                                        <span class="ms-2"><i class="fas fa-euro-sign me-1"></i>{{ expense.amount }} €</span>
+                                        <span class="ms-2"><i class="far fa-calendar me-1"></i>{{ expense.date|date:"d/m/Y" }}</span>
+                                        {% if expense.project %}
+                                        <span class="ms-2"><i class="fas fa-briefcase me-1"></i>{{ expense.project }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="status-badge status-{{ expense.status }} me-2">{{ expense.get_status_display }}</span>
+                                    {% if expense.status == "pending" %}
+                                        <a href="{% url 'cancel_kilometric_expense' expense.id %}" class="btn btn-sm btn-outline-danger" 
+                                           onclick="return confirm('Êtes-vous sûr de vouloir annuler ces frais kilométriques ?')">
+                                            <i class="fas fa-times"></i> Annuler
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item p-4 text-center">
+                            <p class="text-muted mb-2"><i class="fas fa-car fa-2x mb-2"></i></p>
+                            <p class="mb-2">Aucun frais kilométrique récent</p>
+                            <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-plus me-1"></i> Nouvelle demande
                             </a>
                         </div>
                     {% endif %}
