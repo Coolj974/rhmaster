@@ -25,7 +25,8 @@ from rh_management.views import (
     password_manager_delete, password_manager_view, password_share, password_share_remove,
     api_leaves,
     password_manager, password_add, password_view, password_edit, password_delete,
-    leave_action, expense_action, kilometric_expense_action, manage_leave_balances
+    leave_action, expense_action, kilometric_expense_action, manage_leave_balances,
+    dashboard_stats_api
 )
 
 # Error handlers
@@ -133,7 +134,8 @@ urlpatterns = [
     path('passwords/share/<int:pk>/', password_share, name='password_share'),
     
     # API
-    path("api/leaves/", api_leaves, name="api_leaves"),
+        path("api/leaves/", api_leaves, name="api_leaves"),
+        path('api/dashboard-stats/', dashboard_stats_api, name='dashboard_stats_api'),
 ]
 
 # Add static and media URL patterns

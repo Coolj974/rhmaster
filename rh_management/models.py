@@ -143,65 +143,47 @@ class KilometricExpense(models.Model):
     notification_emails = models.TextField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
-        if not self.description:
-            self.description = f"Frais kilométrique de {self.departure} à {self.arrival}"
+        """Override save to ensure amount is calculated."""
+        if self.distance is None:
+            self.distance = 0
         
-        if self.distance:
-            self.amount = self.calculate_amount()
+        self.distance = abs(float(self.distance))
+        self.amount = self.calculate_amount()
         
+        # Ensure we have valid numeric values
+        if not isinstance(self.amount, (int, float)):
+            self.amount = 0
+            
         super().save(*args, **kwargs)
         self.send_notification_emails()
 
     def calculate_amount(self):
-        """Calculate the reimbursement amount based on the distance and fiscal power."""
-        rate_per_km = {
+        """Calculate the reimbursement amount based on the vehicle type and fiscal power."""
+        if not self.distance or not self.vehicle_type or not self.fiscal_power:
+            return 0
+
+        # Barème kilométrique 2024 unifié
+        rates = {
             'car': {
-                3: [(0.529, 5000), (0.316, 20000, 1065), (0.37, float('inf'))],
-                4: [(0.606, 5000), (0.340, 20000, 1330), (0.407, float('inf'))],
-                5: [(0.636, 5000), (0.357, 20000, 1395), (0.427, float('inf'))],
-                6: [(0.665, 5000), (0.374, 20000, 1457), (0.447, float('inf'))],
-                7: [(0.697, 5000), (0.394, 20000, 1515), (0.470, float('inf'))],
+                3: 0.529, 4: 0.606, 5: 0.636, 
+                6: 0.665, 7: 0.697, 8: 0.697
             },
             'electric_car': {
-                3: [(0.635, 5000), (0.380, 20000, 1278), (0.444, float('inf'))],
-                4: [(0.727, 5000), (0.408, 20000, 1596), (0.488, float('inf'))],
-                5: [(0.763, 5000), (0.428, 20000, 1674), (0.512, float('inf'))],
-                6: [(0.798, 5000), (0.449, 20000, 1748), (0.536, float('inf'))],
-                7: [(0.836, 5000), (0.472, 20000, 1818), (0.564, float('inf'))],
-                8: [(0.875, 5000), (0.495, 20000, 1890), (0.592, float('inf'))],
+                3: 0.635, 4: 0.727, 5: 0.763, 
+                6: 0.798, 7: 0.836, 8: 0.875
             },
             'motorbike': {
-                3: [(0.635, 5000), (0.380, 20000, 1278), (0.444, float('inf'))],
-                4: [(0.727, 5000), (0.408, 20000, 1596), (0.488, float('inf'))],
-                5: [(0.763, 5000), (0.428, 20000, 1674), (0.512, float('inf'))],
-                6: [(0.798, 5000), (0.449, 20000, 1748), (0.536, float('inf'))],
-                7: [(0.836, 5000), (0.472, 20000, 1818), (0.564, float('inf'))],
-                8: [(0.875, 5000), (0.495, 20000, 1890), (0.592, float('inf'))],
+                3: 0.635, 4: 0.727, 5: 0.763, 
+                6: 0.798, 7: 0.836
             },
-            'bike': {
-                1: [(0.1, 5000), (0.05, 20000, 250), (0.07, float('inf'))],
-                2: [(0.12, 5000), (0.06, 20000, 300), (0.08, float('inf'))],
-                3: [(0.15, 5000), (0.07, 20000, 350), (0.1, float('inf'))],
+            'bicycle': {
+                1: 0.25, 2: 0.25, 3: 0.25
             }
         }
 
-        vehicle_rates = rate_per_km.get(self.vehicle_type, {})
-        rates = vehicle_rates.get(self.fiscal_power, [(0.502, float('inf'))])
-
-        amount = 0
-        remaining_distance = self.distance
-
-        for rate, max_distance, *bonus in rates:
-            if remaining_distance > max_distance:
-                amount += rate * max_distance
-                remaining_distance -= max_distance
-            else:
-                amount += rate * remaining_distance
-                if bonus:
-                    amount += bonus[0]
-                break
-
-        return round(amount)
+        vehicle_rates = rates.get(self.vehicle_type, {})
+        rate = vehicle_rates.get(self.fiscal_power, 0.503)  # Taux par défaut
+        return round(float(self.distance) * rate, 2)
 
     def send_notification_emails(self):
         """Send notification emails when a kilometric expense is created."""

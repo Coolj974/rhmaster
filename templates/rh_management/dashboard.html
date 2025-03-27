@@ -225,23 +225,36 @@
 
 {% block extra_scripts %}
 <script>
-// Script minimal pour récupérer les statistiques actualisées
 document.addEventListener('DOMContentLoaded', function() {
-    fetch('/api/dashboard-stats/')
-        .then(response => {
-            if (response.ok) return response.json();
-            throw new Error('Erreur réseau');
-        })
-        .then(data => {
-            // Mise à jour des compteurs si disponibles
-            if (data.leave_count) document.getElementById('leave-count').textContent = data.leave_count;
-            if (data.expense_count) document.getElementById('expense-count').textContent = data.expense_count;
-            if (data.km_expense_count) document.getElementById('km-expense-count').textContent = data.km_expense_count;
-            if (data.password_count) document.getElementById('password-count').textContent = data.password_count;
-        })
-        .catch(error => {
-            console.log('Erreur API:', error);
+    // Récupérer le token CSRF
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Appel à l'API avec le token CSRF
+    fetch('/api/dashboard-stats/', {
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Erreur réseau');
+        return response.json();
+    })
+    .then(data => {
+        // Mise à jour des compteurs
+        const elements = {
+            'leave-count': data.leave_count || 0,
+            'expense-count': data.expense_count || 0,
+            'km-expense-count': data.km_expense_count || 0,
+            'password-count': data.password_count || 0
+        };
+        
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = value;
         });
+    })
+    .catch(error => console.error('Erreur API:', error));
 });
 </script>
 {% endblock %}

@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import HttpResponse
 from django.contrib.auth.models import User
+from django.db.models import Sum, Avg  # Ajout des imports nécessaires
 from datetime import datetime
 import json
 import pandas as pd
@@ -38,45 +39,62 @@ def submit_kilometric_expense(request):
     """Vue pour soumettre un frais kilométrique."""
     if request.method == "POST":
         try:
-            # Récupérer la distance depuis le formulaire
-            distance = float(request.POST.get('distance', 0))
-            
-            # Validation de la distance
-            if distance <= 0:
-                messages.error(request, "La distance doit être supérieure à zéro.")
-                return redirect('submit_kilometric_expense')
-                
-            data = {
-                'user': request.user,
-                'travel_date': request.POST.get('date'),
-                'vehicle_type': request.POST.get('vehicle_type'),
-                'fiscal_power': request.POST.get('fiscal_power'),
-                'departure': request.POST.get('departure'),
-                'arrival': request.POST.get('arrival'),
-                'departure_lat': request.POST.get('departure_lat'),
-                'departure_lng': request.POST.get('departure_lng'),
-                'arrival_lat': request.POST.get('arrival_lat'),
-                'arrival_lng': request.POST.get('arrival_lng'),
-                'distance': distance,  # Utiliser la distance validée
-                'project': request.POST.get('project'),
-                'status': 'pending'
-            }
-            
-            # Calculer le montant automatiquement
-            rate = get_kilometric_rate(data['vehicle_type'])
-            data['amount'] = distance * rate
-            
-            # Créer l'objet KilometricExpense
-            expense = KilometricExpense.objects.create(**data)
-            
-            messages.success(request, "Votre demande de frais kilométriques a été soumise avec succès.")
-            return redirect('my_kilometric_expenses')
+            # Nettoyer et récupérer les premières valeurs non vides
+            def clean_float(value_list):
+                if not isinstance(value_list, list):
+                    value_list = [value_list]
+                # Prendre la première valeur non vide
+                for value in value_list:
+                    if value and value.strip():
+                        return float(value.replace(',', '.'))
+                return 0.0
 
-        except ValueError as e:
-            messages.error(request, f"Erreur de format : {str(e)}")
-            return redirect('submit_kilometric_expense')
-        except Exception as e:
-            messages.error(request, f"Une erreur s'est produite : {str(e)}")
+            # Récupérer les données du POST
+            post_data = {
+                'departure_lat': clean_float(request.POST.getlist('departure_lat')),
+                'departure_lng': clean_float(request.POST.getlist('departure_lng')),
+                'arrival_lat': clean_float(request.POST.getlist('arrival_lat')),
+                'arrival_lng': clean_float(request.POST.getlist('arrival_lng')),
+                'distance': clean_float(request.POST.getlist('distance')),
+                'amount': clean_float(request.POST.getlist('amount'))
+            }
+
+            # Créer l'objet KilometricExpense
+            expense = KilometricExpense(
+                user=request.user,
+                date=request.POST.get('date'),
+                vehicle_type=request.POST.get('vehicle_type'),
+                fiscal_power=int(request.POST.get('fiscal_power', 0)),
+                departure=request.POST.get('departure', ''),
+                departure_lat=post_data['departure_lat'],
+                departure_lng=post_data['departure_lng'],
+                arrival=request.POST.get('arrival', ''),
+                arrival_lat=post_data['arrival_lat'],
+                arrival_lng=post_data['arrival_lng'],
+                distance=post_data['distance'],
+                amount=post_data['amount'],
+                project=request.POST.get('project', ''),
+                status='pending',
+                notification_emails=request.POST.get('notification_emails', '')
+            )
+
+            # Debug - afficher les valeurs avant sauvegarde
+            print("Debug - Données nettoyées:", {
+                'distance': post_data['distance'],
+                'amount': post_data['amount'],
+                'departure_lat': post_data['departure_lat'],
+                'departure_lng': post_data['departure_lng'],
+                'arrival_lat': post_data['arrival_lat'],
+                'arrival_lng': post_data['arrival_lng']
+            })
+
+            expense.save()
+            messages.success(request, "Votre demande de remboursement kilométrique a été soumise avec succès.")
+            return redirect('dashboard')
+
+        except (ValueError, TypeError) as e:
+            print(f"Debug - Erreur : {str(e)}, POST data : {request.POST}")
+            messages.error(request, f"Erreur de format dans les données : {str(e)}")
             return redirect('submit_kilometric_expense')
 
     # Ajout des compteurs de notifications
@@ -178,49 +196,33 @@ def export_expenses_pdf(request):
 @login_required
 @user_passes_test(is_admin_hr_or_encadrant)
 def manage_kilometric_expenses(request):
-    """Affiche tous les frais kilométriques pour validation (Admin/RH/Encadrants)."""
-    if not request.user.is_authenticated:
-        return redirect('login')
+    """Affiche tous les frais kilométriques pour validation."""
+    expenses = KilometricExpense.objects.all().order_by('-date')
     
-    if not (request.user.is_superuser or request.user.is_staff or request.user.groups.filter(name='Encadrant').exists()):
-        messages.error(request, "Vous n'avez pas les droits nécessaires pour accéder à cette page.")
-        return redirect('dashboard')
+    # Forcer le calcul des montants
+    for expense in expenses:
+        if not expense.amount or expense.amount == 0:
+            expense.amount = expense.calculate_amount()
+            expense.save()
     
-    # Filtrer les dépenses en fonction du rôle de l'utilisateur
-    if request.user.is_superuser or request.user.is_staff:
-        expenses = KilometricExpense.objects.all().order_by('-date')
-    else:  # Encadrant
-        team_members = User.objects.filter(team_leader=request.user)
-        expenses = KilometricExpense.objects.filter(user__in=team_members).order_by('-date')
-    
-    # Ajouter les compteurs de notifications au contexte
-    is_admin = request.user.is_superuser
-    is_rh = request.user.is_staff
-    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
-    
-    # Compter les notifications
-    new_leave_requests_count = 0
-    new_expense_reports_count = 0
-    new_kilometric_expenses_count = 0
-    
-    if is_admin or is_rh:
-        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
-        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
-        new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
-    elif is_encadrant:
-        team_members = User.objects.filter(team_leader=request.user)
-        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
-        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
-        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    # Recalculer les totaux
+    total_stats = expenses.aggregate(
+        total_distance=Sum('distance'),
+        total_amount=Sum('amount')
+    )
     
     context = {
         'expenses': expenses,
-        'is_admin': is_admin,
-        'is_rh': is_rh,
-        'is_encadrant': is_encadrant,
-        'new_leave_requests_count': new_leave_requests_count,
-        'new_expense_reports_count': new_expense_reports_count,
-        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+        'pending_count': expenses.filter(status='pending').count(),
+        'total_distance': float(total_stats['total_distance'] or 0),
+        'total_amount': float(total_stats['total_amount'] or 0),
+        'average_distance': float(total_stats['total_distance'] or 0) / expenses.count() if expenses.exists() else 0,
+        'new_leave_requests_count': LeaveRequest.objects.filter(status='pending').count(),
+        'new_expense_reports_count': ExpenseReport.objects.filter(status='pending').count(),
+        'new_kilometric_expenses_count': expenses.filter(status='pending').count(),
+        'is_admin': request.user.is_superuser,
+        'is_rh': request.user.is_staff,
+        'is_encadrant': request.user.groups.filter(name='Encadrant').exists(),
     }
     
     return render(request, 'rh_management/manage_kilometric_expenses.html', context)

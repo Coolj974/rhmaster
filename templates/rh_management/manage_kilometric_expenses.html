@@ -298,7 +298,7 @@
         </div>
 
         <div class="card-body p-0">
-            {% if pending_count %}
+            {% if expenses %}
                 <div class="table-responsive">
                     <table class="table table-hover kilometric-expense-table align-middle mb-0">
                         <thead>
@@ -313,18 +313,14 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for expense in pending_expenses %}
+                            {% for expense in expenses %}
                                 <tr class="expense-row">
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="user-avatar me-2">
-                                                {% if expense.user.profile.profile_picture %}
-                                                    <img src="{{ expense.user.profile.profile_picture.url }}" class="rounded-circle" width="36">
-                                                {% else %}
-                                                    <div class="user-bubble bg-primary text-white">
-                                                        {{ expense.user.first_name.0|default:expense.user.username.0|upper }}
-                                                    </div>
-                                                {% endif %}
+                                                <div class="user-bubble bg-primary text-white">
+                                                    {{ expense.user.username|first|upper }}
+                                                </div>
                                             </div>
                                             <div>
                                                 <div class="fw-medium">{{ expense.user.get_full_name|default:expense.user.username }}</div>
@@ -332,35 +328,42 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>{{ expense.travel_date|date:"d/m/Y" }}</td>
+                                    <td>{{ expense.date|date:"d/m/Y" }}</td>
                                     <td>
                                         <div class="small">
                                             <i class="fas fa-map-marker-alt text-danger me-1"></i>
-                                            {{ expense.departure|truncatechars:20 }}
+                                            {{ expense.departure|default:"Non spécifié"|truncatechars:20 }}
                                             <i class="fas fa-arrow-right mx-1 text-muted"></i>
                                             <i class="fas fa-flag-checkered text-success me-1"></i>
-                                            {{ expense.arrival|truncatechars:20 }}
+                                            {{ expense.arrival|default:"Non spécifié"|truncatechars:20 }}
                                         </div>
                                     </td>
-                                    <td>{{ expense.distance }} km</td>
+                                    <td>{{ expense.distance|default:0|floatformat:2 }} km</td>
                                     <td>
                                         <span class="badge bg-light text-dark">
                                             <i class="fas fa-car me-1"></i>
                                             {{ expense.get_vehicle_type_display }}
                                         </span>
                                     </td>
-                                    <td>{{ expense.amount }} €</td>
+                                    <td>{{ expense.amount|default:0|floatformat:2 }} €</td>
                                     <td class="text-center">
                                         <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-outline-primary view-expense" data-expense-id="{{ expense.id }}">
+                                            <button type="button" class="btn btn-sm btn-outline-primary view-expense" 
+                                                    data-bs-toggle="modal" data-bs-target="#viewModal{{ expense.id }}">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-success approve-expense" data-expense-id="{{ expense.id }}">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger reject-expense" data-expense-id="{{ expense.id }}">
-                                                <i class="fas fa-times"></i>
-                                            </button>
+                                            {% if expense.status == 'pending' %}
+                                                <a href="{% url 'approve_kilometric_expense' expense.id %}" 
+                                                   class="btn btn-sm btn-outline-success"
+                                                   onclick="return confirm('Voulez-vous approuver cette demande ?')">
+                                                    <i class="fas fa-check"></i>
+                                                </a>
+                                                <a href="{% url 'reject_kilometric_expense' expense.id %}"
+                                                   class="btn btn-sm btn-outline-danger"
+                                                   onclick="return confirm('Voulez-vous rejeter cette demande ?')">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            {% endif %}
                                         </div>
                                     </td>
                                 </tr>
@@ -371,8 +374,8 @@
             {% else %}
                 <div class="empty-state">
                     <i class="fas fa-check-circle text-success"></i>
-                    <h4>Tout est à jour !</h4>
-                    <p class="text-muted">Il n'y a actuellement aucun frais kilométrique en attente.</p>
+                    <h4>Aucune demande à traiter</h4>
+                    <p class="text-muted">Il n'y a actuellement aucun frais kilométrique à valider.</p>
                 </div>
             {% endif %}
         </div>

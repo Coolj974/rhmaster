@@ -172,6 +172,24 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Affichage des valeurs calculées -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="distance_display" class="form-label">Distance (km)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-road"></i></span>
+                            <input type="text" id="distance_display" class="form-control" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="amount_display" class="form-label">Montant (€)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-euro-sign"></i></span>
+                            <input type="text" id="amount_display" class="form-control" readonly>
+                        </div>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -195,35 +213,53 @@
         // Taux de remboursement simplifiés
         const reimbursementRates = {
             'car': {
-                3: 0.45,
-                4: 0.5,
-                5: 0.55,
-                6: 0.6,
-                7: 0.65,
-                8: 0.7
+                3: 0.529, 4: 0.606, 5: 0.636, 
+                6: 0.665, 7: 0.697, 8: 0.697
             },
             'electric_car': {
-                3: 0.55,
-                4: 0.6,
-                5: 0.65,
-                6: 0.7,
-                7: 0.75,
-                8: 0.8
+                3: 0.635, 4: 0.727, 5: 0.763, 
+                6: 0.798, 7: 0.836, 8: 0.875
             },
             'motorbike': {
-                3: 0.35,
-                4: 0.4,
-                5: 0.45,
-                6: 0.5,
-                7: 0.55,
-                8: 0.6
+                3: 0.635, 4: 0.727, 5: 0.763, 
+                6: 0.798, 7: 0.836
             },
             'bicycle': {
-                1: 0.1,
-                2: 0.12,
-                3: 0.15
+                1: 0.25, 2: 0.25, 3: 0.25
             }
         };
+
+        // Calculer le remboursement - Déplacer la fonction au début
+        function updateReimbursement(distance) {
+            // Vérifier que la distance est un nombre valide
+            if (isNaN(distance) || distance === '' || distance === null) {
+                distance = 0;
+            }
+            
+            const vehicleType = document.getElementById('id_vehicle_type').value;
+            const fiscalPower = parseInt(document.getElementById('id_fiscal_power').value) || 0;
+            const reimbursementField = document.getElementById('reimbursement');
+
+            if (vehicleType && fiscalPower && reimbursementRates[vehicleType] && reimbursementRates[vehicleType][fiscalPower]) {
+                const rate = reimbursementRates[vehicleType][fiscalPower];
+                const reimbursement = parseFloat(distance) * rate;
+                reimbursementField.value = reimbursement.toFixed(2);
+                document.getElementById('amount').value = reimbursement.toFixed(2);
+            } else {
+                reimbursementField.value = "0.00";
+                document.getElementById('amount').value = "0.00";
+            }
+        }
+
+        // Fonction mise à jour de la distance
+        function updateDistance(distance) {
+            // S'assurer que la distance est un nombre valide
+            const validDistance = !isNaN(parseFloat(distance)) ? parseFloat(distance) : 0;
+            
+            document.getElementById('distance_field').value = validDistance.toFixed(2);
+            document.getElementById('distance').value = validDistance.toFixed(2);
+            updateReimbursement(validDistance);
+        }
 
         // Stocker la distance initiale
         let distanceInitiale = 0;
@@ -241,7 +277,7 @@
                 distanceField.value = distanceInitiale.toFixed(2);
                 mapInstructions.innerHTML = "Distance simple pour l'aller simple";
             }
-            updateReimbursement();
+            updateReimbursement(parseFloat(distanceField.value));
         });
 
         // Mise à jour quand la distance change
@@ -249,27 +285,16 @@
             if (!allerRetourCheckbox.checked) {
                 distanceInitiale = parseFloat(this.value) || 0;
             }
-            updateReimbursement();
+            updateReimbursement(parseFloat(this.value));
         });
 
         // Mise à jour quand le type de véhicule change
-        vehicleTypeField.addEventListener("change", updateReimbursement);
-        fiscalPowerField.addEventListener("change", updateReimbursement);
-
-        // Calculer le remboursement
-        function updateReimbursement() {
-            const distance = parseFloat(distanceField.value) || 0;
-            const vehicleType = vehicleTypeField.value;
-            const fiscalPower = parseInt(fiscalPowerField.value);
-
-            if (vehicleType && fiscalPower && reimbursementRates[vehicleType] && reimbursementRates[vehicleType][fiscalPower]) {
-                const rate = reimbursementRates[vehicleType][fiscalPower];
-                const reimbursement = distance * rate;
-                reimbursementField.value = reimbursement.toFixed(2);
-            } else {
-                reimbursementField.value = "0.00";
-            }
-        }
+        vehicleTypeField.addEventListener("change", function() {
+            updateReimbursement(parseFloat(distanceField.value));
+        });
+        fiscalPowerField.addEventListener("change", function() {
+            updateReimbursement(parseFloat(distanceField.value));
+        });
 
         // Configuration de la carte
         let map = L.map('map').setView([-21.1151, 55.5364], 10); // Centré sur l'île de la Réunion
@@ -366,8 +391,7 @@
                         const distance = data.routes[0].distance / 1000;
                         
                         // Mise à jour de l'affichage de la distance
-                        document.getElementById('distance_field').value = distance.toFixed(2);
-                        document.getElementById('distance').value = distance.toFixed(2);
+                        updateDistance(distance);  // Utiliser la fonction updateDistance
 
                         // Tracé de l'itinéraire
                         if (routeLayer) {
@@ -380,11 +404,10 @@
                         map.fitBounds(routeLayer.getBounds(), {padding: [30, 30]});
 
                         // Mise à jour du montant
-                        updateReimbursement();
+                        updateReimbursement(distance);
                         
                         // Activation du bouton de soumission
                         document.getElementById('submitBtn').disabled = false;
-                        updateDistance(distance);
                         enableSubmitButton();
                     } else {
                         alert("Impossible de calculer l'itinéraire entre ces deux points.");
@@ -394,9 +417,7 @@
                     console.error("Erreur:", error);
                     // Calcul de la distance à vol d'oiseau en fallback
                     const distance = calculateDirectDistance(lat1, lng1, lat2, lng2);
-                    document.getElementById('distance_field').value = distance.toFixed(2);
-                    document.getElementById('distance').value = distance.toFixed(2);
-                    updateReimbursement();
+                    updateDistance(distance);  // Utiliser la fonction updateDistance
                 });
         }
 
@@ -404,7 +425,7 @@
         function calculateDirectDistance(lat1, lon1, lat2, lon2) {
             const R = 6371; // Rayon de la Terre en km
             const dLat = toRad(lat2 - lat1);
-            const dLon = toRad(lon2 - lon1);
+            const dLon = toRad(lon1 - lon2);
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
                     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
                     Math.sin(dLon/2) * Math.sin(dLon/2);
@@ -625,11 +646,230 @@
         }
     });
 
-    // Mise à jour de la distance
-    function updateDistance(distance) {
-        // Mettre à jour l'affichage ET le champ caché
+    document.addEventListener("DOMContentLoaded", function() {
+        // Éléments du formulaire
+        const form = document.getElementById("kilometric-expense-form");
+        const distanceField = document.getElementById("distance_field");
+        const reimbursementField = document.getElementById("reimbursement");
+        const vehicleTypeField = document.getElementById("id_vehicle_type");
+        const fiscalPowerField = document.getElementById("id_fiscal_power");
+        
+        // Calcul du remboursement
+        function calculateReimbursement(distance) {
+            const vehicleType = vehicleTypeField.value;
+            const fiscalPower = parseInt(fiscalPowerField.value);
+            
+            // Taux fixes pour chaque type de véhicule
+            const rates = {
+                'car': 0.603,
+                'motorcycle': 0.368,
+                'bicycle': 0.25
+            };
+            
+            const rate = rates[vehicleType] || 0;
+            const amount = distance * rate;
+            
+            // Mise à jour des champs
+            reimbursementField.value = amount.toFixed(2);
+            document.getElementById('amount').value = amount.toFixed(2);
+        }
+
+        // Mise à jour de la distance
+        function updateDistance(distance) {
+            distanceField.value = distance.toFixed(2);
+            document.getElementById('distance').value = distance.toFixed(2);
+            calculateReimbursement(distance);
+        }
+
+        // Calcul de l'itinéraire
+        function calculateRoute(departureLat, departureLng, arrivalLat, arrivalLng) {
+            const url = `https://router.project-osrm.org/route/v1/driving/${departureLng},${departureLat};${arrivalLng},${arrivalLat}?overview=false`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.routes && data.routes.length > 0) {
+                        const distance = data.routes[0].distance / 1000;
+                        updateDistance(distance);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du calcul de l\'itinéraire:', error);
+                    // Fallback : calculer la distance à vol d'oiseau
+                    const distance = calculateDirectDistance(departureLat, departureLng, arrivalLat, arrivalLng);
+                    updateDistance(distance);
+                });
+        }
+
+        // ...existing code...
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // ...existing code...
+
+        // Remplacer la fonction enableSubmitButton
+        function enableSubmitButton() {
+            const departure = document.getElementById('departure').value;
+            const arrival = document.getElementById('arrival').value;
+            const distance = parseFloat(document.getElementById('distance_field').value) || 0;
+            const date = document.getElementById('id_date').value;
+            const vehicleType = document.getElementById('id_vehicle_type').value;
+            const fiscalPower = document.getElementById('id_fiscal_power').value;
+            const project = document.getElementById('id_project').value;
+            const departureLat = document.getElementById('departure_lat').value;
+            const arrivalLat = document.getElementById('arrival_lat').value;
+
+            const isValid = departure && 
+                           arrival && 
+                           distance > 0 && 
+                           date && 
+                           vehicleType && 
+                           fiscalPower && 
+                           project &&
+                           departureLat &&
+                           arrivalLat;
+
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = !isValid;
+                submitBtn.classList.toggle('btn-secondary', !isValid);
+                submitBtn.classList.toggle('btn-primary', isValid);
+            }
+
+            // Debug des valeurs
+            console.log({
+                departure,
+                arrival,
+                distance,
+                date,
+                vehicleType,
+                fiscalPower,
+                project,
+                departureLat,
+                arrivalLat,
+                isValid
+            });
+        }
+
+        // Ajouter des écouteurs d'événements pour tous les champs
+        const fieldsToWatch = ['departure', 'arrival', 'id_date', 'id_vehicle_type', 'id_fiscal_power', 'id_project'];
+        
+        fieldsToWatch.forEach(fieldId => {
+            const element = document.getElementById(fieldId);
+            if (element) {
+                ['change', 'input', 'blur'].forEach(eventType => {
+                    element.addEventListener(eventType, enableSubmitButton);
+                });
+            }
+        });
+
+        // Appeler enableSubmitButton après le calcul de l'itinéraire
+        const originalCalculateRoute = calculateRoute;
+        calculateRoute = function() {
+            originalCalculateRoute.apply(this, arguments);
+            setTimeout(enableSubmitButton, 500); // Vérifier après le calcul
+        };
+
+        // Vérifier l'état initial du formulaire
+        setTimeout(enableSubmitButton, 100);
+    });
+
+    // Remplacer la fonction calculateReimbursement existante par celle-ci
+    function calculateReimbursement(distance) {
+        const vehicleType = document.getElementById('id_vehicle_type').value;
+        const fiscalPower = parseInt(document.getElementById('id_fiscal_power').value) || 0;
+        
+        // Barème kilométrique 2024
+        const rates = {
+            'car': {
+                3: 0.529, 4: 0.606, 5: 0.636, 6: 0.665, 7: 0.697
+            },
+            'electric_car': {
+                3: 0.635, 4: 0.727, 5: 0.763, 6: 0.798, 7: 0.836
+            },
+            'motorbike': {
+                3: 0.635, 4: 0.727, 5: 0.763, 6: 0.798, 7: 0.836
+            },
+            'bicycle': {
+                1: 0.25, 2: 0.25, 3: 0.25
+            }
+        };
+
+        // S'assurer que la distance est un nombre valide
+        const validDistance = parseFloat(distance) || 0;
+
+        // Récupérer le taux applicable
+        const vehicleRates = rates[vehicleType] || {};
+        const rate = vehicleRates[fiscalPower] || 0.503; // Taux par défaut
+
+        // Calculer le montant
+        const amount = validDistance * rate;
+
+        // Mettre à jour les champs de formulaire
+        document.getElementById('distance_field').value = validDistance.toFixed(2);
+        document.getElementById('distance').value = validDistance.toFixed(2);
+        document.getElementById('reimbursement').value = amount.toFixed(2);
+        document.getElementById('amount').value = amount.toFixed(2);
+
+        return amount;
+    }
+
+    // Ajouter cet écouteur d'événements après le calcul de l'itinéraire
+    function updateRouteData(distance) {
+        // Mettre à jour les champs cachés avec les vraies valeurs
+        document.getElementById('distance').value = distance.toFixed(2);
         document.getElementById('distance_field').value = distance.toFixed(2);
-        updateReimbursement();
+        
+        // Calculer et mettre à jour le montant
+        const amount = calculateReimbursement(distance);
+        document.getElementById('amount').value = amount.toFixed(2);
+        document.getElementById('reimbursement').value = amount.toFixed(2);
+    }
+
+    // Ajouter après le calcul de l'itinéraire dans la fonction calculateRoute
+    function calculateRoute() {
+        // ...existing code...
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.routes && data.routes.length > 0) {
+                    const distance = data.routes[0].distance / 1000;
+                    updateRouteData(distance);
+                    // ...existing code...
+                }
+            });
+    }
+
+    // Fonction pour mettre à jour les valeurs
+    function updateValues(distance) {
+        // Conversion et nettoyage des valeurs
+        distance = parseFloat(distance) || 0;
+        
+        // Mise à jour des champs cachés
+        document.getElementById('distance').value = distance.toFixed(2);
+        document.getElementById('distance_display').value = distance.toFixed(2);
+        
+        // Calcul et mise à jour du montant
+        const vehicleType = document.getElementById('id_vehicle_type').value;
+        const rate = {
+            'car': 0.603,
+            'electric_car': 0.751,
+            'motorbike': 0.368,
+            'bicycle': 0.25
+        }[vehicleType] || 0.603;
+        
+        const amount = distance * rate;
+        document.getElementById('amount').value = amount.toFixed(2);
+        document.getElementById('amount_display').value = amount.toFixed(2);
+        
+        // Debug - afficher les valeurs dans la console
+        console.log('Distance:', distance, 'Amount:', amount);
+    }
+
+    // Ajouter après le calcul de l'itinéraire
+    function handleRouteCalculated(distance) {
+        updateValues(distance);
     }
 </script>
 {% endblock %}

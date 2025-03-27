@@ -15,7 +15,8 @@ from .auth_views import (
 from .dashboard_views import (
     dashboard_view,
     some_view,
-    dashboard_filtered
+    dashboard_filtered,
+    dashboard_stats_api
 )
 
 # Importation des vues de gestion des congés

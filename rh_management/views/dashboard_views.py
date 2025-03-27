@@ -4,7 +4,7 @@ from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib import messages
-from ..models import LeaveRequest, ExpenseReport, KilometricExpense, UserProfile
+from ..models import LeaveRequest, ExpenseReport, KilometricExpense, UserProfile, PasswordManager
 from .permissions import is_rh, is_encadrant, is_stp, is_admin_or_hr
 
 @login_required
@@ -137,3 +137,18 @@ def dashboard_filtered(request):
         'is_hr': request.user.groups.filter(name='HR').exists(),
         'is_admin': request.user.is_superuser,
     })
+
+@login_required
+def dashboard_stats_api(request):
+    """API endpoint pour les statistiques du tableau de bord."""
+    try:
+        user = request.user
+        stats = {
+            'leave_count': LeaveRequest.objects.filter(user=user).count(),
+            'expense_count': ExpenseReport.objects.filter(user=user).count(),
+            'km_expense_count': KilometricExpense.objects.filter(user=user).count(),
+            'password_count': PasswordManager.objects.filter(user=user).count(),
+        }
+        return JsonResponse(stats)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
