@@ -212,9 +212,44 @@ class UserProfile(models.Model):
     position = models.CharField(max_length=100, blank=True, null=True)
     department = models.CharField(max_length=100, blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    
+    # Relations pour encadrants et équipes
+    supervisor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, 
+                                  related_name='supervised_employees',
+                                  help_text="Supérieur hiérarchique de l'employé")
+    is_supervisor = models.BooleanField(default=False, 
+                                     help_text="Indique si l'utilisateur est un encadrant")
+
+    # Préférences utilisateur
+    theme_preference = models.CharField(max_length=10, default='light', choices=[
+        ('light', 'Thème clair'),
+        ('dark', 'Thème sombre'),
+        ('system', 'Thème du système')
+    ])
+    notifications_enabled = models.BooleanField(default=True)
+    email_notifications = models.BooleanField(default=True)
+    language_preference = models.CharField(max_length=5, default='fr', choices=[
+        ('fr', 'Français'),
+        ('en', 'Anglais')
+    ])
 
     def __str__(self):
         return f"Profil de {self.user.username}"
+    
+    def get_role(self):
+        """Renvoie le rôle principal de l'utilisateur"""
+        user = self.user
+        if user.is_superuser:
+            return "Admin"
+        if user.is_staff or user.groups.filter(name="RH").exists():
+            return "RH"
+        if user.groups.filter(name="Encadrant").exists():
+            return "Encadrant"
+        if user.groups.filter(name="STP").exists():
+            return "STP"
+        if user.groups.filter(name="Employé").exists():
+            return "Employé"
+        return "Sans rôle"
 
 class LeaveBalance(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='leave_balance')
@@ -304,3 +339,32 @@ class PasswordShare(models.Model):
         
     def __str__(self):
         return f"{self.password_entry.title} partagé avec {self.shared_with.username}"
+
+class CustomPermission(models.Model):
+    """Modèle pour gérer les permissions personnalisées."""
+    name = models.CharField(max_length=255, unique=True)
+    codename = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Permission personnalisée'
+        verbose_name_plural = 'Permissions personnalisées'
+
+    def __str__(self):
+        return self.name
+
+class PermissionGroup(models.Model):
+    """Modèle pour gérer les groupes de permissions."""
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True)
+    permissions = models.ManyToManyField(CustomPermission)
+    users = models.ManyToManyField(User, related_name='custom_groups')
+    
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Groupe de permissions'
+        verbose_name_plural = 'Groupes de permissions'
+
+    def __str__(self):
+        return self.name

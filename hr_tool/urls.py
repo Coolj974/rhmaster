@@ -27,7 +27,7 @@ from rh_management.views import (
     api_leaves,
     password_manager, password_add, password_view, password_edit, password_delete,
     leave_action, expense_action, kilometric_expense_action, manage_leave_balances,
-    dashboard_stats_api
+    update_leave_balance, dashboard_stats_api
 )
 
 # Error handlers
@@ -48,9 +48,25 @@ handler500 = error_500
 handler403 = error_403
 handler400 = error_400
 
+# Personnalisation de l'interface d'administration
+from rh_management import admin_views
+
+# Ne pas remplacer l'instance admin.site
+admin.site.site_header = "CybeRH Administration"
+admin.site.site_title = "CybeRH Admin"
+admin.site.index_title = "Tableau de bord d'administration"
+
 urlpatterns = [
-    # Admin
+    # Admin standard
     path("admin/", admin.site.urls),
+    
+    # Tableau de bord admin personnalisé - utiliser un chemin différent que celui sous /admin/
+    path("admin-dashboard/", admin_views.admin_dashboard, name='admin_dashboard'),
+    
+    # Utilisation directe de la vue sans passer par admin.site.admin_view
+    path("admin/dashboard/", admin_views.admin_dashboard, name='admin_dashboard'),
+    # Version sans slash final pour la compatibilité
+    path("admin/dashboard", admin_views.admin_dashboard),
     
     # Authentication
     path("login/", login_view, name="login"),
@@ -96,6 +112,7 @@ urlpatterns = [
     path('leave-action/<int:leave_id>/', leave_action, name='leave_action'),
     path('export/', export_leaves, name='export_leaves'),
     path('leave-balance/', manage_leave_balances, name='manage_leave_balances'),
+    path('update-leave-balance/<int:user_id>/', update_leave_balance, name='update_leave_balance'),
     path('my-leaves/', my_leaves, name='my_leaves'),
 
     # Expense Management

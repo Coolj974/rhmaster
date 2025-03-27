@@ -2,10 +2,21 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.db import models
 from django.contrib import messages
-from .models import LeaveRequest, LeaveBalance, ExpenseReport, KilometricExpense, NotificationEmail, UserProfile
+from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.admin import UserAdmin, AdminPasswordChangeForm
+from django.contrib.auth.models import User
+from django.urls import path, reverse
+from django.shortcuts import render, redirect
+from django.db.models import Count, Sum
+from django.utils.translation import gettext_lazy as _
+from .models import LeaveRequest, LeaveBalance, ExpenseReport, KilometricExpense, NotificationEmail, UserProfile, CustomPermission, PermissionGroup
 
-# Enregistrement simple des modèles déjà présents (si pas déjà fait)
-# admin.site.register(NotificationEmail)  # Déjà enregistré dans models.py
+# Personnalisation de l'interface admin
+admin.site.site_header = "CybeRH Administration"
+admin.site.site_title = "CybeRH Admin"
+admin.site.index_title = "Tableau de bord d'administration"
+
+# Enregistrement simple des modèles déjà présents
 admin.site.register(UserProfile)
 
 @admin.register(LeaveBalance)
@@ -26,6 +37,10 @@ class LeaveBalanceAdmin(admin.ModelAdmin):
         return format_html('<span style="color:{};">{}</span>', color, obj.available)
     
     available.short_description = 'Solde disponible'
+    
+    def has_delete_permission(self, request, obj=None):
+        # Empêcher la suppression des soldes de congés
+        return False
 
 def approve_leaves(modeladmin, request, queryset):
     """Approuve les congés sélectionnés et met à jour les soldes de congés."""
@@ -86,6 +101,18 @@ class LeaveRequestAdmin(admin.ModelAdmin):
     actions = [approve_leaves, reject_leaves]
     readonly_fields = ('created_at',)
     
+    fieldsets = (
+        ('Informations de base', {
+            'fields': ('user', 'leave_type', 'start_date', 'end_date', 'days_requested')
+        }),
+        ('Détails', {
+            'fields': ('reason', 'half_day', 'half_day_period', 'attachment')
+        }),
+        ('Statut', {
+            'fields': ('status', 'comment', 'created_at', 'updated_at')
+        }),
+    )
+    
     def duration(self, obj):
         """Calcule la durée du congé en jours."""
         delta = obj.end_date - obj.start_date
@@ -119,6 +146,12 @@ class LeaveRequestAdmin(admin.ModelAdmin):
         
         # Laisser la méthode save() du modèle gérer les mises à jour
         super().save_model(request, obj, form, change)
+    
+    def get_readonly_fields(self, request, obj=None):
+        # Rendre certains champs en lecture seule après la création
+        if obj:  # si l'objet existe déjà
+            return ('user', 'created_at', 'updated_at', 'days_requested')
+        return ('created_at', 'updated_at')
 
 @admin.register(ExpenseReport)
 class ExpenseReportAdmin(admin.ModelAdmin):
@@ -141,6 +174,21 @@ class ExpenseReportAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'description', 'project', 'location')
     date_hierarchy = 'date'
     actions = ['approve_expenses', 'reject_expenses']
+    
+    fieldsets = (
+        ('Informations de base', {
+            'fields': ('user', 'date', 'description', 'amount')
+        }),
+        ('Détails', {
+            'fields': ('expense_type', 'vat', 'project', 'location', 'refacturable')
+        }),
+        ('Justificatifs', {
+            'fields': ('receipt', 'attachment')
+        }),
+        ('Statut', {
+            'fields': ('status', 'comment')
+        }),
+    )
     
     def approve_expenses(self, request, queryset):
         approved_count = 0
@@ -194,6 +242,25 @@ class KilometricExpenseAdmin(admin.ModelAdmin):
     date_hierarchy = 'date'
     actions = ['approve_kilometric_expenses', 'reject_kilometric_expenses']
     
+    fieldsets = (
+        ('Informations de base', {
+            'fields': ('user', 'date', 'description', 'project')
+        }),
+        ('Trajet', {
+            'fields': ('departure', 'arrival', 'distance')
+        }),
+        ('Véhicule', {
+            'fields': ('vehicle_type', 'fiscal_power')
+        }),
+        ('Coordonnées GPS', {
+            'fields': ('departure_lat', 'departure_lng', 'arrival_lat', 'arrival_lng'),
+            'classes': ('collapse',)
+        }),
+        ('Montant et statut', {
+            'fields': ('amount', 'status')
+        }),
+    )
+    
     def approve_kilometric_expenses(self, request, queryset):
         approved_count = 0
         skipped_count = 0
@@ -237,3 +304,251 @@ class KilometricExpenseAdmin(admin.ModelAdmin):
             messages.warning(request, f"{skipped_count} frais kilométrique(s) vous appartenant ont été ignorés. Vous ne pouvez pas rejeter vos propres frais kilométriques.")
     
     reject_kilometric_expenses.short_description = "Refuser les frais kilométriques sélectionnés"
+
+# Modification de notre UserAdmin pour inclure les groupes et permissions
+class EnhancedUserAdmin(UserAdmin):
+    # Ajout de l'affichage des groupes dans la liste
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'get_groups', 'is_active')
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
+    
+    # Ajout d'actions pour gérer les rôles
+    actions = ['assign_employee_role', 'assign_rh_role', 'assign_stp_role', 'assign_encadrant_role', 
+               'remove_employee_role', 'remove_rh_role', 'remove_stp_role', 'remove_encadrant_role']
+    
+    def get_groups(self, obj):
+        """Affiche les groupes de l'utilisateur"""
+        return ", ".join([g.name for g in obj.groups.all()]) or "-"
+    get_groups.short_description = 'Rôles'
+    
+    # Actions pour ajouter des rôles
+    def assign_employee_role(self, request, queryset):
+        group, _ = Group.objects.get_or_create(name='Employé')
+        for user in queryset:
+            user.groups.add(group)
+        messages.success(request, f"{queryset.count()} utilisateur(s) ont reçu le rôle Employé.")
+    assign_employee_role.short_description = "Attribuer le rôle Employé"
+    
+    def assign_rh_role(self, request, queryset):
+        group, _ = Group.objects.get_or_create(name='RH')
+        for user in queryset:
+            user.groups.add(group)
+        messages.success(request, f"{queryset.count()} utilisateur(s) ont reçu le rôle RH.")
+    assign_rh_role.short_description = "Attribuer le rôle RH"
+    
+    def assign_stp_role(self, request, queryset):
+        group, _ = Group.objects.get_or_create(name='STP')
+        for user in queryset:
+            user.groups.add(group)
+        messages.success(request, f"{queryset.count()} utilisateur(s) ont reçu le rôle STP.")
+    assign_stp_role.short_description = "Attribuer le rôle STP"
+    
+    def assign_encadrant_role(self, request, queryset):
+        group, _ = Group.objects.get_or_create(name='Encadrant')
+        for user in queryset:
+            user.groups.add(group)
+        messages.success(request, f"{queryset.count()} utilisateur(s) ont reçu le rôle Encadrant.")
+    assign_encadrant_role.short_description = "Attribuer le rôle Encadrant"
+    
+    # Actions pour retirer des rôles
+    def remove_employee_role(self, request, queryset):
+        try:
+            group = Group.objects.get(name='Employé')
+            for user in queryset:
+                user.groups.remove(group)
+            messages.success(request, f"Rôle Employé retiré pour {queryset.count()} utilisateur(s).")
+        except Group.DoesNotExist:
+            messages.error(request, "Le groupe Employé n'existe pas.")
+    remove_employee_role.short_description = "Retirer le rôle Employé"
+    
+    def remove_rh_role(self, request, queryset):
+        try:
+            group = Group.objects.get(name='RH')
+            for user in queryset:
+                user.groups.remove(group)
+            messages.success(request, f"Rôle RH retiré pour {queryset.count()} utilisateur(s).")
+        except Group.DoesNotExist:
+            messages.error(request, "Le groupe RH n'existe pas.")
+    remove_rh_role.short_description = "Retirer le rôle RH"
+    
+    def remove_stp_role(self, request, queryset):
+        try:
+            group = Group.objects.get(name='STP')
+            for user in queryset:
+                user.groups.remove(group)
+            messages.success(request, f"Rôle STP retiré pour {queryset.count()} utilisateur(s).")
+        except Group.DoesNotExist:
+            messages.error(request, "Le groupe STP n'existe pas.")
+    remove_stp_role.short_description = "Retirer le rôle STP"
+    
+    def remove_encadrant_role(self, request, queryset):
+        try:
+            group = Group.objects.get(name='Encadrant')
+            for user in queryset:
+                user.groups.remove(group)
+            messages.success(request, f"Rôle Encadrant retiré pour {queryset.count()} utilisateur(s).")
+        except Group.DoesNotExist:
+            messages.error(request, "Le groupe Encadrant n'existe pas.")
+    remove_encadrant_role.short_description = "Retirer le rôle Encadrant"
+    
+    # Ajout d'un panneau de statistiques pour chaque utilisateur
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if obj:  # Si nous sommes en mode édition d'un utilisateur existant
+            # Ajouter un fieldset pour les statistiques
+            stats_fieldset = ('Statistiques', {
+                'fields': ('user_leaves_count', 'user_expenses_count', 'user_km_expenses_count'),
+                'classes': ('collapse',),
+            })
+            return fieldsets + (stats_fieldset,)
+        return fieldsets
+    
+    def user_leaves_count(self, obj):
+        count = LeaveRequest.objects.filter(user=obj).count()
+        pending = LeaveRequest.objects.filter(user=obj, status='pending').count()
+        return format_html('<a href="{}?user__id__exact={}">{} demande(s) de congés (dont {} en attente)</a>',
+                           reverse('admin:rh_management_leaverequest_changelist'), obj.id, count, pending)
+    user_leaves_count.short_description = "Congés"
+    
+    def user_expenses_count(self, obj):
+        count = ExpenseReport.objects.filter(user=obj).count()
+        return format_html('<a href="{}?user__id__exact={}">{} note(s) de frais</a>',
+                           reverse('admin:rh_management_expensereport_changelist'), obj.id, count)
+    user_expenses_count.short_description = "Notes de frais"
+    
+    def user_km_expenses_count(self, obj):
+        count = KilometricExpense.objects.filter(user=obj).count()
+        return format_html('<a href="{}?user__id__exact={}">{} frais kilométriques</a>',
+                           reverse('admin:rh_management_kilometricexpense_changelist'), obj.id, count)
+    user_km_expenses_count.short_description = "Frais kilométriques"
+    
+    # Ajout de méthodes pour les champs calculés
+    def get_readonly_fields(self, request, obj=None):
+        # Ces champs sont calculés, donc en lecture seule
+        readonly_fields = super().get_readonly_fields(request, obj)
+        if obj:
+            return readonly_fields + ('user_leaves_count', 'user_expenses_count', 'user_km_expenses_count')
+        return readonly_fields
+
+# Amélioration de l'admin pour CustomPermission
+class CustomPermissionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'codename', 'description', 'get_groups_count')
+    search_fields = ('name', 'codename', 'description')
+    ordering = ('name',)
+    
+    # Ajouter un champ pour voir les groupes utilisant cette permission
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "permissions":
+            kwargs["widget"] = admin.widgets.FilteredSelectMultiple(
+                db_field.verbose_name, False
+            )
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+    
+    def get_groups_count(self, obj):
+        """Nombre de groupes utilisant cette permission"""
+        return PermissionGroup.objects.filter(permissions=obj).count()
+    get_groups_count.short_description = "Groupes"
+
+# Amélioration de l'admin pour PermissionGroup
+class PermissionGroupAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description', 'get_users_count', 'get_permissions_count')
+    filter_horizontal = ('permissions', 'users')
+    search_fields = ('name', 'description')
+    
+    # Amélioration du filtre sur les utilisateurs
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "users" or db_field.name == "permissions":
+            kwargs["widget"] = admin.widgets.FilteredSelectMultiple(
+                db_field.verbose_name, False
+            )
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+    
+    def get_users_count(self, obj):
+        return obj.users.count()
+    get_users_count.short_description = 'Utilisateurs'
+    
+    def get_permissions_count(self, obj):
+        return obj.permissions.count()
+    get_permissions_count.short_description = 'Permissions'
+
+# Interface admin pour les groupes Django standard (rôles)
+class RoleAdmin(admin.ModelAdmin):
+    list_display = ('name', 'get_users_count', 'get_permissions_count')
+    filter_horizontal = ('permissions',)
+    search_fields = ('name',)
+    
+    # Ajout d'une action pour voir les utilisateurs avec ce rôle
+    def view_users(self, request, queryset):
+        if queryset.count() != 1:
+            messages.error(request, "Veuillez sélectionner un seul rôle à la fois.")
+            return
+            
+        role = queryset.first()
+        return redirect(f"/admin/auth/user/?groups__name={role.name}")
+    view_users.short_description = "Voir les utilisateurs avec ce rôle"
+    
+    # Ajouter l'action à la liste
+    actions = ['view_users']
+    
+    def get_users_count(self, obj):
+        return obj.user_set.count()
+    get_users_count.short_description = 'Utilisateurs'
+    
+    def get_permissions_count(self, obj):
+        return obj.permissions.count()
+    get_permissions_count.short_description = 'Permissions'
+
+# Désenregistrez l'admin user par défaut et enregistrez notre version améliorée
+admin.site.unregister(User)
+admin.site.register(User, EnhancedUserAdmin)
+
+# Désenregistrez les groupes standard et enregistrez notre version améliorée
+admin.site.unregister(Group)
+admin.site.register(Group, RoleAdmin)
+
+# Enregistrez les modèles personnalisés de permissions
+admin.site.register(CustomPermission, CustomPermissionAdmin)
+admin.site.register(PermissionGroup, PermissionGroupAdmin)
+
+# Redéfinir l'approche de personnalisation pour éviter de remplacer admin.site
+def setup_admin_site(admin_site):
+    """Configure le site d'administration sans remplacer l'instance admin.site."""
+    # Personnalisation du site admin
+    admin_site.site_header = "CybeRH Administration"
+    admin_site.site_title = "CybeRH Admin"
+    admin_site.index_title = "Tableau de bord d'administration"
+    
+    # Méthode statique pour l'affichage du tableau de bord
+    @staticmethod
+    def dashboard_view(request):
+        if not request.user.is_staff:
+            return redirect('admin:login')
+            
+        # Statistiques pour le tableau de bord admin
+        stats = {
+            'users_count': User.objects.count(),
+            'leaves_count': LeaveRequest.objects.count(),
+            'pending_leaves': LeaveRequest.objects.filter(status='pending').count(),
+            'expenses_count': ExpenseReport.objects.filter(status='pending').count(),
+            'km_expenses_count': KilometricExpense.objects.filter(status='pending').count(),
+        }
+        
+        # Groupes par nombre d'utilisateurs
+        groups_stats = Group.objects.annotate(users_count=Count('user')).order_by('-users_count')
+        
+        context = {
+            'title': 'Tableau de bord',
+            'stats': stats,
+            'groups_stats': groups_stats,
+            'has_permission': True,  # Important pour que les templates admin fonctionnent
+            'site_header': admin_site.site_header,
+            'site_title': admin_site.site_title,
+        }
+        
+        return render(request, 'admin/dashboard.html', context)
+    
+    # Assigner la méthode statique
+    setup_admin_site.dashboard_view = dashboard_view
+    
+    return admin_site
+
+# Créer le template admin/dashboard.html dans le dossier templates de votre projet

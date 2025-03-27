@@ -1,0 +1,454 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% load custom_filters %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    .admin-dashboard {
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .dashboard-header {
+        padding: 15px 20px;
+        background: #f5f7fa;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        border-left: 5px solid #4e73df;
+    }
+    
+    .stat-card {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: transform 0.2s;
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card .icon-container {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin-bottom: 10px;
+    }
+    
+    .stat-card .card-header {
+        background-color: transparent;
+        border-bottom: none;
+        padding: 15px 20px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+    }
+    
+    .stat-card .card-body {
+        padding: 0 20px 20px 20px;
+    }
+    
+    .stat-card .card-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+    
+    .users-card {
+        border-top: 4px solid #4e73df;
+    }
+    
+    .leaves-card {
+        border-top: 4px solid #1cc88a;
+    }
+    
+    .expenses-card {
+        border-top: 4px solid #f6c23e;
+    }
+    
+    .km-card {
+        border-top: 4px solid #e74a3b;
+    }
+    
+    .data-table {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .data-table .table {
+        margin-bottom: 0;
+    }
+    
+    .data-table thead {
+        background-color: #f8f9fc;
+    }
+    
+    .data-table th {
+        border-top: none;
+        font-weight: 600;
+    }
+    
+    .action-btn {
+        padding: 5px 10px;
+        border-radius: 5px;
+        margin-right: 5px;
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .action-btn i {
+        margin-right: 5px;
+    }
+    
+    .section-header {
+        margin: 30px 0 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e3e6f0;
+        color: #5a5c69;
+        font-weight: 600;
+    }
+    
+    .badge-pending {
+        background-color: #f6c23e;
+        color: #fff;
+    }
+    
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+    
+    .quick-links {
+        margin-top: 20px;
+    }
+    
+    .quick-link-card {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        background-color: #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+    }
+    
+    .quick-link-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .quick-link-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+    }
+    
+    .quick-link-content h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    .quick-link-content p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-0">Tableau de bord administratif CybeRH</h1>
+                <p class="text-muted">Vue d'ensemble des activités et statistiques du système</p>
+            </div>
+            <div>
+                <a href="/admin/" class="btn btn-primary btn-sm">
+                    <i class="fas fa-cogs me-1"></i> Administration Django
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques générales -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card users-card">
+                <div class="card-header text-primary">
+                    <div class="icon-container bg-primary bg-opacity-10 text-primary me-2">
+                        <i class="fas fa-users fa-lg"></i>
+                    </div>
+                    <span>Utilisateurs</span>
+                </div>
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="h1 mb-0 font-weight-bold">{{ stats.users_count }}</div>
+                            <div class="text-xs font-weight-bold text-muted mt-1">utilisateurs actifs</div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="/admin/auth/user/" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="fas fa-user-cog me-1"></i> Gérer les utilisateurs
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card leaves-card">
+                <div class="card-header text-success">
+                    <div class="icon-container bg-success bg-opacity-10 text-success me-2">
+                        <i class="fas fa-calendar-check fa-lg"></i>
+                    </div>
+                    <span>Demandes de congés</span>
+                </div>
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="h1 mb-0 font-weight-bold">{{ stats.leaves_count }}</div>
+                            <div class="text-xs font-weight-bold text-muted mt-1">
+                                dont <span class="badge badge-pending">{{ stats.pending_leaves }}</span> en attente
+                            </div>
+                            <div class="progress">
+                                <!-- Utilisation directe de pending_percentage du contexte au lieu du filtre -->
+                                <div class="progress-bar bg-success" style="width: {{ stats.pending_percentage|default:0 }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'manage_leaves' %}" class="btn btn-sm btn-outline-success w-100">
+                            <i class="fas fa-list-check me-1"></i> Gérer les congés
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card expenses-card">
+                <div class="card-header text-warning">
+                    <div class="icon-container bg-warning bg-opacity-10 text-warning me-2">
+                        <i class="fas fa-file-invoice-dollar fa-lg"></i>
+                    </div>
+                    <span>Notes de frais</span>
+                </div>
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="h1 mb-0 font-weight-bold">{{ stats.expenses_count }}</div>
+                            <div class="text-xs font-weight-bold text-muted mt-1">en attente de validation</div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'manage_expenses' %}" class="btn btn-sm btn-outline-warning w-100">
+                            <i class="fas fa-file-invoice me-1"></i> Gérer les notes de frais
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card km-card">
+                <div class="card-header text-danger">
+                    <div class="icon-container bg-danger bg-opacity-10 text-danger me-2">
+                        <i class="fas fa-route fa-lg"></i>
+                    </div>
+                    <span>Frais kilométriques</span>
+                </div>
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="h1 mb-0 font-weight-bold">{{ stats.km_expenses_count }}</div>
+                            <div class="text-xs font-weight-bold text-muted mt-1">en attente de validation</div>
+                            <div class="progress">
+                                <div class="progress-bar bg-danger" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'manage_kilometric_expenses' %}" class="btn btn-sm btn-outline-danger w-100">
+                            <i class="fas fa-car me-1"></i> Gérer les frais kilométriques
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Répartition des utilisateurs par groupes -->
+    <div class="section-header">
+        <h4 class="h4"><i class="fas fa-user-tag me-2"></i>Répartition des utilisateurs par rôle</h4>
+    </div>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Groupes d'utilisateurs</h5>
+                </div>
+                <div class="card-body">
+                    <div class="data-table">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nom du groupe</th>
+                                    <th>Nombre d'utilisateurs</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for group in groups_stats %}
+                                <tr>
+                                    <td><strong>{{ group.name }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if group.name == 'Admin' %}danger{% elif group.name == 'RH' %}warning{% elif group.name == 'Encadrant' %}info{% elif group.name == 'STP' %}success{% else %}primary{% endif %} rounded-pill">
+                                            {{ group.users_count }} utilisateur{% if group.users_count > 1 %}s{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="/admin/auth/user/?groups__name={{ group.name }}" class="btn btn-sm btn-outline-secondary action-btn">
+                                            <i class="fas fa-users"></i> Voir les membres
+                                        </a>
+                                        <a href="/admin/auth/group/{{ group.id }}/change/" class="btn btn-sm btn-outline-primary action-btn">
+                                            <i class="fas fa-edit"></i> Modifier
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-3">Aucun groupe défini</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Liens rapides -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Accès rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="quick-links">
+                        <a href="/admin/auth/user/add/" class="quick-link-card">
+                            <div class="quick-link-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="quick-link-content">
+                                <h5>Nouvel utilisateur</h5>
+                                <p>Créer un nouveau compte</p>
+                            </div>
+                        </a>
+                        
+                        <a href="/admin/auth/group/add/" class="quick-link-card">
+                            <div class="quick-link-icon bg-success bg-opacity-10 text-success">
+                                <i class="fas fa-users-cog"></i>
+                            </div>
+                            <div class="quick-link-content">
+                                <h5>Nouveau groupe</h5>
+                                <p>Créer un nouveau rôle</p>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'manage_leave_balances' %}" class="quick-link-card">
+                            <div class="quick-link-icon bg-info bg-opacity-10 text-info">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="quick-link-content">
+                                <h5>Soldes de congés</h5>
+                                <p>Gérer les soldes des employés</p>
+                            </div>
+                        </a>
+                        
+                        <a href="/admin/rh_management/permissiongroup/" class="quick-link-card">
+                            <div class="quick-link-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div class="quick-link-content">
+                                <h5>Permissions</h5>
+                                <p>Gérer les droits d'accès</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chiffres importants -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informations sur la base de données</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center border-end">
+                                <h6 class="text-muted">Notes de frais approuvées</h6>
+                                <h3 class="text-success">{{ stats.approved_expenses|default:"0" }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center border-end">
+                                <h6 class="text-muted">Congés approuvés</h6>
+                                <h3 class="text-success">{{ stats.approved_leaves|default:"0" }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center border-end">
+                                <h6 class="text-muted">Comptes actifs</h6>
+                                <h3 class="text-primary">{{ stats.active_users|default:stats.users_count }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h6 class="text-muted">Total des groupes</h6>
+                                <h3 class="text-primary">{{ groups_stats|length }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

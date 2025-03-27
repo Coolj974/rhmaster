@@ -5,7 +5,8 @@ from django.utils import timezone
 from django.db.models import Avg, Sum
 from django.core.mail import send_mail
 from django.http import HttpResponse
-from ..models import LeaveRequest, LeaveBalance
+from django.contrib.auth.models import Group, User  # Ajout de l'import manquant
+from ..models import LeaveRequest, LeaveBalance, ExpenseReport, KilometricExpense
 from ..forms import LeaveRequestForm
 from .permissions import is_admin_or_hr, is_admin_hr_or_encadrant, can_approve_leaves
 from datetime import datetime, timedelta
@@ -148,14 +149,11 @@ def leave_request_view(request):
     if is_admin or is_rh or is_encadrant:
         # Seuls les admins, RH et encadrants peuvent voir les compteurs
         if is_admin or is_rh:
-            from ..models import ExpenseReport, KilometricExpense
             new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
             new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
             new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
         elif is_encadrant:
             # Pour les encadrants, montrer uniquement les demandes de leur équipe
-            from django.contrib.auth.models import User
-            from ..models import ExpenseReport, KilometricExpense
             team_members = User.objects.filter(team_leader=request.user)
             new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
             new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
@@ -177,47 +175,85 @@ def leave_request_view(request):
 @login_required
 @user_passes_test(is_admin_or_hr)
 def manage_leave_balances(request):
-    """Vue pour gérer les soldes de congés des employés."""
+    """Vue pour gérer les soldes de congés des utilisateurs."""
+    # Récupérer tous les soldes de congés
     leave_balances = LeaveBalance.objects.all().select_related('user')
     
+    # Calculate average balance manually since 'available' is a property
+    total_available = sum(balance.available for balance in leave_balances)
+    average_balance = total_available / leave_balances.count() if leave_balances.exists() else 0
+    
     # Statistiques
-    from django.contrib.auth.models import User
     employee_count = User.objects.filter(is_active=True).count()
-    average_balance = LeaveBalance.objects.filter(acquired__gt=0).aggregate(avg=Avg('acquired'))['avg'] or 0
     currently_on_leave = LeaveRequest.objects.filter(
-        status='approved', 
-        start_date__lte=timezone.now(), 
-        end_date__gte=timezone.now()
+        start_date__lte=datetime.now().date(),
+        end_date__gte=datetime.now().date(),
+        status='approved'
     ).count()
     no_balance_count = User.objects.filter(is_active=True).exclude(
-        id__in=LeaveBalance.objects.filter(acquired__gt=0).values_list('user_id', flat=True)
+        id__in=leave_balances.values_list('user_id', flat=True)
     ).count()
     
-    return render(request, 'rh_management/manage_leave_balances.html', {
+    # Compteurs de notifications pour le template de base
+    is_admin_flag = request.user.is_superuser
+    is_rh_flag = request.user.is_staff or request.user.groups.filter(name='RH').exists()
+    is_encadrant_flag = request.user.groups.filter(name='Encadrant').exists()
+    
+    # Initialiser les compteurs
+    new_leave_requests_count = 0
+    new_expense_reports_count = 0
+    new_kilometric_expenses_count = 0
+    
+    if is_admin_flag or is_rh_flag:
+        new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    elif is_encadrant_flag:
+        team_members = User.objects.filter(userprofile__supervisor=request.user)
+        new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
+        new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
+        new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
+    
+    # Trier le queryset manuellement après récupération
+    leave_balances = sorted(leave_balances, key=lambda x: x.available, reverse=True)
+    
+    context = {
         'leave_balances': leave_balances,
         'employee_count': employee_count,
-        'average_balance': round(average_balance, 1),
+        'average_balance': average_balance,
         'currently_on_leave': currently_on_leave,
-        'no_balance_count': no_balance_count
-    })
+        'no_balance_count': no_balance_count,
+        # Ajouter les variables requises par le template de base
+        'is_admin': is_admin_flag,
+        'is_rh': is_rh_flag,
+        'is_encadrant': is_encadrant_flag,
+        'new_leave_requests_count': new_leave_requests_count,
+        'new_expense_reports_count': new_expense_reports_count,
+        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+    }
+    
+    return render(request, 'rh_management/manage_leave_balances.html', context)
 
 @login_required
 @user_passes_test(is_admin_or_hr)
-def update_leave_balance(request):
-    """Mise à jour du solde de congés d'un employé."""
-    if request.method == "POST":
-        balance_id = request.POST.get('balance_id')
-        acquired_days = float(request.POST.get('acquired_days', 0))
-        taken_days = float(request.POST.get('taken_days', 0))
-        
-        balance = get_object_or_404(LeaveBalance, id=balance_id)
-        balance.acquired = acquired_days
-        balance.taken = taken_days
-        balance.save()
-        
-        messages.success(request, f"Le solde de congés de {balance.user.get_full_name() or balance.user.username} a été mis à jour.")
-        return redirect('manage_leave_balances')
+def update_leave_balance(request, user_id):
+    """Vue pour mettre à jour le solde de congés d'un utilisateur."""
+    user = get_object_or_404(User, id=user_id)
+    leave_balance, created = LeaveBalance.objects.get_or_create(user=user, defaults={'acquired': 25.0})
     
+    if request.method == 'POST':
+        try:
+            acquired = float(request.POST.get('acquired', 0.0))
+            taken = float(request.POST.get('taken', 0.0))
+            
+            leave_balance.acquired = acquired
+            leave_balance.taken = taken
+            leave_balance.save()
+            
+            messages.success(request, f"Solde de congés mis à jour pour {user.get_full_name() or user.username}")
+        except ValueError:
+            messages.error(request, "Format de valeur invalide. Veuillez entrer des nombres valides.")
+        
     return redirect('manage_leave_balances')
 
 @login_required
@@ -229,7 +265,6 @@ def bulk_update_leave_balance(request):
         days_to_add = float(request.POST.get('days_to_add', 0))
         
         # Filtrer les utilisateurs selon le groupe sélectionné
-        from django.contrib.auth.models import User
         users_query = User.objects.filter(is_active=True)
         
         if employee_group == 'permanent':
@@ -263,25 +298,32 @@ def manage_leaves_view(request):
         return redirect('login')
     
     # Vérifier les permissions
-    from .permissions import is_encadrant
-    is_admin = request.user.is_superuser
-    is_hr = request.user.is_staff
+    from .permissions import is_encadrant, is_rh, is_admin
+    is_admin_flag = is_admin(request.user)
+    is_rh_flag = is_rh(request.user)
     is_encadrant_flag = is_encadrant(request.user)
     
-    if not (is_admin or is_hr or is_encadrant_flag):
+    if not (is_admin_flag or is_rh_flag or is_encadrant_flag):
         messages.error(request, "Vous n'avez pas les permissions nécessaires pour accéder à cette page.")
         return redirect('dashboard')
     
     # Filtrer les demandes de congés selon le rôle de l'utilisateur
-    from django.contrib.auth.models import User
-    if is_admin or is_hr:
+    if is_admin_flag:
+        # Les admins voient toutes les demandes
         pending_leaves = LeaveRequest.objects.filter(status='pending').order_by('-created_at')
         processed_leaves = LeaveRequest.objects.exclude(status='pending').order_by('-updated_at')
+    elif is_rh_flag:
+        # Les RH voient les demandes des employés
+        employee_group = Group.objects.get(name='Employé')
+        employee_users = employee_group.user_set.all()
+        pending_leaves = LeaveRequest.objects.filter(user__in=employee_users, status='pending').order_by('-created_at')
+        processed_leaves = LeaveRequest.objects.filter(user__in=employee_users).exclude(status='pending').order_by('-updated_at')
     elif is_encadrant_flag:
-        # L'encadrant ne voit que les demandes de son équipe
-        team_members = User.objects.filter(team_leader=request.user)
-        pending_leaves = LeaveRequest.objects.filter(user__in=team_members, status='pending').order_by('-created_at')
-        processed_leaves = LeaveRequest.objects.filter(user__in=team_members).exclude(status='pending').order_by('-updated_at')
+        # Les encadrants voient les demandes des STP
+        stp_group = Group.objects.get(name='STP')
+        stp_users = stp_group.user_set.all()
+        pending_leaves = LeaveRequest.objects.filter(user__in=stp_users, status='pending').order_by('-created_at')
+        processed_leaves = LeaveRequest.objects.filter(user__in=stp_users).exclude(status='pending').order_by('-updated_at')
     else:
         pending_leaves = LeaveRequest.objects.none()
         processed_leaves = LeaveRequest.objects.none()
@@ -290,7 +332,6 @@ def manage_leaves_view(request):
     user_leaves = LeaveRequest.objects.filter(user=request.user).order_by('-created_at')
     
     # Ajouter les compteurs de notifications
-    from ..models import ExpenseReport, KilometricExpense
     new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
     new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
     new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
@@ -299,8 +340,8 @@ def manage_leaves_view(request):
         'pending_leaves': pending_leaves,
         'user_leaves': user_leaves,
         'processed_leaves': processed_leaves,
-        'is_admin': is_admin,
-        'is_hr': is_hr,
+        'is_admin': is_admin_flag,
+        'is_hr': is_rh_flag,
         'is_encadrant': is_encadrant_flag,
         'new_leave_requests_count': new_leave_requests_count,
         'new_expense_reports_count': new_expense_reports_count,
@@ -351,15 +392,16 @@ def leave_action(request, leave_id):
     if not request.user.is_authenticated:
         return redirect('login')
     
-    # Vérifier les permissions
-    if not (request.user.is_superuser or request.user.is_staff or 
-            request.user.groups.filter(name='Encadrant').exists()):
-        messages.error(request, "Vous n'avez pas les droits nécessaires pour effectuer cette action.")
-        return redirect('dashboard')
-    
     # Récupérer la demande de congé
     try:
         leave_request = LeaveRequest.objects.get(id=leave_id)
+        
+        # Vérifier les permissions selon les rôles
+        from .permissions import can_approve_leave, is_admin
+        if not (is_admin(request.user) or can_approve_leave(request.user, leave_request)):
+            messages.error(request, "Vous n'avez pas les droits pour approuver cette demande. Les RH peuvent approuver les demandes des employés et les encadrants celles des STP.")
+            return redirect('dashboard')
+        
         # Calculer days_requested si non défini
         if not leave_request.days_requested:
             leave_request.days_requested = calculate_working_days(
@@ -385,7 +427,8 @@ def leave_action(request, leave_id):
             
             # Mettre à jour le solde de congés de l'utilisateur
             balance, created = LeaveBalance.objects.get_or_create(user=leave_request.user)
-            balance.taken += leave_request.days_requested
+            # Corriger l'erreur de type en convertissant days_requested en float
+            balance.taken += float(leave_request.days_requested)
             balance.save()
             
             messages.success(request, "La demande de congé a été approuvée.")
@@ -452,13 +495,11 @@ def my_leaves(request):
     new_kilometric_expenses_count = 0
     
     if is_admin or is_rh or is_encadrant:
-        from ..models import ExpenseReport, KilometricExpense
         if is_admin or is_rh:
             new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
             new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
             new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
         elif is_encadrant:
-            from django.contrib.auth.models import User
             team_members = User.objects.filter(team_leader=request.user)
             new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
             new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()

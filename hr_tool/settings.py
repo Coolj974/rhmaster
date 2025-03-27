@@ -67,13 +67,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'crispy_forms',  # Ajoutez cette ligne
+    'crispy_forms',
     'crispy_bootstrap4',
-
-
-    # Ajoutez ici votre application
     'rh_management',
-    'rh_management.templatetags',  # Ajoutez cette ligne pour reconnaître les templatetags
+    'rh_management.templatetags',  # Assurez-vous que cette ligne est présente et non commentée
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'

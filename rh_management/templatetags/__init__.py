@@ -1,1 +1,1 @@
-# Fichier init pour définir le package des templates tags
+# Fichier __init__.py nécessaire pour que le répertoire templatetags soit reconnu comme un package Python

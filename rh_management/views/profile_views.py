@@ -34,22 +34,23 @@ def profile_view(request):
         return redirect('profile')
 
     # Ajout des compteurs de notifications au contexte
-    is_admin = request.user.is_superuser
-    is_rh = request.user.is_staff
-    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    is_admin_flag = request.user.is_superuser
+    is_rh_flag = request.user.is_staff or request.user.groups.filter(name='RH').exists()
+    is_encadrant_flag = request.user.groups.filter(name='Encadrant').exists()
+    is_stp_flag = request.user.groups.filter(name='STP').exists()
     
     # Initialiser les compteurs
     new_leave_requests_count = 0
     new_expense_reports_count = 0
     new_kilometric_expenses_count = 0
     
-    if is_admin or is_rh or is_encadrant:
+    if is_admin_flag or is_rh_flag or is_encadrant_flag:
         from ..models import LeaveRequest, ExpenseReport, KilometricExpense
-        if is_admin or is_rh:
+        if is_admin_flag or is_rh_flag:
             new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
             new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
             new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
-        elif is_encadrant:
+        elif is_encadrant_flag:
             from django.contrib.auth.models import User
             team_members = User.objects.filter(team_leader=request.user)
             new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
@@ -58,9 +59,10 @@ def profile_view(request):
     
     context = {
         'profile': profile,
-        'is_admin': is_admin,
-        'is_rh': is_rh,
-        'is_encadrant': is_encadrant,
+        'is_admin': is_admin_flag,
+        'is_rh': is_rh_flag,
+        'is_encadrant': is_encadrant_flag,
+        'is_stp': is_stp_flag,
         'new_leave_requests_count': new_leave_requests_count,
         'new_expense_reports_count': new_expense_reports_count,
         'new_kilometric_expenses_count': new_kilometric_expenses_count,
