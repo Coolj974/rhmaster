@@ -2,109 +2,92 @@
 
 {% block extra_css %}
 <style>
-    /* Styles simples pour la gestion des congés */
-    .filter-card {
-        border-radius: 0.5rem;
-        margin-bottom: 1rem;
-        border: 1px solid #e3e6f0;
-        padding: 10px;
+    /* Styles pour la gestion des demandes de congés */
+    .leave-header {
+        padding: 1rem 0;
+        margin-bottom: 1.5rem;
     }
     
-    .filter-header {
-        padding: 0.75rem 1rem;
-        background-color: #f8f9fc;
-        border-bottom: 1px solid #e3e6f0;
-        font-weight: 600;
-        color: #4e73df;
+    .stats-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+        border: none;
+        overflow: hidden;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .stats-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .stats-header {
+        margin-bottom: 1rem;
+        color: #5a5c69;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    
+    .stats-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+    
+    .stats-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
     }
     
     .leave-table {
-        border-radius: 0.5rem;
+        border-radius: 10px;
         overflow: hidden;
+        box-shadow: 0 0.15rem 1.25rem rgba(0,0,0,0.075);
+    }
+    
+    .leave-table th {
+        background-color: #f8f9fc;
+        font-weight: 600;
+        padding: 1rem;
+        border-top: none;
     }
     
     .status-badge {
         font-size: 0.75rem;
-        padding: 0.25rem 0.75rem;
+        padding: 0.35rem 0.85rem;
         border-radius: 30px;
         font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     .status-pending {
-        background-color: #fff3cd;
-        color: #856404;
+        background-color: rgba(246, 194, 62, 0.15);
+        color: #f6c23e;
     }
     
     .status-approved {
-        background-color: #d4edda;
-        color: #155724;
+        background-color: rgba(28, 200, 138, 0.15);
+        color: #1cc88a;
     }
     
     .status-rejected {
-        background-color: #f8d7da;
-        color: #721c24;
+        background-color: rgba(231, 74, 59, 0.15);
+        color: #e74a3b;
     }
     
-    .leave-row {
-        transition: background-color 0.2s;
-    }
-    
-    .leave-row:hover {
-        background-color: #f8f9fc;
-    }
-    
-    .action-buttons {
-        white-space: nowrap;
-    }
-    
-    .action-btn {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.8rem;
-    }
-    
-    .btn-view {
-        color: #4e73df;
-        background-color: #eaecf4;
-        border-color: #eaecf4;
-    }
-    
-    .btn-approve {
-        color: #fff;
-        background-color: #1cc88a;
-        border-color: #1cc88a;
-    }
-    
-    .btn-reject {
-        color: #fff;
-        background-color: #e74a3b;
-        border-color: #e74a3b;
-    }
-    
-    .date-range {
-        font-size: 0.85rem;
-        color: #6c757d;
-    }
-    
-    .leave-details {
-        background-color: #f8f9fc;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin-top: 1rem;
-    }
-    
-    .empty-state {
-        text-align: center;
-        padding: 3rem 1rem;
-        color: #6c757d;
-    }
-    
-    .empty-state i {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        color: #d1d3e2;
-    }
-
-    /* Animations et transitions */
     .leave-row {
         transition: all 0.3s ease;
     }
@@ -112,6 +95,10 @@
     .leave-row:hover {
         transform: translateX(5px);
         background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    .action-buttons {
+        white-space: nowrap;
     }
     
     .action-btn {
@@ -129,61 +116,6 @@
         transform: scale(1.1);
     }
     
-    .dashboard-card {
-        transition: all 0.3s ease;
-    }
-    
-    .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    }
-    
-    .status-badge {
-        transition: all 0.3s ease;
-        font-size: 0.75rem;
-        padding: 0.35rem 1rem;
-        border-radius: 30px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .leave-details {
-        transition: all 0.3s ease;
-        border-radius: 0.5rem;
-        margin: 0.5rem 1rem;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    }
-    
-    /* Animation pour l'affichage des détails */
-    @keyframes slideDown {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .leave-details-visible {
-        animation: slideDown 0.3s ease forwards;
-    }
-    
-    /* Amélioration des filtres */
-    .filter-card {
-        background: linear-gradient(to right, #ffffff, #f8f9fc);
-        border: none;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    }
-    
-    /* Style amélioré pour le tableau */
-    .leaves-table th {
-        background-color: #f8f9fc;
-        border-bottom: 2px solid #e3e6f0;
-        padding: 1rem;
-    }
-    
-    .leaves-table td {
-        padding: 1rem;
-    }
-    
-    /* Style pour les boutons d'action */
     .btn-group-actions {
         opacity: 0.7;
         transition: opacity 0.2s ease;
@@ -192,27 +124,188 @@
     .leave-row:hover .btn-group-actions {
         opacity: 1;
     }
+    
+    /* Améliorations pour le modal */
+    .modal-header {
+        background-color: #4e73df;
+        color: #fff;
+        border-bottom: none;
+    }
+    
+    .modal-header .btn-close {
+        color: white;
+    }
+    
+    .modal-footer {
+        border-top: none;
+        padding: 1rem 1.5rem 1.5rem;
+    }
+    
+    .modal-card {
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    /* État vide */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: #dddfeb;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
+    
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .slide-up {
+        animation: slideUp 0.5s ease forwards;
+    }
+    
+    /* Styles des pièces jointes */
+    .attachment-preview {
+        max-width: 100%;
+        max-height: 400px;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.1);
+    }
+    
+    .user-bubble {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
+    /* Filtres et recherche */
+    .filters-card {
+        border-radius: 10px;
+        box-shadow: 0 0.15rem 1.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .filters-header {
+        padding: 1rem 1.25rem;
+        background-color: #f8f9fc;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .filters-body {
+        padding: 1.25rem;
+    }
+    
+    /* Styles pour le calendrier des congés */
+    .leave-calendar {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+    
+    .calendar-day {
+        min-height: 100px;
+        border: 1px solid #e3e6f0;
+        padding: 5px;
+    }
+    
+    .calendar-day-header {
+        font-weight: 600;
+        text-align: right;
+    }
+    
+    .calendar-day-content {
+        margin-top: 5px;
+    }
+    
+    .leave-item {
+        font-size: 0.8rem;
+        padding: 2px 5px;
+        margin-bottom: 2px;
+        border-radius: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .leave-item.annual {
+        background-color: rgba(78, 115, 223, 0.15);
+        color: #4e73df;
+    }
+    
+    .leave-item.sick {
+        background-color: rgba(246, 194, 62, 0.15);
+        color: #f6c23e;
+    }
+    
+    .leave-item.other {
+        background-color: rgba(54, 185, 204, 0.15);
+        color: #36b9cc;
+    }
+    
+    /* Légende du calendrier */
+    .calendar-legend {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 10px;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+    }
+    
+    .legend-color {
+        width: 15px;
+        height: 15px;
+        border-radius: 3px;
+        margin-right: 5px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <!-- En-tête de la page -->
+    <div class="d-sm-flex align-items-center justify-content-between leave-header">
         <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-calendar-check me-2"></i>Gestion des demandes de congés</h1>
         <div>
-            <a href="{% url 'export_leaves' %}" class="btn btn-sm btn-success shadow-sm me-2">
-                <i class="fas fa-download fa-sm me-1"></i> Exporter
+            <a href="{% url 'export_leaves' %}" class="btn btn-success shadow-sm me-2">
+                <i class="fas fa-file-export me-1"></i> Exporter
             </a>
-            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary shadow-sm">
-                <i class="fas fa-arrow-left fa-sm me-1"></i> Retour au tableau de bord
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm">
+                <i class="fas fa-arrow-left me-1"></i> Tableau de bord
             </a>
         </div>
     </div>
 
     {% if messages %}
-    <div class="mb-4">
+    <div class="mb-4 fade-in">
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -220,19 +313,21 @@
     </div>
     {% endif %}
 
-    <!-- Statistiques -->
+    <!-- Statistiques des demandes de congés -->
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-primary shadow h-100 py-2">
+            <div class="stats-card">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total des demandes</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_count }}</div>
+                            <div class="stats-header text-primary">TOTAL DEMANDES</div>
+                            <div class="stats-value">{{ stats.total_count|default:"0" }}</div>
+                            <div class="text-xs text-muted">demandes soumises</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                            <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -240,16 +335,18 @@
         </div>
 
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-warning shadow h-100 py-2">
+            <div class="stats-card">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                En attente</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending_count }}</div>
+                            <div class="stats-header text-warning">EN ATTENTE</div>
+                            <div class="stats-value">{{ stats.pending_count|default:"0" }}</div>
+                            <div class="text-xs text-muted">demandes à traiter</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                            <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -257,16 +354,18 @@
         </div>
 
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-success shadow h-100 py-2">
+            <div class="stats-card">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Approuvées</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.approved_count }}</div>
+                            <div class="stats-header text-success">APPROUVÉES</div>
+                            <div class="stats-value">{{ stats.approved_count|default:"0" }}</div>
+                            <div class="text-xs text-muted">demandes acceptées</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                            <div class="stats-icon bg-success bg-opacity-10 text-success">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -274,16 +373,18 @@
         </div>
 
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-danger shadow h-100 py-2">
+            <div class="stats-card">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                Refusées</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.rejected_count }}</div>
+                            <div class="stats-header text-danger">REFUSÉES</div>
+                            <div class="stats-value">{{ stats.rejected_count|default:"0" }}</div>
+                            <div class="text-xs text-muted">demandes rejetées</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-times-circle fa-2x text-gray-300"></i>
+                            <div class="stats-icon bg-danger bg-opacity-10 text-danger">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -292,214 +393,552 @@
     </div>
 
     <!-- Filtres -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Filtres</h6>
+    <div class="filters-card">
+        <div class="filters-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-primary"><i class="fas fa-filter me-2"></i>Filtres</h5>
+            <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse" aria-expanded="false" aria-controls="filtersCollapse">
+                <i class="fas fa-chevron-down filter-toggle-icon"></i>
+                <span class="filter-toggle-text ms-1">Afficher</span>
+            </button>
         </div>
-        <div class="card-body">
-            <form method="get" action="{% url 'manage_leaves' %}" class="row g-3">
-                <div class="col-md-3">
-                    <label for="status" class="form-label">Statut</label>
-                    <select name="status" id="status" class="form-select">
-                        <option value="">Tous</option>
-                        <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>En attente</option>
-                        <option value="approved" {% if filters.status == 'approved' %}selected{% endif %}>Approuvé</option>
-                        <option value="rejected" {% if filters.status == 'rejected' %}selected{% endif %}>Refusé</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="start_date" class="form-label">Date de début</label>
-                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ filters.start_date|date:'Y-m-d' }}">
-                </div>
-                <div class="col-md-3">
-                    <label for="end_date" class="form-label">Date de fin</label>
-                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ filters.end_date|date:'Y-m-d' }}">
-                </div>
-                <div class="col-md-3">
-                    <label for="user" class="form-label">Employé</label>
-                    <select name="user" id="user" class="form-select">
-                        <option value="">Tous</option>
-                        {% for user in all_users %}
-                            <option value="{{ user.id }}" {% if filters.user_id == user.id %}selected{% endif %}>
-                                {{ user.get_full_name|default:user.username }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="leave_type" class="form-label">Type de congé</label>
-                    <select name="leave_type" id="leave_type" class="form-select">
-                        <option value="">Tous</option>
-                        <option value="annual" {% if filters.leave_type == 'annual' %}selected{% endif %}>Congé annuel</option>
-                        <option value="sick" {% if filters.leave_type == 'sick' %}selected{% endif %}>Congé maladie</option>
-                        <option value="parental" {% if filters.leave_type == 'parental' %}selected{% endif %}>Congé parental</option>
-                        <option value="unpaid" {% if filters.leave_type == 'unpaid' %}selected{% endif %}>Congé sans solde</option>
-                        <option value="other" {% if filters.leave_type == 'other' %}selected{% endif %}>Autre</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="sort_by" class="form-label">Trier par</label>
-                    <select name="sort_by" id="sort_by" class="form-select">
-                        <option value="created_at" {% if filters.sort_by == 'created_at' %}selected{% endif %}>Date de création</option>
-                        <option value="start_date" {% if filters.sort_by == 'start_date' %}selected{% endif %}>Date de début</option>
-                        <option value="user" {% if filters.sort_by == 'user' %}selected{% endif %}>Employé</option>
-                        <option value="days_requested" {% if filters.sort_by == 'days_requested' %}selected{% endif %}>Durée</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="sort_order" class="form-label">Ordre</label>
-                    <select name="sort_order" id="sort_order" class="form-select">
-                        <option value="desc" {% if filters.sort_order == 'desc' %}selected{% endif %}>Décroissant</option>
-                        <option value="asc" {% if filters.sort_order == 'asc' %}selected{% endif %}>Croissant</option>
-                    </select>
-                </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary me-2">
-                        <i class="fas fa-filter me-1"></i> Filtrer
-                    </button>
-                    <a href="{% url 'manage_leaves' %}" class="btn btn-secondary">
-                        <i class="fas fa-redo me-1"></i> Réinitialiser
-                    </a>
-                </div>
-            </form>
+        <div class="collapse" id="filtersCollapse">
+            <div class="filters-body">
+                <form method="get" action="{% url 'manage_leaves' %}" id="filters-form" class="row g-3">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <select name="status" id="statusFilter" class="form-select rounded-3">
+                                <option value="">Tous les statuts</option>
+                                <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>En attente</option>
+                                <option value="approved" {% if filters.status == 'approved' %}selected{% endif %}>Approuvés</option>
+                                <option value="rejected" {% if filters.status == 'rejected' %}selected{% endif %}>Rejetés</option>
+                            </select>
+                            <label for="statusFilter">Statut</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <select name="leave_type" id="leaveTypeFilter" class="form-select rounded-3">
+                                <option value="">Tous types</option>
+                                <option value="annual" {% if filters.leave_type == 'annual' %}selected{% endif %}>Congé annuel</option>
+                                <option value="sick" {% if filters.leave_type == 'sick' %}selected{% endif %}>Congé maladie</option>
+                                <option value="parental" {% if filters.leave_type == 'parental' %}selected{% endif %}>Congé parental</option>
+                                <option value="unpaid" {% if filters.leave_type == 'unpaid' %}selected{% endif %}>Congé sans solde</option>
+                                <option value="other" {% if filters.leave_type == 'other' %}selected{% endif %}>Autre</option>
+                            </select>
+                            <label for="leaveTypeFilter">Type de congé</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <select name="user" id="userFilter" class="form-select rounded-3">
+                                <option value="">Tous les employés</option>
+                                {% for user in all_users %}
+                                    <option value="{{ user.id }}" {% if filters.user_id == user.id %}selected{% endif %}>
+                                        {{ user.get_full_name|default:user.username }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <label for="userFilter">Employé</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <input type="date" class="form-control rounded-3" id="startDateFilter" name="start_date" value="{{ filters.start_date|date:'Y-m-d'|default:'' }}">
+                            <label for="startDateFilter">Date début</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <input type="date" class="form-control rounded-3" id="endDateFilter" name="end_date" value="{{ filters.end_date|date:'Y-m-d'|default:'' }}">
+                            <label for="endDateFilter">Date fin</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <select name="sort_by" id="sortByFilter" class="form-select rounded-3">
+                                <option value="created_at" {% if filters.sort_by == 'created_at' %}selected{% endif %}>Date de création</option>
+                                <option value="start_date" {% if filters.sort_by == 'start_date' %}selected{% endif %}>Date de début</option>
+                                <option value="user" {% if filters.sort_by == 'user' %}selected{% endif %}>Employé</option>
+                                <option value="days_requested" {% if filters.sort_by == 'days_requested' %}selected{% endif %}>Durée</option>
+                            </select>
+                            <label for="sortByFilter">Trier par</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <select name="sort_order" id="sortOrderFilter" class="form-select rounded-3">
+                                <option value="desc" {% if filters.sort_order == 'desc' %}selected{% endif %}>Décroissant</option>
+                                <option value="asc" {% if filters.sort_order == 'asc' %}selected{% endif %}>Croissant</option>
+                            </select>
+                            <label for="sortOrderFilter">Ordre</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 text-end">
+                        <button type="reset" class="btn btn-outline-secondary">
+                            <i class="fas fa-undo-alt me-1"></i> Réinitialiser
+                        </button>
+                        <button type="submit" class="btn btn-primary ms-2">
+                            <i class="fas fa-filter me-1"></i> Appliquer
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Table des demandes de congé -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <h6 class="m-0 font-weight-bold text-primary">Demandes de congés</h6>
-            {% if leave_requests %}
+    <!-- Demandes de congés en attente -->
+    <div class="card shadow-sm mb-4 rounded-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center bg-white rounded-top">
+            <div class="d-flex align-items-center">
+                <span class="position-relative me-2">
+                    <i class="fas fa-clock fa-lg text-warning"></i>
+                    {% if pending_leaves %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        {{ pending_leaves|length }}
+                    </span>
+                    {% endif %}
+                </span>
+                <h5 class="m-0 font-weight-bold text-primary">Demandes de congés en attente</h5>
+            </div>
             <div>
-                <button type="button" class="btn btn-sm btn-success" id="approveAllBtn">
-                    <i class="fas fa-check-circle me-1"></i> Tout approuver
+                {% if pending_leaves %}
+                <button type="button" id="approveAllBtn" class="btn btn-sm btn-success me-2">
+                    <i class="fas fa-check-double me-1"></i> Tout approuver
+                </button>
+                {% endif %}
+                <button type="button" class="btn btn-sm btn-outline-primary" id="refreshTable">
+                    <i class="fas fa-sync-alt me-1"></i> Actualiser
                 </button>
             </div>
-            {% endif %}
         </div>
-        <div class="card-body">
-            {% if leave_requests %}
+        <div class="card-body p-0">
+            {% if pending_leaves %}
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="leavesTable" width="100%" cellspacing="0">
+                    <table class="table table-hover leave-table align-middle mb-0" id="pendingLeavesTable">
                         <thead>
                             <tr>
-                                <th>Employé</th>
+                                <th class="ps-3">Employé</th>
                                 <th>Type</th>
                                 <th>Début</th>
                                 <th>Fin</th>
                                 <th>Durée</th>
-                                <th>Statut</th>
-                                <th>Date demande</th>
-                                <th>Actions</th>
+                                <th>Demande</th>
+                                <th class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for leave in leave_requests %}
-                            <tr class="{% if leave.status == 'pending' %}table-warning{% elif leave.status == 'approved' %}table-success{% elif leave.status == 'rejected' %}table-danger{% endif %}">
-                                <td>{{ leave.user.get_full_name|default:leave.user.username }}</td>
-                                <td>{{ leave.get_leave_type_display }}</td>
-                                <td>{{ leave.start_date|date:"d/m/Y" }}</td>
-                                <td>{{ leave.end_date|date:"d/m/Y" }}</td>
-                                <td>{{ leave.days_requested }} jour(s)</td>
-                                <td>
-                                    <span class="badge {% if leave.status == 'pending' %}bg-warning
-                                                      {% elif leave.status == 'approved' %}bg-success
-                                                      {% elif leave.status == 'rejected' %}bg-danger{% endif %}">
-                                        {{ leave.get_status_display }}
-                                    </span>
-                                </td>
-                                <td>{{ leave.created_at|date:"d/m/Y H:i" }}</td>
-                                <td>
-                                    <button type="button" class="btn btn-info btn-sm view-leave" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#viewLeaveModal"
-                                            data-id="{{ leave.id }}"
-                                            data-user="{{ leave.user.get_full_name|default:leave.user.username }}"
-                                            data-leave-type="{{ leave.get_leave_type_display }}"
-                                            data-start-date="{{ leave.start_date|date:'d/m/Y' }}"
-                                            data-end-date="{{ leave.end_date|date:'d/m/Y' }}"
-                                            data-half-day="{{ leave.half_day|yesno:'Oui,Non' }}"
-                                            data-half-day-period="{{ leave.get_half_day_period_display }}"
-                                            data-days-requested="{{ leave.days_requested }}"
-                                            data-reason="{{ leave.reason|default:'' }}"
-                                            data-status="{{ leave.get_status_display }}"
-                                            data-created-at="{{ leave.created_at|date:'d/m/Y H:i' }}"
-                                            data-has-attachment="{{ leave.attachment|yesno:'true,false' }}"
-                                            {% if leave.attachment %}data-attachment-url="{{ leave.attachment.url }}"{% endif %}>
-                                        <i class="fas fa-eye"></i>
-                                    </button>
+                            {% for leave in pending_leaves %}
+                                <tr class="leave-row">
+                                    <td class="ps-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="user-bubble bg-primary text-white me-2">
+                                                {{ leave.user.get_full_name|default:leave.user.username|slice:":1"|upper }}
+                                            </div>
+                                            <div>{{ leave.user.get_full_name|default:leave.user.username }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ leave.get_leave_type_display }}</span>
+                                    </td>
+                                    <td>{{ leave.start_date|date:"d/m/Y" }}</td>
+                                    <td>{{ leave.end_date|date:"d/m/Y" }}</td>
+                                    <td>{{ leave.days_requested }} jour(s)</td>
+                                    <td>{{ leave.created_at|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <div class="btn-group-actions d-flex justify-content-center">
+                                            <button type="button" class="btn btn-sm btn-outline-info me-1 view-leave" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#detailsModal{{ leave.id }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-success me-1 approve-leave" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#approveModal{{ leave.id }}">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger reject-leave" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#rejectModal{{ leave.id }}">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Modal pour voir les détails -->
+                                <div class="modal fade" id="detailsModal{{ leave.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Détails de la demande de congé</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row mb-4">
+                                                    <div class="col-md-6">
+                                                        <div class="card shadow-sm mb-3">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="mb-0">Informations générales</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <p><strong>Employé:</strong> {{ leave.user.get_full_name|default:leave.user.username }}</p>
+                                                                <p><strong>Type de congé:</strong> {{ leave.get_leave_type_display }}</p>
+                                                                <p><strong>Date de début:</strong> {{ leave.start_date|date:"d/m/Y" }}</p>
+                                                                <p><strong>Date de fin:</strong> {{ leave.end_date|date:"d/m/Y" }}</p>
+                                                                <p><strong>Demi-journée:</strong> {{ leave.half_day|yesno:"Oui,Non" }}</p>
+                                                                {% if leave.half_day %}
+                                                                    <p><strong>Période:</strong> {{ leave.get_half_day_period_display }}</p>
+                                                                {% endif %}
+                                                                <p><strong>Durée totale:</strong> {{ leave.days_requested }} jour(s)</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="card shadow-sm mb-3">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="mb-0">Détails de la demande</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <p><strong>Date de la demande:</strong> {{ leave.created_at|date:"d/m/Y H:i" }}</p>
+                                                                <p><strong>Statut actuel:</strong> 
+                                                                    <span class="badge status-{{ leave.status }}">{{ leave.get_status_display }}</span>
+                                                                </p>
+                                                                {% if leave.reason %}
+                                                                    <p><strong>Motif:</strong> {{ leave.reason }}</p>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                {% if leave.attachment %}
+                                                <div class="card shadow-sm">
+                                                    <div class="card-header bg-light">
+                                                        <h6 class="mb-0">Justificatif</h6>
+                                                    </div>
+                                                    <div class="card-body text-center">
+                                                        {% if leave.attachment.url|lower|slice:"-4:" == ".pdf" %}
+                                                            <div class="mb-3">
+                                                                <i class="fas fa-file-pdf fa-3x text-danger"></i>
+                                                                <p class="mt-2">Ce justificatif est un fichier PDF.</p>
+                                                            </div>
+                                                        {% else %}
+                                                            <img src="{{ leave.attachment.url }}" class="attachment-preview mb-3" alt="Justificatif">
+                                                        {% endif %}
+                                                        <div>
+                                                            <a href="{{ leave.attachment.url }}" class="btn btn-primary" target="_blank">
+                                                                <i class="fas fa-eye me-1"></i> Voir
+                                                            </a>
+                                                            <a href="{{ leave.attachment.url }}" class="btn btn-secondary ms-2" download>
+                                                                <i class="fas fa-download me-1"></i> Télécharger
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                                <div>
+                                                    <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" 
+                                                            data-bs-target="#approveModal{{ leave.id }}" data-bs-dismiss="modal">
+                                                        <i class="fas fa-check me-1"></i> Approuver
+                                                    </button>
+                                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal"
+                                                            data-bs-target="#rejectModal{{ leave.id }}" data-bs-dismiss="modal">
+                                                        <i class="fas fa-times me-1"></i> Rejeter
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Modal pour approuver -->
+                                <div class="modal fade" id="approveModal{{ leave.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-success text-white">
+                                                <h5 class="modal-title">Approuver la demande de congé</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form action="{% url 'leave_action' leave.id %}" method="post">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="approve">
+                                                <div class="modal-body">
+                                                    <div class="text-center mb-4">
+                                                        <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                                                        <h5>Confirmer l'approbation</h5>
+                                                        <p>Vous êtes sur le point d'approuver la demande de congé de <strong>{{ leave.days_requested }} jour(s)</strong> pour <strong>{{ leave.user.get_full_name|default:leave.user.username }}</strong>.</p>
+                                                        <div class="d-flex justify-content-center small text-muted">
+                                                            <span>Du {{ leave.start_date|date:"d/m/Y" }} au {{ leave.end_date|date:"d/m/Y" }}</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="form-floating mb-3">
+                                                        <textarea class="form-control" id="approveComment{{ leave.id }}" name="comment" style="height: 100px" placeholder="Commentaire (optionnel)"></textarea>
+                                                        <label for="approveComment{{ leave.id }}">Commentaire (optionnel)</label>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <button type="submit" class="btn btn-success">
+                                                        <i class="fas fa-check-circle me-1"></i> Confirmer l'approbation
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Modal pour rejeter -->
+                                <div class="modal fade" id="rejectModal{{ leave.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white">
+                                                <h5 class="modal-title">Rejeter la demande de congé</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form action="{% url 'leave_action' leave.id %}" method="post">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="reject">
+                                                <div class="modal-body">
+                                                    <div class="text-center mb-4">
+                                                        <i class="fas fa-times-circle text-danger fa-4x mb-3"></i>
+                                                        <h5>Confirmer le rejet</h5>
+                                                        <p>Vous êtes sur le point de rejeter la demande de congé de <strong>{{ leave.days_requested }} jour(s)</strong> pour <strong>{{ leave.user.get_full_name|default:leave.user.username }}</strong>.</p>
+                                                        <div class="d-flex justify-content-center small text-muted">
+                                                            <span>Du {{ leave.start_date|date:"d/m/Y" }} au {{ leave.end_date|date:"d/m/Y" }}</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="form-floating mb-3">
+                                                        <textarea class="form-control" id="rejectComment{{ leave.id }}" name="comment" style="height: 100px" placeholder="Motif du rejet" required></textarea>
+                                                        <label for="rejectComment{{ leave.id }}">Motif du rejet (requis)</label>
+                                                        <div class="form-text text-danger">Veuillez expliquer pourquoi cette demande de congé est rejetée.</div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <i class="fas fa-times-circle me-1"></i> Confirmer le rejet
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-check-circle text-success"></i>
+                    </div>
+                    <h4 class="mb-3">Tout est à jour !</h4>
+                    <p class="text-muted mb-4">Il n'y a actuellement aucune demande de congé en attente de validation.</p>
+                    <button id="refreshEmpty" class="btn btn-outline-primary">
+                        <i class="fas fa-sync-alt me-1"></i> Actualiser
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 
-                                    {% if leave.status == 'pending' %}
-                                        <a href="{% url 'leave_action' leave.id %}?action=approve" 
-                                           class="btn btn-success btn-sm"
-                                           onclick="return confirm('Êtes-vous sûr de vouloir approuver cette demande de congé ?')">
-                                            <i class="fas fa-check"></i>
-                                        </a>
-                                        <a href="{% url 'leave_action' leave.id %}?action=reject" 
-                                           class="btn btn-danger btn-sm"
-                                           onclick="return confirm('Êtes-vous sûr de vouloir refuser cette demande de congé ?')">
-                                            <i class="fas fa-times"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-warning btn-sm" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#commentModal"
-                                                data-leave-id="{{ leave.id }}">
-                                            <i class="fas fa-comment"></i>
-                                        </button>
-                                    {% endif %}
-
-                                    {% if is_admin %}
-                                        <a href="{% url 'delete_leave' leave.id %}" 
-                                           class="btn btn-danger btn-sm"
-                                           onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette demande de congé ?')">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
-                                    {% endif %}
-                                </td>
+    <!-- Historique des demandes de congé -->
+    <div class="card shadow-sm mb-4 rounded-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center bg-white rounded-top">
+            <div>
+                <h5 class="m-0 font-weight-bold text-primary">Historique des demandes de congé</h5>
+            </div>
+            <div>
+                <select id="statusFilterHistoric" class="form-select form-select-sm d-inline-block w-auto me-2">
+                    <option value="">Tous</option>
+                    <option value="approved">Approuvées</option>
+                    <option value="rejected">Rejetées</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="refreshHistory">
+                    <i class="fas fa-sync-alt me-1"></i> Actualiser
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if all_leaves %}
+                <div class="table-responsive">
+                    <table class="table table-hover leave-table align-middle mb-0" id="allLeavesTable">
+                        <thead>
+                            <tr>
+                                <th class="ps-3">Employé</th>
+                                <th>Type</th>
+                                <th>Début</th>
+                                <th>Fin</th>
+                                <th>Durée</th>
+                                <th>Demande</th>
+                                <th>Statut</th>
+                                <th class="text-center">Actions</th>
                             </tr>
+                        </thead>
+                        <tbody>
+                            {% for leave in all_leaves %}
+                                <tr class="leave-row {% if leave.status == 'pending' %}table-warning{% elif leave.status == 'rejected' %}table-danger{% endif %}">
+                                    <td class="ps-3">{{ leave.user.get_full_name|default:leave.user.username }}</td>
+                                    <td>{{ leave.get_leave_type_display }}</td>
+                                    <td>{{ leave.start_date|date:"d/m/Y" }}</td>
+                                    <td>{{ leave.end_date|date:"d/m/Y" }}</td>
+                                    <td>{{ leave.days_requested }} jour(s)</td>
+                                    <td>{{ leave.created_at|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <span class="badge status-{{ leave.status }}">{{ leave.get_status_display }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-info view-leave" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#detailsHistoryModal{{ leave.id }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if is_admin %}
+                                            <a href="{% url 'delete_leave' leave.id %}" class="btn btn-sm btn-outline-danger"
+                                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette demande de congé ?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                
+                                <!-- Modal pour voir les détails (historique) -->
+                                <div class="modal fade" id="detailsHistoryModal{{ leave.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Détails de la demande de congé</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <!-- Contenu similaire au modal de détails précédent -->
+                                                <div class="row mb-4">
+                                                    <div class="col-md-6">
+                                                        <div class="card shadow-sm mb-3">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="mb-0">Informations générales</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <p><strong>Employé:</strong> {{ leave.user.get_full_name|default:leave.user.username }}</p>
+                                                                <p><strong>Type de congé:</strong> {{ leave.get_leave_type_display }}</p>
+                                                                <p><strong>Date de début:</strong> {{ leave.start_date|date:"d/m/Y" }}</p>
+                                                                <p><strong>Date de fin:</strong> {{ leave.end_date|date:"d/m/Y" }}</p>
+                                                                <p><strong>Demi-journée:</strong> {{ leave.half_day|yesno:"Oui,Non" }}</p>
+                                                                {% if leave.half_day %}
+                                                                    <p><strong>Période:</strong> {{ leave.get_half_day_period_display }}</p>
+                                                                {% endif %}
+                                                                <p><strong>Durée totale:</strong> {{ leave.days_requested }} jour(s)</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="card shadow-sm mb-3">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="mb-0">Détails de la demande</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <p><strong>Date de la demande:</strong> {{ leave.created_at|date:"d/m/Y H:i" }}</p>
+                                                                <p><strong>Statut actuel:</strong> 
+                                                                    <span class="badge status-{{ leave.status }}">{{ leave.get_status_display }}</span>
+                                                                </p>
+                                                                {% if leave.reason %}
+                                                                    <p><strong>Motif:</strong> {{ leave.reason }}</p>
+                                                                {% endif %}
+                                                                {% if leave.comment %}
+                                                                    <p><strong>Commentaire:</strong> {{ leave.comment }}</p>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                {% if leave.attachment %}
+                                                <div class="card shadow-sm">
+                                                    <div class="card-header bg-light">
+                                                        <h6 class="mb-0">Justificatif</h6>
+                                                    </div>
+                                                    <div class="card-body text-center">
+                                                        {% if leave.attachment.url|lower|slice:"-4:" == ".pdf" %}
+                                                            <div class="mb-3">
+                                                                <i class="fas fa-file-pdf fa-3x text-danger"></i>
+                                                                <p class="mt-2">Ce justificatif est un fichier PDF.</p>
+                                                            </div>
+                                                        {% else %}
+                                                            <img src="{{ leave.attachment.url }}" class="attachment-preview mb-3" alt="Justificatif">
+                                                        {% endif %}
+                                                        <div>
+                                                            <a href="{{ leave.attachment.url }}" class="btn btn-primary" target="_blank">
+                                                                <i class="fas fa-eye me-1"></i> Voir
+                                                            </a>
+                                                            <a href="{{ leave.attachment.url }}" class="btn btn-secondary ms-2" download>
+                                                                <i class="fas fa-download me-1"></i> Télécharger
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 
                 <!-- Pagination -->
-                {% if leave_requests.has_other_pages %}
-                <div class="mt-3">
-                    <nav>
+                {% if all_leaves.has_other_pages %}
+                <div class="p-3">
+                    <nav aria-label="Page navigation">
                         <ul class="pagination justify-content-center">
-                            {% if leave_requests.has_previous %}
+                            {% if all_leaves.has_previous %}
                                 <li class="page-item">
                                     <a class="page-link" href="?page=1{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
                                         <i class="fas fa-angle-double-left"></i>
                                     </a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ leave_requests.previous_page_number }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
+                                    <a class="page-link" href="?page={{ all_leaves.previous_page_number }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
                                         <i class="fas fa-angle-left"></i>
                                     </a>
                                 </li>
                             {% endif %}
 
-                            {% for i in leave_requests.paginator.page_range %}
-                                {% if leave_requests.number == i %}
+                            {% for i in all_leaves.paginator.page_range %}
+                                {% if all_leaves.number == i %}
                                     <li class="page-item active">
                                         <span class="page-link">{{ i }}</span>
                                     </li>
-                                {% else %}
+                                {% elif i > all_leaves.number|add:'-3' and i < all_leaves.number|add:'3' %}
                                     <li class="page-item">
                                         <a class="page-link" href="?page={{ i }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">{{ i }}</a>
                                     </li>
                                 {% endif %}
                             {% endfor %}
 
-                            {% if leave_requests.has_next %}
+                            {% if all_leaves.has_next %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ leave_requests.next_page_number }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
+                                    <a class="page-link" href="?page={{ all_leaves.next_page_number }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
                                         <i class="fas fa-angle-right"></i>
                                     </a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ leave_requests.paginator.num_pages }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
+                                    <a class="page-link" href="?page={{ all_leaves.paginator.num_pages }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
                                         <i class="fas fa-angle-double-right"></i>
                                     </a>
                                 </li>
@@ -510,163 +949,14 @@
                 {% endif %}
                 
             {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-                    <p class="lead mb-0">Aucune demande de congé à afficher</p>
-                    {% if filters %}
-                    <p class="text-muted">Essayez de modifier les filtres</p>
-                    {% endif %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-calendar"></i>
+                    </div>
+                    <h4 class="mb-3">Aucune demande de congé</h4>
+                    <p class="text-muted mb-4">Il n'y a actuellement aucune demande de congé dans le système.</p>
                 </div>
             {% endif %}
-        </div>
-    </div>
-</div>
-
-<!-- Modal pour voir les détails d'une demande -->
-<div class="modal fade" id="viewLeaveModal" tabindex="-1" aria-labelledby="viewLeaveModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="viewLeaveModalLabel">Détails de la demande de congé</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card shadow-sm mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title text-primary"><i class="fas fa-user me-2"></i>Informations de l'employé</h6>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Nom</label>
-                                    <p id="modal-user" class="form-control-plaintext"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card shadow-sm mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title text-success"><i class="fas fa-calendar-check me-2"></i>Statut de la demande</h6>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Statut actuel</label>
-                                    <p id="modal-status" class="form-control-plaintext"></p>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Date de la demande</label>
-                                    <p id="modal-created-at" class="form-control-plaintext"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card shadow-sm mb-3">
-                    <div class="card-body">
-                        <h6 class="card-title text-primary"><i class="fas fa-info-circle me-2"></i>Détails du congé</h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Type de congé</label>
-                                    <p id="modal-leave-type" class="form-control-plaintext"></p>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Date de début</label>
-                                    <p id="modal-start-date" class="form-control-plaintext"></p>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Date de fin</label>
-                                    <p id="modal-end-date" class="form-control-plaintext"></p>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Demi-journée</label>
-                                    <p id="modal-half-day" class="form-control-plaintext"></p>
-                                </div>
-                                <div class="mb-3" id="half-day-period-container">
-                                    <label class="form-label fw-bold">Période</label>
-                                    <p id="modal-half-day-period" class="form-control-plaintext"></p>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Durée totale</label>
-                                    <p id="modal-days-requested" class="form-control-plaintext"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card shadow-sm mb-3" id="reason-card">
-                    <div class="card-body">
-                        <h6 class="card-title text-primary"><i class="fas fa-comment-alt me-2"></i>Motif</h6>
-                        <p id="modal-reason" class="form-control-plaintext"></p>
-                    </div>
-                </div>
-                
-                <div class="card shadow-sm" id="attachment-card">
-                    <div class="card-body">
-                        <h6 class="card-title text-primary"><i class="fas fa-paperclip me-2"></i>Pièce jointe</h6>
-                        <div class="text-center">
-                            <a id="modal-attachment-link" href="#" class="btn btn-primary" target="_blank">
-                                <i class="fas fa-download me-1"></i> Télécharger le justificatif
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                <div id="modal-action-buttons">
-                    <button type="button" id="modal-approve-btn" class="btn btn-success">
-                        <i class="fas fa-check me-1"></i> Approuver
-                    </button>
-                    <button type="button" id="modal-reject-btn" class="btn btn-danger">
-                        <i class="fas fa-times me-1"></i> Refuser
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal pour ajouter un commentaire -->
-<div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="commentModalLabel">Ajouter un commentaire</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="" method="post" id="commentForm">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <input type="hidden" name="action" id="comment-action" value="">
-                    
-                    <div class="mb-3">
-                        <label for="comment" class="form-label">Commentaire (optionnel)</label>
-                        <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Exemple: Congé approuvé pour raison X"></textarea>
-                    </div>
-                    
-                    <div class="d-flex justify-content-center">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="action-type" id="approve-action" value="approve" checked>
-                            <label class="form-check-label" for="approve-action">
-                                <span class="text-success"><i class="fas fa-check-circle me-1"></i> Approuver</span>
-                            </label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="action-type" id="reject-action" value="reject">
-                            <label class="form-check-label" for="reject-action">
-                                <span class="text-danger"><i class="fas fa-times-circle me-1"></i> Refuser</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-primary">Envoyer</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
@@ -674,116 +964,143 @@
 {% block extra_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialisation de DataTable si la librairie est présente
-    if (typeof $.fn.DataTable !== 'undefined') {
-        $('#leavesTable').DataTable({
-            "paging": false,
-            "searching": false,
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json"
+    // Toggle pour le panneau de filtres
+    const filterToggle = document.querySelector('[data-bs-toggle="collapse"]');
+    const filterIcon = document.querySelector('.filter-toggle-icon');
+    const filterText = document.querySelector('.filter-toggle-text');
+    
+    if (filterToggle) {
+        filterToggle.addEventListener('click', function() {
+            const isCollapsed = this.getAttribute('aria-expanded') === 'false';
+            
+            // Changer l'icône et le texte
+            if (isCollapsed) {
+                filterIcon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                filterText.textContent = 'Masquer';
+            } else {
+                filterIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                filterText.textContent = 'Afficher';
             }
         });
     }
     
-    // Gestion du modal pour voir les détails d'une demande
-    const viewLeaveButtons = document.querySelectorAll('.view-leave');
-    const halfDayPeriodContainer = document.getElementById('half-day-period-container');
-    const reasonCard = document.getElementById('reason-card');
-    const attachmentCard = document.getElementById('attachment-card');
-    const modalApproveBtn = document.getElementById('modal-approve-btn');
-    const modalRejectBtn = document.getElementById('modal-reject-btn');
-    const modalActionButtons = document.getElementById('modal-action-buttons');
-    
-    viewLeaveButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Récupérer les données
-            const leaveId = this.getAttribute('data-id');
-            const user = this.getAttribute('data-user');
-            const leaveType = this.getAttribute('data-leave-type');
-            const startDate = this.getAttribute('data-start-date');
-            const endDate = this.getAttribute('data-end-date');
-            const halfDay = this.getAttribute('data-half-day');
-            const halfDayPeriod = this.getAttribute('data-half-day-period');
-            const daysRequested = this.getAttribute('data-days-requested');
-            const reason = this.getAttribute('data-reason');
-            const status = this.getAttribute('data-status');
-            const createdAt = this.getAttribute('data-created-at');
-            const hasAttachment = this.getAttribute('data-has-attachment') === 'true';
-            const attachmentUrl = this.getAttribute('data-attachment-url');
-            
-            // Mettre à jour le modal avec les données
-            document.getElementById('modal-user').textContent = user;
-            document.getElementById('modal-leave-type').textContent = leaveType;
-            document.getElementById('modal-start-date').textContent = startDate;
-            document.getElementById('modal-end-date').textContent = endDate;
-            document.getElementById('modal-half-day').textContent = halfDay;
-            document.getElementById('modal-half-day-period').textContent = halfDayPeriod;
-            document.getElementById('modal-days-requested').textContent = `${daysRequested} jour(s)`;
-            document.getElementById('modal-status').textContent = status;
-            document.getElementById('modal-created-at').textContent = createdAt;
-            
-            // Afficher/cacher les sections conditionnelles
-            halfDayPeriodContainer.style.display = halfDay === 'Oui' ? 'block' : 'none';
-            
-            if (reason && reason.trim() !== '') {
-                document.getElementById('modal-reason').textContent = reason;
-                reasonCard.style.display = 'block';
-            } else {
-                reasonCard.style.display = 'none';
-            }
-            
-            if (hasAttachment) {
-                document.getElementById('modal-attachment-link').href = attachmentUrl;
-                attachmentCard.style.display = 'block';
-            } else {
-                attachmentCard.style.display = 'none';
-            }
-            
-            // Configuration des boutons d'action
-            if (status === 'En attente') {
-                modalActionButtons.style.display = 'block';
-                modalApproveBtn.onclick = () => window.location.href = `{% url 'leave_action' 0 %}?action=approve`.replace('0', leaveId);
-                modalRejectBtn.onclick = () => window.location.href = `{% url 'leave_action' 0 %}?action=reject`.replace('0', leaveId);
-            } else {
-                modalActionButtons.style.display = 'none';
-            }
-        });
-    });
-    
-    // Gestion du modal pour ajouter un commentaire
-    const commentModal = document.getElementById('commentModal');
-    if (commentModal) {
-        commentModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const leaveId = button.getAttribute('data-leave-id');
-            const form = document.getElementById('commentForm');
-            
-            form.action = `{% url 'leave_action' 0 %}`.replace('0', leaveId);
-            
-            // Reset le formulaire
-            form.reset();
-            
-            // Mettre à jour l'action selon la selection de radio
-            document.querySelectorAll('input[name="action-type"]').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    document.getElementById('comment-action').value = this.value;
-                });
+    // Initialisation de DataTable
+    if (typeof $.fn.DataTable !== 'undefined') {
+        // Table des demandes en attente
+        if (document.getElementById('pendingLeavesTable')) {
+            $('#pendingLeavesTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
+                },
+                paging: false,
+                searching: true,
+                info: false
+            });
+        }
+        
+        // Table de toutes les demandes
+        if (document.getElementById('allLeavesTable')) {
+            const allLeavesTable = $('#allLeavesTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
+                },
+                paging: false,
+                searching: true,
+                info: false
             });
             
-            // Valeur par défaut
-            document.getElementById('comment-action').value = document.querySelector('input[name="action-type"]:checked').value;
-        });
+            // Filtre de statut pour l'historique
+            $('#statusFilterHistoric').on('change', function() {
+                const status = this.value;
+                allLeavesTable.column(6).search(status).draw();
+            });
+        }
     }
     
+    // Animation des cartes statistiques
+    const statsCards = document.querySelectorAll('.stats-card');
+    statsCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.classList.add('slide-up');
+        }, index * 100);
+    });
+    
+    // Gestion des boutons d'actualisation
+    document.getElementById('refreshTable')?.addEventListener('click', function() {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Actualisation...';
+        this.disabled = true;
+        
+        // Simuler une actualisation
+        setTimeout(() => {
+            window.location.reload();
+        }, 800);
+    });
+    
+    document.getElementById('refreshEmpty')?.addEventListener('click', function() {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Actualisation...';
+        this.disabled = true;
+        
+        // Simuler une actualisation
+        setTimeout(() => {
+            window.location.reload();
+        }, 800);
+    });
+    
+    document.getElementById('refreshHistory')?.addEventListener('click', function() {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Actualisation...';
+        this.disabled = true;
+        
+        // Simuler une actualisation
+        setTimeout(() => {
+            window.location.reload();
+        }, 800);
+    });
+    
+    // Vérifier que les formulaires de rejet ont un commentaire
+    document.querySelectorAll('[id^="rejectModal"]').forEach(modal => {
+        const form = modal.querySelector('form');
+        const textarea = modal.querySelector('textarea[required]');
+        const submitBtn = modal.querySelector('button[type="submit"]');
+        
+        if (form && textarea && submitBtn) {
+            form.addEventListener('submit', function(e) {
+                if (!textarea.value.trim()) {
+                    e.preventDefault();
+                    textarea.classList.add('is-invalid');
+                    alert('Veuillez indiquer un motif de rejet');
+                    return false;
+                }
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Traitement...';
+                return true;
+            });
+            
+            textarea.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                } else {
+                    this.classList.add('is-invalid');
+                }
+            });
+        }
+    });
+    
     // Gestion du bouton "Tout approuver"
-    const approveAllBtn = document.getElementById('approveAllBtn');
-    if (approveAllBtn) {
-        approveAllBtn.addEventListener('click', function() {
-            if (confirm('Êtes-vous sûr de vouloir approuver toutes les demandes en attente ?')) {
-                window.location.href = "{% url 'approve_all_leaves' %}";
-            }
-        });
-    }
+    document.getElementById('approveAllBtn')?.addEventListener('click', function() {
+        if (confirm('Êtes-vous sûr de vouloir approuver toutes les demandes de congé en attente ?')) {
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Traitement...';
+            this.disabled = true;
+            window.location.href = "{% url 'approve_all_leaves' %}";
+        }
+    });
+    
+    // Réinitialiser les filtres
+    document.querySelector('button[type="reset"]')?.addEventListener('click', function() {
+        setTimeout(() => {
+            window.location.href = '{% url "manage_leaves" %}';
+        }, 100);
+    });
 });
 </script>
 {% endblock %}

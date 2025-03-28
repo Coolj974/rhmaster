@@ -1,189 +1,721 @@
 {% extends "base.html" %}
 
+{% block extra_css %}
+<style>
+    /* Styles pour la gestion des soldes de congés */
+    .balance-header {
+        padding: 1rem 0;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stats-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+        border: none;
+        overflow: hidden;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .stats-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .stats-header {
+        margin-bottom: 1rem;
+        color: #5a5c69;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    
+    .stats-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+    
+    .stats-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .balance-table {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0.15rem 1.25rem rgba(0,0,0,0.075);
+    }
+    
+    .balance-table th {
+        background-color: #f8f9fc;
+        font-weight: 600;
+        padding: 1rem;
+        border-top: none;
+    }
+    
+    .balance-row {
+        transition: all 0.3s ease;
+    }
+    
+    .balance-row:hover {
+        transform: translateX(5px);
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    .action-buttons {
+        white-space: nowrap;
+    }
+    
+    .btn-group-actions {
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+    }
+    
+    .balance-row:hover .btn-group-actions {
+        opacity: 1;
+    }
+    
+    /* Badges pour les soldes */
+    .balance-badge {
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 0.35rem 0.85rem;
+        border-radius: 30px;
+    }
+    
+    .balance-high {
+        background-color: rgba(28, 200, 138, 0.15);
+        color: #1cc88a;
+    }
+    
+    .balance-medium {
+        background-color: rgba(78, 115, 223, 0.15);
+        color: #4e73df;
+    }
+    
+    .balance-low {
+        background-color: rgba(246, 194, 62, 0.15);
+        color: #f6c23e;
+    }
+    
+    .balance-critical {
+        background-color: rgba(231, 74, 59, 0.15);
+        color: #e74a3b;
+    }
+    
+    /* Améliorations pour les modals */
+    .modal-header {
+        background-color: #4e73df;
+        color: #fff;
+        border-bottom: none;
+    }
+    
+    .modal-header .btn-close {
+        color: white;
+    }
+    
+    .modal-footer {
+        border-top: none;
+        padding: 1rem 1.5rem 1.5rem;
+    }
+    
+    /* État vide */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: #dddfeb;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
+    
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .slide-up {
+        animation: slideUp 0.5s ease forwards;
+    }
+    
+    .user-bubble {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
+    /* Filtres et recherche */
+    .filters-card {
+        border-radius: 10px;
+        box-shadow: 0 0.15rem 1.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .filters-header {
+        padding: 1rem 1.25rem;
+        background-color: #f8f9fc;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .filters-body {
+        padding: 1.25rem;
+    }
+    
+    /* Animation pour les mises à jour */
+    .balance-flash {
+        animation: flash 1s ease;
+    }
+    
+    @keyframes flash {
+        0%, 100% { background-color: transparent; }
+        50% { background-color: rgba(78, 115, 223, 0.15); }
+    }
+    
+    /* Styles pour l'historique des mouvements */
+    .history-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .history-item:last-child {
+        border-bottom: none;
+    }
+    
+    .adjustment-positive {
+        color: #1cc88a;
+    }
+    
+    .adjustment-negative {
+        color: #e74a3b;
+    }
+    
+    /* Input spinner personnalisé */
+    .balance-spinner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        max-width: 150px;
+    }
+    
+    .balance-spinner .btn {
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+    
+    .balance-spinner input {
+        width: 60px;
+        text-align: center;
+        border-left: none;
+        border-right: none;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-calendar-check me-2"></i>Gestion des soldes de congés</h1>
+    <!-- En-tête de la page -->
+    <div class="d-sm-flex align-items-center justify-content-between balance-header">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-calendar-day me-2"></i>Gestion des soldes de congés</h1>
         <div>
-            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-primary shadow-sm">
-                <i class="fas fa-arrow-left fa-sm me-1"></i> Retour au tableau de bord
+            <a href="{% url 'export_leave_balances' %}" class="btn btn-success shadow-sm me-2">
+                <i class="fas fa-file-export me-1"></i> Exporter
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm">
+                <i class="fas fa-arrow-left me-1"></i> Tableau de bord
             </a>
         </div>
     </div>
-    
+
     {% if messages %}
-    <div class="alert-container mb-4">
+    <div class="mb-4 fade-in">
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         {% endfor %}
     </div>
     {% endif %}
-    
-    <!-- Statistiques -->
+
+    <!-- Statistiques des soldes de congés -->
     <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stats-card">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Employés</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ employee_count }}</div>
+                            <div class="stats-header text-primary">TOTAL EMPLOYÉS</div>
+                            <div class="stats-value">{{ stats.total_employees|default:"0" }}</div>
+                            <div class="text-xs text-muted">Employés actifs</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                            <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="fas fa-users"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stats-card">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Moyenne des soldes</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ average_balance|floatformat:1 }} jours</div>
+                            <div class="stats-header text-success">JOURS ACQUIS</div>
+                            <div class="stats-value">{{ stats.total_acquired_days|default:"0" }}</div>
+                            <div class="text-xs text-muted">Tous employés confondus</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                            <div class="stats-icon bg-success bg-opacity-10 text-success">
+                                <i class="fas fa-plus-circle"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stats-card">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Actuellement en congé</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ currently_on_leave }}</div>
+                            <div class="stats-header text-info">JOURS UTILISÉS</div>
+                            <div class="stats-value">{{ stats.total_taken_days|default:"0" }}</div>
+                            <div class="text-xs text-muted">Congés pris</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-plane-departure fa-2x text-gray-300"></i>
+                            <div class="stats-icon bg-info bg-opacity-10 text-info">
+                                <i class="fas fa-minus-circle"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stats-card">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Sans solde défini</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ no_balance_count }}</div>
+                            <div class="stats-header text-warning">JOURS DISPONIBLES</div>
+                            <div class="stats-value">{{ stats.total_available_days|default:"0" }}</div>
+                            <div class="text-xs text-muted">Solde restant</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                            <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Table des soldes -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-            <h6 class="m-0 font-weight-bold text-primary">Soldes des congés</h6>
-            <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addBalanceModal">
-                <i class="fas fa-plus fa-sm"></i> Ajouter un solde
-            </a>
+
+    <!-- Filtres -->
+    <div class="filters-card">
+        <div class="filters-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-primary"><i class="fas fa-filter me-2"></i>Filtres</h5>
+            <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse" aria-expanded="false" aria-controls="filtersCollapse">
+                <i class="fas fa-chevron-down filter-toggle-icon"></i>
+                <span class="filter-toggle-text ms-1">Afficher</span>
+            </button>
         </div>
+        <div class="collapse" id="filtersCollapse">
+            <div class="filters-body">
+                <form method="get" action="{% url 'manage_leave_balances' %}" id="filters-form" class="row g-3">
+                    <div class="col-md-4 col-sm-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control rounded-3" id="nameFilter" name="name" value="{{ filters.name|default:'' }}">
+                            <label for="nameFilter">Nom ou prénom</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 col-sm-6">
+                        <div class="form-floating">
+                            <select name="department" id="departmentFilter" class="form-select rounded-3">
+                                <option value="">Tous les départements</option>
+                                {% for dept in departments %}
+                                    <option value="{{ dept.id }}" {% if filters.department == dept.id %}selected{% endif %}>
+                                        {{ dept.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <label for="departmentFilter">Département</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 col-sm-6">
+                        <div class="form-floating">
+                            <select name="balance_status" id="balanceStatusFilter" class="form-select rounded-3">
+                                <option value="">Tous les soldes</option>
+                                <option value="low" {% if filters.balance_status == 'low' %}selected{% endif %}>Solde faible (< 5 jours)</option>
+                                <option value="medium" {% if filters.balance_status == 'medium' %}selected{% endif %}>Solde moyen (5-15 jours)</option>
+                                <option value="high" {% if filters.balance_status == 'high' %}selected{% endif %}>Solde élevé (> 15 jours)</option>
+                            </select>
+                            <label for="balanceStatusFilter">État du solde</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 text-end">
+                        <button type="reset" class="btn btn-outline-secondary">
+                            <i class="fas fa-undo-alt me-1"></i> Réinitialiser
+                        </button>
+                        <button type="submit" class="btn btn-primary ms-2">
+                            <i class="fas fa-filter me-1"></i> Appliquer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action globale -->
+    <div class="card shadow-sm mb-4 rounded-4">
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>Employé</th>
-                            <th>Email</th>
-                            <th>Congés acquis</th>
-                            <th>Congés pris</th>
-                            <th>Congés disponibles</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for balance in leave_balances %}
-                        <tr>
-                            <td>{{ balance.user.get_full_name|default:balance.user.username }}</td>
-                            <td>{{ balance.user.email }}</td>
-                            <td>{{ balance.acquired }}</td>
-                            <td>{{ balance.taken }}</td>
-                            <td class="font-weight-bold {% if balance.available > 5 %}text-success{% elif balance.available > 0 %}text-warning{% else %}text-danger{% endif %}">
-                                {{ balance.available }}
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-primary edit-balance" data-user-id="{{ balance.user.id }}"
-                                        data-user-name="{{ balance.user.get_full_name|default:balance.user.username }}"
-                                        data-acquired="{{ balance.acquired }}"
-                                        data-taken="{{ balance.taken }}"
-                                        data-bs-toggle="modal" data-bs-target="#editBalanceModal">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center">Aucun solde de congés défini</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-3 mb-lg-0">
+                    <h5 class="mb-0">Ajustement collectif des soldes de congés</h5>
+                    <p class="text-muted mb-0">Appliquer un ajustement à tous les employés sélectionnés</p>
+                </div>
+                <div class="col-lg-6">
+                    <div class="d-flex justify-content-lg-end">
+                        <div class="input-group me-2" style="max-width: 150px;">
+                            <button class="btn btn-outline-secondary" type="button" id="decreaseCollective">-</button>
+                            <input type="number" class="form-control text-center" id="collectiveAdjustment" value="0" step="0.5">
+                            <button class="btn btn-outline-secondary" type="button" id="increaseCollective">+</button>
+                        </div>
+                        <button type="button" class="btn btn-primary" id="applyCollectiveBtn" data-bs-toggle="modal" data-bs-target="#confirmCollectiveModal">
+                            <i class="fas fa-check me-1"></i> Appliquer
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Modal d'édition -->
-<div class="modal fade" id="editBalanceModal" tabindex="-1" aria-labelledby="editBalanceModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editBalanceModalLabel">Modifier le solde de congés</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Tableau des soldes de congés -->
+    <div class="card shadow-sm mb-4 rounded-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center bg-white rounded-top">
+            <div>
+                <h5 class="m-0 font-weight-bold text-primary">Soldes de congés des employés</h5>
             </div>
-            <form action="" method="post" id="editBalanceForm">
-                {% csrf_token %}
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="refreshTable">
+                    <i class="fas fa-sync-alt me-1"></i> Actualiser
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if leave_balances %}
+                <div class="table-responsive">
+                    <table class="table table-hover balance-table align-middle mb-0" id="balancesTable">
+                        <thead>
+                            <tr>
+                                <th class="ps-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="selectAllEmployees">
+                                        <label class="form-check-label" for="selectAllEmployees"></label>
+                                    </div>
+                                </th>
+                                <th>Employé</th>
+                                <th>Département</th>
+                                <th class="text-center">Jours acquis</th>
+                                <th class="text-center">Jours pris</th>
+                                <th class="text-center">Solde actuel</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for balance in leave_balances %}
+                                <tr class="balance-row" data-employee-id="{{ balance.user.id }}">
+                                    <td class="ps-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input employee-select" type="checkbox" value="{{ balance.user.id }}">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="user-bubble bg-primary text-white me-2">
+                                                {{ balance.user.get_full_name|default:balance.user.username|slice:":1"|upper }}
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">{{ balance.user.get_full_name|default:balance.user.username }}</div>
+                                                <div class="text-muted small">{{ balance.user.email }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ balance.user.profile.department|default:"Non défini" }}</td>
+                                    <td class="text-center acquired-days">{{ balance.acquired }}</td>
+                                    <td class="text-center taken-days">{{ balance.taken }}</td>
+                                    <td class="text-center">
+                                        <span class="balance-badge 
+                                            {% if balance.available > 15 %}balance-high
+                                            {% elif balance.available > 5 %}balance-medium
+                                            {% elif balance.available > 0 %}balance-low
+                                            {% else %}balance-critical{% endif %}">
+                                            {{ balance.available }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group-actions">
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-1 adjust-balance" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#adjustBalanceModal" 
+                                                    data-id="{{ balance.user.id }}"
+                                                    data-name="{{ balance.user.get_full_name|default:balance.user.username }}"
+                                                    data-balance="{{ balance.available }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-info view-history" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#historyModal" 
+                                                    data-id="{{ balance.user.id }}"
+                                                    data-name="{{ balance.user.get_full_name|default:balance.user.username }}">
+                                                <i class="fas fa-history"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if leave_balances.has_other_pages %}
+                <div class="p-3">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if leave_balances.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ leave_balances.previous_page_number }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {% for i in leave_balances.paginator.page_range %}
+                                {% if leave_balances.number == i %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ i }}</span>
+                                    </li>
+                                {% elif i > leave_balances.number|add:'-3' and i < leave_balances.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">{{ i }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if leave_balances.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ leave_balances.next_page_number }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ leave_balances.paginator.num_pages }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+                
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <h4 class="mb-3">Aucun solde de congés</h4>
+                    <p class="text-muted mb-4">Il n'y a actuellement aucun employé avec un solde de congés.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modal d'ajustement de solde -->
+    <div class="modal fade" id="adjustBalanceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajuster le solde de congés</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{% url 'adjust_leave_balance' %}" method="post" id="adjustBalanceForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" id="user_id" value="">
+                    <div class="modal-body">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-calendar-alt text-primary fa-3x mb-3"></i>
+                            <h5>Ajuster le solde pour <span id="employeeName"></span></h5>
+                            <p>Solde actuel: <span class="fw-bold" id="currentBalance"></span> jour(s)</p>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="adjustment" class="form-label">Ajustement (jour(s))</label>
+                            <div class="balance-spinner mx-auto">
+                                <button type="button" class="btn btn-outline-secondary" id="decrementBtn">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number" class="form-control" id="adjustment" name="adjustment" step="0.5" value="0">
+                                <button type="button" class="btn btn-outline-secondary" id="incrementBtn">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="small text-muted text-center mt-1">Valeur positive pour ajouter, négative pour déduire</div>
+                        </div>
+                        
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="reason" name="reason" placeholder="Motif de l'ajustement" required>
+                            <label for="reason">Motif de l'ajustement</label>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <div class="d-flex">
+                                <div class="me-2">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0">
+                                        <strong>Nouveau solde après ajustement:</strong> 
+                                        <span id="newBalance" class="fw-bold">0</span> jour(s)
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> Enregistrer l'ajustement
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal d'historique des ajustements -->
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Historique des ajustements</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <div class="modal-body">
-                    <input type="hidden" id="edit_user_id" name="user_id">
-                    
-                    <div class="mb-3">
-                        <label for="edit_user_name" class="form-label">Employé</label>
-                        <input type="text" class="form-control" id="edit_user_name" readonly>
+                    <div class="text-center mb-4">
+                        <h5>Historique pour <span id="historyEmployeeName"></span></h5>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="edit_acquired" class="form-label">Congés acquis</label>
-                        <input type="number" class="form-control" id="edit_acquired" name="acquired" step="0.5" min="0" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="edit_taken" class="form-label">Congés pris</label>
-                        <input type="number" class="form-control" id="edit_taken" name="taken" step="0.5" min="0" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="edit_available" class="form-label">Congés disponibles</label>
-                        <input type="text" class="form-control" id="edit_available" readonly>
+                    <div id="historyContent" class="mb-3">
+                        <!-- L'historique sera chargé dynamiquement -->
+                        <div class="text-center p-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
                 </div>
-            </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmation d'ajustement collectif -->
+    <div class="modal fade" id="confirmCollectiveModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmer l'ajustement collectif</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-users text-warning fa-3x mb-3"></i>
+                        <h5>Vous êtes sur le point d'ajuster les soldes de <span id="selectedCount">0</span> employés</h5>
+                        <p>Ajustement: <span id="collectiveAdjustmentValue" class="fw-bold">0</span> jour(s) par employé</p>
+                    </div>
+                    
+                    <form id="collectiveAdjustmentForm" action="{% url 'adjust_collective_leave_balance' %}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="employee_ids" id="employee_ids" value="">
+                        <input type="hidden" name="collective_adjustment" id="collective_adjustment_value" value="0">
+                        
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="collective_reason" name="reason" placeholder="Motif de l'ajustement collectif" required>
+                            <label for="collective_reason">Motif de l'ajustement collectif</label>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <div class="d-flex">
+                                <div class="me-2">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0">
+                                        Cette action modifiera le solde de congés de tous les employés sélectionnés. Cette opération ne peut pas être annulée.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="submitCollectiveAdjustment">
+                        <i class="fas fa-save me-1"></i> Confirmer l'ajustement
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -191,41 +723,257 @@
 {% block extra_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Handler pour remplir le modal d'édition
-    const editButtons = document.querySelectorAll('.edit-balance');
+    // Toggle pour le panneau de filtres
+    const filterToggle = document.querySelector('[data-bs-toggle="collapse"]');
+    const filterIcon = document.querySelector('.filter-toggle-icon');
+    const filterText = document.querySelector('.filter-toggle-text');
     
-    editButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const userId = this.getAttribute('data-user-id');
-            const userName = this.getAttribute('data-user-name');
-            const acquired = this.getAttribute('data-acquired');
-            const taken = this.getAttribute('data-taken');
-            const available = parseFloat(acquired) - parseFloat(taken);
+    if (filterToggle) {
+        filterToggle.addEventListener('click', function() {
+            const isCollapsed = this.getAttribute('aria-expanded') === 'false';
             
-            document.getElementById('edit_user_id').value = userId;
-            document.getElementById('edit_user_name').value = userName;
-            document.getElementById('edit_acquired').value = acquired;
-            document.getElementById('edit_taken').value = taken;
-            document.getElementById('edit_available').value = available.toFixed(1);
+            // Changer l'icône et le texte
+            if (isCollapsed) {
+                filterIcon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                filterText.textContent = 'Masquer';
+            } else {
+                filterIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                filterText.textContent = 'Afficher';
+            }
+        });
+    }
+    
+    // Initialisation de DataTable
+    if (typeof $.fn.DataTable !== 'undefined') {
+        if (document.getElementById('balancesTable')) {
+            $('#balancesTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
+                },
+                paging: false,
+                searching: true,
+                info: false
+            });
+        }
+    }
+    
+    // Animation des cartes statistiques
+    const statsCards = document.querySelectorAll('.stats-card');
+    statsCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.classList.add('slide-up');
+        }, index * 100);
+    });
+    
+    // Gestion du bouton d'actualisation
+    document.getElementById('refreshTable')?.addEventListener('click', function() {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Actualisation...';
+        this.disabled = true;
+        
+        // Actualiser la page
+        setTimeout(() => {
+            window.location.reload();
+        }, 800);
+    });
+    
+    // Sélection de tous les employés
+    const selectAllCheckbox = document.getElementById('selectAllEmployees');
+    const employeeCheckboxes = document.querySelectorAll('.employee-select');
+    
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            employeeCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateSelectedCount();
+        });
+    }
+    
+    employeeCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectedCount();
             
-            // Mettre à jour l'URL du formulaire
-            document.getElementById('editBalanceForm').action = `/update-leave-balance/${userId}/`;
+            // Vérifier si tous les checkboxes sont cochés
+            const allChecked = Array.from(employeeCheckboxes).every(cb => cb.checked);
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = allChecked;
+            }
         });
     });
     
-    // Calculer le solde disponible quand les valeurs changent
-    const acquiredInput = document.getElementById('edit_acquired');
-    const takenInput = document.getElementById('edit_taken');
-    const availableInput = document.getElementById('edit_available');
-    
-    function updateAvailable() {
-        const acquired = parseFloat(acquiredInput.value) || 0;
-        const taken = parseFloat(takenInput.value) || 0;
-        availableInput.value = (acquired - taken).toFixed(1);
+    function updateSelectedCount() {
+        const selectedCount = document.querySelectorAll('.employee-select:checked').length;
+        document.getElementById('selectedCount').textContent = selectedCount;
+        
+        // Activer/désactiver le bouton d'ajustement collectif
+        const applyButton = document.getElementById('applyCollectiveBtn');
+        if (applyButton) {
+            applyButton.disabled = selectedCount === 0;
+        }
+        
+        // Mettre à jour les champs cachés
+        const selectedIds = Array.from(document.querySelectorAll('.employee-select:checked'))
+            .map(cb => cb.value)
+            .join(',');
+        document.getElementById('employee_ids').value = selectedIds;
     }
     
-    acquiredInput.addEventListener('input', updateAvailable);
-    takenInput.addEventListener('input', updateAvailable);
+    // Initialiser le compteur de sélection
+    updateSelectedCount();
+    
+    // Ajustement de balance individuel
+    const adjustButtons = document.querySelectorAll('.adjust-balance');
+    adjustButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const userId = this.getAttribute('data-id');
+            const userName = this.getAttribute('data-name');
+            const currentBalance = this.getAttribute('data-balance');
+            
+            document.getElementById('user_id').value = userId;
+            document.getElementById('employeeName').textContent = userName;
+            document.getElementById('currentBalance').textContent = currentBalance;
+            document.getElementById('adjustment').value = 0;
+            document.getElementById('newBalance').textContent = currentBalance;
+            
+            // Reset le motif
+            document.getElementById('reason').value = '';
+        });
+    });
+    
+    // Calculer le nouveau solde quand l'ajustement change
+    const adjustmentInput = document.getElementById('adjustment');
+    if (adjustmentInput) {
+        adjustmentInput.addEventListener('input', calculateNewBalance);
+        
+        // Boutons + et - pour l'ajustement
+        document.getElementById('incrementBtn').addEventListener('click', function() {
+            adjustmentInput.value = parseFloat(adjustmentInput.value || 0) + 0.5;
+            calculateNewBalance();
+        });
+        
+        document.getElementById('decrementBtn').addEventListener('click', function() {
+            adjustmentInput.value = parseFloat(adjustmentInput.value || 0) - 0.5;
+            calculateNewBalance();
+        });
+    }
+    
+    function calculateNewBalance() {
+        const currentBalance = parseFloat(document.getElementById('currentBalance').textContent);
+        const adjustment = parseFloat(document.getElementById('adjustment').value || 0);
+        const newBalance = currentBalance + adjustment;
+        document.getElementById('newBalance').textContent = newBalance.toFixed(1);
+        
+        // Changer la couleur selon le nouveau solde
+        const newBalanceElement = document.getElementById('newBalance');
+        if (newBalance < 0) {
+            newBalanceElement.className = 'fw-bold text-danger';
+        } else if (newBalance < 5) {
+            newBalanceElement.className = 'fw-bold text-warning';
+        } else {
+            newBalanceElement.className = 'fw-bold text-success';
+        }
+    }
+    
+    // Ajustement collectif
+    const collectiveAdjustment = document.getElementById('collectiveAdjustment');
+    if (collectiveAdjustment) {
+        // Boutons + et - pour l'ajustement collectif
+        document.getElementById('increaseCollective').addEventListener('click', function() {
+            collectiveAdjustment.value = parseFloat(collectiveAdjustment.value || 0) + 0.5;
+            document.getElementById('collectiveAdjustmentValue').textContent = collectiveAdjustment.value;
+            document.getElementById('collective_adjustment_value').value = collectiveAdjustment.value;
+        });
+        
+        document.getElementById('decreaseCollective').addEventListener('click', function() {
+            collectiveAdjustment.value = parseFloat(collectiveAdjustment.value || 0) - 0.5;
+            document.getElementById('collectiveAdjustmentValue').textContent = collectiveAdjustment.value;
+            document.getElementById('collective_adjustment_value').value = collectiveAdjustment.value;
+        });
+        
+        collectiveAdjustment.addEventListener('input', function() {
+            document.getElementById('collectiveAdjustmentValue').textContent = this.value;
+            document.getElementById('collective_adjustment_value').value = this.value;
+        });
+    }
+    
+    // Soumettre l'ajustement collectif
+    document.getElementById('submitCollectiveAdjustment')?.addEventListener('click', function() {
+        document.getElementById('collectiveAdjustmentForm').submit();
+    });
+    
+    // Ouvrir le modal d'historique et charger les données
+    const historyButtons = document.querySelectorAll('.view-history');
+    historyButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const userId = this.getAttribute('data-id');
+            const userName = this.getAttribute('data-name');
+            document.getElementById('historyEmployeeName').textContent = userName;
+            
+            // Réinitialiser le contenu
+            document.getElementById('historyContent').innerHTML = `
+                <div class="text-center p-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                </div>
+            `;
+            
+            // Charger l'historique via AJAX
+            fetch(`/rh/leave-balance-history/${userId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    const historyContent = document.getElementById('historyContent');
+                    if (data.history && data.history.length > 0) {
+                        let historyHtml = `
+                            <div class="list-group">
+                        `;
+                        
+                        data.history.forEach(item => {
+                            const adjustmentClass = parseFloat(item.adjustment) >= 0 ? 'adjustment-positive' : 'adjustment-negative';
+                            const adjustmentText = parseFloat(item.adjustment) >= 0 ? '+' + item.adjustment : item.adjustment;
+                            
+                            historyHtml += `
+                                <div class="list-group-item history-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="fw-bold">${item.reason}</div>
+                                            <small class="text-muted">${item.date} par ${item.adjusted_by}</small>
+                                        </div>
+                                        <span class="badge bg-light ${adjustmentClass}">${adjustmentText} jour(s)</span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        historyHtml += `</div>`;
+                        historyContent.innerHTML = historyHtml;
+                    } else {
+                        historyContent.innerHTML = `
+                            <div class="text-center p-3">
+                                <i class="fas fa-info-circle text-info fa-2x mb-2"></i>
+                                <p class="mb-0">Aucun historique d'ajustement trouvé pour cet employé.</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('historyContent').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Erreur lors du chargement de l'historique.
+                        </div>
+                    `;
+                    console.error('Erreur:', error);
+                });
+        });
+    });
+
+    // Réinitialiser les filtres
+    document.querySelector('button[type="reset"]')?.addEventListener('click', function() {
+        setTimeout(() => {
+            window.location.href = '{% url "manage_leave_balances" %}';
+        }, 100);
+    });
 });
 </script>
 {% endblock %}

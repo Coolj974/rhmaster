@@ -1,0 +1,670 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Styles pour la page de gestion des rôles */
+    .role-header {
+        padding: 1rem 0;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stats-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+        border: none;
+        overflow: hidden;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .stats-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .stats-header {
+        margin-bottom: 1rem;
+        color: #5a5c69;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    
+    .stats-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+    
+    .stats-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .role-card {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0.15rem 1.25rem rgba(0,0,0,0.075);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .role-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.15);
+    }
+    
+    .role-card .card-header {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding: 1.25rem;
+    }
+    
+    .roles-table {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0.15rem 1.25rem rgba(0,0,0,0.075);
+    }
+    
+    .roles-table th {
+        background-color: #f8f9fc;
+        font-weight: 600;
+        padding: 1rem;
+        border-top: none;
+    }
+    
+    .role-row {
+        transition: all 0.3s ease;
+    }
+    
+    .role-row:hover {
+        transform: translateX(5px);
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    .btn-group-actions {
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+    }
+    
+    .role-row:hover .btn-group-actions {
+        opacity: 1;
+    }
+    
+    .user-badge {
+        background-color: #e9ecef;
+        border-radius: 50px;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.8rem;
+        margin: 0.15rem;
+        display: inline-block;
+        white-space: nowrap;
+    }
+    
+    .permission-list {
+        max-height: 350px;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    
+    .permission-category {
+        padding: 0.5rem 0;
+        margin-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .permission-name {
+        font-weight: 500;
+    }
+    
+    .permission-description {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
+    
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .slide-up {
+        animation: slideUp 0.5s ease forwards;
+    }
+    
+    /* Modal custom styles */
+    .modal-header {
+        background-color: #4e73df;
+        color: #fff;
+        border-bottom: none;
+    }
+    
+    .modal-header .btn-close {
+        color: white;
+    }
+    
+    .modal-footer {
+        border-top: none;
+        padding: 1rem 1.5rem 1.5rem;
+    }
+    
+    /* État vide */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: #dddfeb;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- En-tête de la page -->
+    <div class="d-sm-flex align-items-center justify-content-between role-header">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-user-tag me-2"></i>Gestion des rôles</h1>
+        <div>
+            <button type="button" class="btn btn-primary shadow-sm me-2" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+                <i class="fas fa-plus-circle me-1"></i> Nouveau rôle
+            </button>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm">
+                <i class="fas fa-arrow-left me-1"></i> Tableau de bord
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-4 fade-in">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Statistiques des rôles -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-primary">TOTAL RÔLES</div>
+                            <div class="stats-value">{{ stats.total_roles|default:"0" }}</div>
+                            <div class="text-xs text-muted">rôles définis</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="fas fa-users-cog"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-success">UTILISATEURS ACTIFS</div>
+                            <div class="stats-value">{{ stats.active_users|default:"0" }}</div>
+                            <div class="text-xs text-muted">comptes actifs</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-success bg-opacity-10 text-success">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-info">PERMISSIONS</div>
+                            <div class="stats-value">{{ stats.total_permissions|default:"0" }}</div>
+                            <div class="text-xs text-muted">permissions disponibles</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-info bg-opacity-10 text-info">
+                                <i class="fas fa-key"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-warning">ADMINS</div>
+                            <div class="stats-value">{{ stats.admin_count|default:"0" }}</div>
+                            <div class="text-xs text-muted">utilisateurs admin</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="fas fa-user-shield"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des rôles -->
+    <div class="card shadow-sm mb-4 rounded-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center bg-white rounded-top">
+            <h5 class="m-0 font-weight-bold text-primary"><i class="fas fa-list me-2"></i>Liste des rôles</h5>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="refreshTable">
+                <i class="fas fa-sync-alt me-1"></i> Actualiser
+            </button>
+        </div>
+        <div class="card-body p-0">
+            {% if roles %}
+                <div class="table-responsive">
+                    <table class="table table-hover roles-table align-middle mb-0" id="rolesTable">
+                        <thead>
+                            <tr>
+                                <th class="ps-3">Rôle</th>
+                                <th>Description</th>
+                                <th>Utilisateurs</th>
+                                <th>Permissions</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for role in roles %}
+                                <tr class="role-row">
+                                    <td class="ps-3 fw-bold">{{ role.name }}</td>
+                                    <td>{{ role.description|default:"Aucune description" }}</td>
+                                    <td>
+                                        <div class="d-flex flex-wrap">
+                                            {% for user in role.users|slice:":3" %}
+                                                <span class="user-badge">{{ user.get_full_name|default:user.username }}</span>
+                                            {% endfor %}
+                                            {% if role.users.count > 3 %}
+                                                <span class="user-badge bg-secondary text-white">+{{ role.users.count|add:"-3" }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>{{ role.permissions.count }} permission(s)</td>
+                                    <td class="text-center">
+                                        <div class="btn-group-actions">
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-1" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editRoleModal{{ role.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-info me-1" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#assignPermissionsModal{{ role.id }}">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-success" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#assignUsersModal{{ role.id }}">
+                                                <i class="fas fa-user-plus"></i>
+                                            </button>
+                                            {% if not role.is_default %}
+                                            <button type="button" class="btn btn-sm btn-outline-danger ms-1" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#deleteRoleModal{{ role.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Modal pour éditer le rôle -->
+                                <div class="modal fade" id="editRoleModal{{ role.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Modifier le rôle</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form action="{% url 'edit_role' role.id %}" method="post">
+                                                {% csrf_token %}
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label for="roleName{{ role.id }}" class="form-label">Nom du rôle <span class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control" id="roleName{{ role.id }}" name="name" value="{{ role.name }}" required {% if role.is_default %}readonly{% endif %}>
+                                                        {% if role.is_default %}
+                                                        <div class="form-text text-muted">Ce rôle système ne peut pas être renommé.</div>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="roleDescription{{ role.id }}" class="form-label">Description</label>
+                                                        <textarea class="form-control" id="roleDescription{{ role.id }}" name="description" rows="3">{{ role.description }}</textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="fas fa-save me-1"></i> Enregistrer
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Modal pour attribuer des permissions -->
+                                <div class="modal fade" id="assignPermissionsModal{{ role.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Gérer les permissions - {{ role.name }}</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form action="{% url 'assign_permissions' role.id %}" method="post">
+                                                {% csrf_token %}
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <h6 class="mb-0">Permissions disponibles</h6>
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="form-check me-3">
+                                                                    <input class="form-check-input" type="checkbox" id="selectAll{{ role.id }}">
+                                                                    <label class="form-check-label" for="selectAll{{ role.id }}">
+                                                                        Tout sélectionner
+                                                                    </label>
+                                                                </div>
+                                                                <input type="text" class="form-control form-control-sm" id="searchPermissions{{ role.id }}" placeholder="Rechercher..." style="width: 200px;">
+                                                            </div>
+                                                        </div>
+                                                        <div class="permission-list">
+                                                            {% regroup all_permissions by content_type.app_label as app_list %}
+                                                            {% for app in app_list %}
+                                                                <div class="permission-category">
+                                                                    <h6 class="text-primary">{{ app.grouper|title }}</h6>
+                                                                    {% for permission in app.list %}
+                                                                        <div class="form-check mb-2 permission-item">
+                                                                            <input class="form-check-input permission-checkbox" type="checkbox" name="permissions" value="{{ permission.id }}" id="perm{{ permission.id }}" 
+                                                                                {% if permission in role.permissions.all %}checked{% endif %}>
+                                                                            <label class="form-check-label" for="perm{{ permission.id }}">
+                                                                                <div class="permission-name">{{ permission.name }}</div>
+                                                                                <div class="permission-description text-muted small">{{ permission.codename }}</div>
+                                                                            </label>
+                                                                        </div>
+                                                                    {% endfor %}
+                                                                </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="fas fa-save me-1"></i> Enregistrer les permissions
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Modal pour attribuer des utilisateurs -->
+                                <div class="modal fade" id="assignUsersModal{{ role.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Attribuer des utilisateurs - {{ role.name }}</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form action="{% url 'assign_users' role.id %}" method="post">
+                                                {% csrf_token %}
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label for="userSearch{{ role.id }}" class="form-label">Rechercher des utilisateurs</label>
+                                                        <input type="text" class="form-control mb-2" id="userSearch{{ role.id }}" placeholder="Nom, prénom ou email...">
+                                                        <div class="form-text mb-3">Sélectionnez les utilisateurs à ajouter à ce rôle.</div>
+                                                        <div style="max-height: 250px; overflow-y: auto;">
+                                                            {% for user in all_users %}
+                                                                <div class="form-check mb-2 user-item">
+                                                                    <input class="form-check-input" type="checkbox" name="users" value="{{ user.id }}" id="user{{ role.id }}_{{ user.id }}"
+                                                                        {% if user in role.users.all %}checked{% endif %}>
+                                                                    <label class="form-check-label d-flex justify-content-between align-items-center" for="user{{ role.id }}_{{ user.id }}">
+                                                                        <div>
+                                                                            <span>{{ user.get_full_name|default:user.username }}</span>
+                                                                            <small class="text-muted d-block">{{ user.email }}</small>
+                                                                        </div>
+                                                                        {% if user.is_superuser %}
+                                                                        <span class="badge bg-danger">Admin</span>
+                                                                        {% endif %}
+                                                                    </label>
+                                                                </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="fas fa-save me-1"></i> Enregistrer les assignations
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Modal pour supprimer le rôle -->
+                                {% if not role.is_default %}
+                                <div class="modal fade" id="deleteRoleModal{{ role.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white">
+                                                <h5 class="modal-title">Supprimer le rôle</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="text-center mb-4">
+                                                    <i class="fas fa-exclamation-triangle text-danger fa-4x mb-3"></i>
+                                                    <h5>Êtes-vous sûr de vouloir supprimer ce rôle ?</h5>
+                                                    <p>Le rôle <strong>{{ role.name }}</strong> sera définitivement supprimé et tous les utilisateurs associés perdront les permissions de ce rôle.</p>
+                                                    <div class="alert alert-warning">
+                                                        <i class="fas fa-info-circle me-2"></i>
+                                                        Cette action ne peut pas être annulée.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                <form action="{% url 'delete_role' role.id %}" method="post" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <i class="fas fa-trash me-1"></i> Supprimer définitivement
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-user-tag"></i>
+                    </div>
+                    <h4 class="mb-3">Aucun rôle défini</h4>
+                    <p class="text-muted mb-4">Commencez par créer un rôle pour définir des permissions.</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+                        <i class="fas fa-plus-circle me-1"></i> Créer un rôle
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour créer un nouveau rôle -->
+<div class="modal fade" id="createRoleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Créer un nouveau rôle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'create_role' %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="newRoleName" class="form-label">Nom du rôle <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="newRoleName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newRoleDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="newRoleDescription" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-1"></i> Créer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation des cartes statistiques
+    const statsCards = document.querySelectorAll('.stats-card');
+    statsCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.classList.add('slide-up');
+        }, index * 100);
+    });
+    
+    // Initialiser DataTable si disponible
+    if (typeof $.fn.DataTable !== 'undefined' && document.getElementById('rolesTable')) {
+        $('#rolesTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
+            },
+            paging: false,
+            searching: true,
+            info: false
+        });
+    }
+    
+    // Fonction pour le bouton d'actualisation
+    document.getElementById('refreshTable')?.addEventListener('click', function() {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Actualisation...';
+        this.disabled = true;
+        
+        // Actualiser la page
+        setTimeout(() => {
+            window.location.reload();
+        }, 800);
+    });
+    
+    // Gestion du "Tout sélectionner" pour les permissions
+    document.querySelectorAll('[id^="selectAll"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const modal = this.closest('.modal');
+            const checkboxes = modal.querySelectorAll('.permission-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = this.checked;
+            });
+        });
+    });
+    
+    // Recherche parmi les permissions
+    document.querySelectorAll('[id^="searchPermissions"]').forEach(searchInput => {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const modal = this.closest('.modal');
+            const permissionItems = modal.querySelectorAll('.permission-item');
+            
+            permissionItems.forEach(item => {
+                const permName = item.querySelector('.permission-name').textContent.toLowerCase();
+                const permDesc = item.querySelector('.permission-description').textContent.toLowerCase();
+                
+                if (permName.includes(searchTerm) || permDesc.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Ajuster l'affichage des catégories vides
+            const categories = modal.querySelectorAll('.permission-category');
+            categories.forEach(category => {
+                const visibleItems = [...category.querySelectorAll('.permission-item')].filter(item => item.style.display !== 'none');
+                if (visibleItems.length === 0) {
+                    category.style.display = 'none';
+                } else {
+                    category.style.display = '';
+                }
+            });
+        });
+    });
+    
+    // Recherche parmi les utilisateurs
+    document.querySelectorAll('[id^="userSearch"]').forEach(searchInput => {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const modal = this.closest('.modal');
+            const userItems = modal.querySelectorAll('.user-item');
+            
+            userItems.forEach(item => {
+                const label = item.querySelector('label').textContent.toLowerCase();
+                
+                if (label.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

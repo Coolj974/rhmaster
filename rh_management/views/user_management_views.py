@@ -2,13 +2,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.models import User, Group
-from django.db.models import Q
+from django.contrib.auth.models import User, Group, Permission
 from django.core.paginator import Paginator
+from django.db.models import Q, Count
 import random
 import string
 from ..models import LeaveRequest, ExpenseReport, KilometricExpense
-from .permissions import is_admin, is_admin_or_hr, can_edit_profiles, is_rh, is_encadrant
+from .permissions import is_admin, is_admin_or_hr, can_edit_profiles, is_rh, is_encadrant, user_is_hr_or_admin
 
 @login_required
 @user_passes_test(is_admin)
@@ -347,74 +347,163 @@ def mass_action(request):
     return redirect('manage_users')
 
 @login_required
-@user_passes_test(is_admin)
+@user_is_hr_or_admin
 def manage_roles_view(request):
-    """Gère l'affichage et la création de rôles (Admin)."""
-    from django.contrib.auth.models import Permission
-    from django.contrib.contenttypes.models import ContentType
+    """
+    Vue pour gérer les rôles (groupes) et leurs permissions
+    """
+    roles = Group.objects.prefetch_related('permissions', 'user_set').all()
     
-    # Récupération de tous les groupes
-    roles = Group.objects.all().order_by('name')
+    # Pour chaque rôle, déterminer s'il s'agit d'un rôle système/par défaut
+    for role in roles:
+        role.is_default = role.name in ['Admin', 'RH', 'Manager', 'Employee']  # Rôles système
     
-    # Récupération des permissions disponibles pour l'affichage
-    available_permissions = Permission.objects.filter(
-        content_type__app_label='rh_management'
-    ).order_by('name')
+    # Statistiques pour le tableau de bord
+    stats = {
+        'total_roles': roles.count(),
+        'active_users': User.objects.filter(is_active=True).count(),
+        'total_permissions': Permission.objects.count(),
+        'admin_count': User.objects.filter(is_superuser=True).count()
+    }
     
-    if request.method == "POST":
-        role_name = request.POST.get('role_name')
-        if role_name:
-            # Vérifier que le rôle n'existe pas déjà
-            if Group.objects.filter(name=role_name).exists():
-                messages.error(request, f"Le rôle '{role_name}' existe déjà.")
-            else:
-                # Créer le nouveau rôle
-                new_role = Group.objects.create(name=role_name)
-                
-                # Ajouter les permissions sélectionnées
-                for permission_id in request.POST.getlist('permissions'):
-                    permission = Permission.objects.get(id=permission_id)
-                    new_role.permissions.add(permission)
-                
-                messages.success(request, f"Le rôle '{role_name}' a été créé avec succès.")
-                return redirect('manage_roles')
-        else:
-            messages.error(request, "Le nom du rôle ne peut pas être vide.")
+    # Toutes les permissions disponibles pour l'assignation
+    all_permissions = Permission.objects.select_related('content_type').all()
     
-    # Ajouter les compteurs de notifications au contexte
-    new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
-    new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
-    new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
+    # Tous les utilisateurs pour l'assignation aux rôles
+    all_users = User.objects.filter(is_active=True).order_by('first_name', 'last_name')
     
     context = {
         'roles': roles,
-        'available_permissions': available_permissions,
-        'new_leave_requests_count': new_leave_requests_count,
-        'new_expense_reports_count': new_expense_reports_count,
-        'new_kilometric_expenses_count': new_kilometric_expenses_count,
-        'is_admin': True  # Comme on est dans une vue qui nécessite is_admin, on peut mettre True directement
+        'stats': stats,
+        'all_permissions': all_permissions,
+        'all_users': all_users,
     }
     
     return render(request, 'rh_management/manage_roles.html', context)
 
 @login_required
-@user_passes_test(is_admin)
-def delete_role(request, role_id):
-    """Supprime un rôle existant (Admin)."""
-    role = get_object_or_404(Group, id=role_id)
-    
-    if request.method == "POST":
-        role_name = role.name
+@user_is_hr_or_admin
+def create_role(request):
+    """
+    Vue pour créer un nouveau rôle (groupe)
+    """
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
         
-        # Vérifier si le rôle est un rôle système qu'on ne veut pas supprimer
-        system_roles = ['HR', 'Encadrant', 'STP', 'Employé', 'CanApproveLeaves', 'CanEditProfiles']
-        if role_name in system_roles:
-            messages.error(request, f"Le rôle '{role_name}' est un rôle système et ne peut pas être supprimé.")
+        if not name:
+            messages.error(request, "Le nom du rôle est obligatoire.")
             return redirect('manage_roles')
         
-        # Supprimer le rôle
-        role.delete()
-        messages.success(request, f"Le rôle '{role_name}' a été supprimé avec succès.")
+        if Group.objects.filter(name=name).exists():
+            messages.error(request, f"Un rôle avec le nom '{name}' existe déjà.")
+            return redirect('manage_roles')
+        
+        # Créer le nouveau rôle
+        group = Group.objects.create(name=name)
+        
+        # Ajouter la description si elle existe
+        # Note: Django's Group model doesn't have a description field by default
+        # You might want to create a custom model that extends Group to add this field
+        
+        messages.success(request, f"Le rôle '{name}' a été créé avec succès.")
+        
+    return redirect('manage_roles')
+
+@login_required
+@user_is_hr_or_admin
+def edit_role(request, role_id):
+    """
+    Vue pour modifier un rôle existant
+    """
+    role = get_object_or_404(Group, id=role_id)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        
+        if not name:
+            messages.error(request, "Le nom du rôle est obligatoire.")
+            return redirect('manage_roles')
+        
+        # Vérifier si un autre rôle avec ce nom existe déjà
+        if Group.objects.filter(name=name).exclude(id=role_id).exists():
+            messages.error(request, f"Un rôle avec le nom '{name}' existe déjà.")
+            return redirect('manage_roles')
+        
+        # Mettre à jour le nom du rôle
+        role.name = name
+        role.save()
+        
+        # Mettre à jour la description si elle existe
+        # Note: Django's Group model doesn't have a description field by default
+        
+        messages.success(request, f"Le rôle '{name}' a été mis à jour avec succès.")
+        
+    return redirect('manage_roles')
+
+@login_required
+@user_is_hr_or_admin
+def assign_permissions(request, role_id):
+    """
+    Vue pour attribuer des permissions à un rôle
+    """
+    role = get_object_or_404(Group, id=role_id)
+    
+    if request.method == 'POST':
+        selected_permissions = request.POST.getlist('permissions', [])
+        
+        # Mettre à jour les permissions du rôle
+        role.permissions.clear()  # Supprimer toutes les permissions actuelles
+        
+        if selected_permissions:
+            permissions = Permission.objects.filter(id__in=selected_permissions)
+            role.permissions.add(*permissions)
+        
+        messages.success(request, f"Les permissions du rôle '{role.name}' ont été mises à jour.")
+        
+    return redirect('manage_roles')
+
+@login_required
+@user_is_hr_or_admin
+def assign_users(request, role_id):
+    """
+    Vue pour attribuer des utilisateurs à un rôle
+    """
+    role = get_object_or_404(Group, id=role_id)
+    
+    if request.method == 'POST':
+        selected_users = request.POST.getlist('users', [])
+        
+        # Supprimer tous les utilisateurs actuels du rôle
+        role.user_set.clear()
+        
+        if selected_users:
+            users = User.objects.filter(id__in=selected_users)
+            for user in users:
+                user.groups.add(role)
+        
+        messages.success(request, f"Les utilisateurs du rôle '{role.name}' ont été mis à jour.")
+        
+    return redirect('manage_roles')
+
+@login_required
+@user_is_hr_or_admin
+def delete_role(request, role_id):
+    """
+    Vue pour supprimer un rôle
+    """
+    role = get_object_or_404(Group, id=role_id)
+    
+    # Empêcher la suppression des rôles système
+    default_roles = ['Admin', 'RH', 'Manager', 'Employee']
+    if role.name in default_roles:
+        messages.error(request, f"Impossible de supprimer le rôle système '{role.name}'.")
         return redirect('manage_roles')
     
-    return render(request, 'rh_management/delete_role.html', {'role': role})
+    if request.method == 'POST':
+        role_name = role.name
+        role.delete()
+        messages.success(request, f"Le rôle '{role_name}' a été supprimé avec succès.")
+        
+    return redirect('manage_roles')

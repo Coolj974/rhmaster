@@ -1,49 +1,241 @@
-<li><h6 class="dropdown-header">Notifications ({{ unread_count }} non lues)</h6></li>
-
-{% if notifications %}
-    {% for notification in notifications %}
-    <li>
-        <a class="dropdown-item notification-item {% if not notification.read %}fw-bold{% endif %}" 
-           href="{% if notification.url %}{{ notification.url }}{% else %}#{% endif %}"
-           data-notification-id="{{ notification.id }}">
-            <div class="d-flex align-items-center">
-                <div class="notification-icon bg-{{ notification.color }} text-white rounded-circle p-2 me-2">
-                    <i class="fas {{ notification.icon }}"></i>
-                </div>
-                <div class="notification-content flex-grow-1">
-                    <div class="small fw-bold text-truncate">{{ notification.title }}</div>
-                    <div class="small text-muted">{{ notification.created_at|timesince }}</div>
-                </div>
-                {% if not notification.read %}
-                <div class="ms-2">
-                    <span class="badge bg-{{ notification.color }} rounded-circle">&nbsp;</span>
-                </div>
-                {% endif %}
+<li class="nav-item dropdown notification-dropdown no-arrow mx-1">
+    <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-bell fa-fw"></i>
+        <!-- Compteur de notifications non lues -->
+        <span class="position-absolute notification-badge badge rounded-pill bg-danger" id="notification-count" style="display: none;"></span>
+    </a>
+    
+    <!-- Menu déroulant de notifications -->
+    <div class="dropdown-list dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="alertsDropdown">
+        <h6 class="dropdown-header bg-primary text-white">
+            Notifications
+        </h6>
+        
+        <div id="notification-list">
+            <!-- Les notifications seront chargées dynamiquement ici via JavaScript -->
+            <div class="notification-loading text-center py-3">
+                <i class="fas fa-spinner fa-spin me-1"></i> Chargement...
             </div>
-        </a>
-    </li>
-    {% endfor %}
+        </div>
+        
+        <div class="dropdown-divider mb-0"></div>
+        
+        <div class="d-flex justify-content-between px-3 py-2">
+            <a class="text-primary mark-all-read" href="#" id="markAllAsRead">
+                <i class="fas fa-check-double me-1"></i> Tout marquer comme lu
+            </a>
+            <a class="text-primary" href="{% url 'notifications_page' %}">
+                <i class="fas fa-list-ul me-1"></i> Voir tout
+            </a>
+        </div>
+    </div>
+</li>
+
+<script>
+    // Script pour gérer les notifications
+    document.addEventListener('DOMContentLoaded', function() {
+        let notificationsLoaded = false;
+        let loadingError = false;
+        let maxRetries = 3;
+        let retryCount = 0;
+        
+        // Fonction pour charger les notifications
+        function loadNotifications() {
+            if (notificationsLoaded || loadingError) return;
+            
+            fetch('{% url "get_notifications" %}', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Cache-Control': 'no-cache, no-store'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur réseau');
+                }
+                return response.json();
+            })
+            .then(data => {
+                notificationsLoaded = true;
+                
+                // Mettre à jour le compteur de notifications
+                const notificationCount = document.getElementById('notification-count');
+                if (data.unread_count > 0) {
+                    notificationCount.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+                    notificationCount.style.display = 'block';
+                } else {
+                    notificationCount.style.display = 'none';
+                }
+                
+                // Remplir la liste des notifications
+                const notificationList = document.getElementById('notification-list');
+                if (data.notifications.length === 0) {
+                    notificationList.innerHTML = '<div class="text-center p-3 text-muted">Aucune notification</div>';
+                } else {
+                    let html = '';
+                    data.notifications.forEach(notification => {
+                        html += `
+                        <a class="dropdown-item d-flex align-items-center ${notification.is_read ? 'read' : 'unread'}" 
+                           href="{% url 'mark_notification_as_read' 0 %}".replace('0', notification.id)>
+                            <div class="me-3">
+                                <div class="icon-circle bg-${getIconColor(notification.icon)}">
+                                    <i class="fas ${notification.icon} text-white"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="small text-gray-500">${notification.time_since}</div>
+                                <span class="font-weight-bold">${notification.title}</span>
+                                <div class="small">${notification.message}</div>
+                            </div>
+                        </a>`;
+                    });
+                    notificationList.innerHTML = html;
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors du chargement des notifications:', error);
+                retryCount++;
+                
+                if (retryCount < maxRetries) {
+                    // Réessayer après un délai
+                    setTimeout(loadNotifications, 2000);
+                } else {
+                    loadingError = true;
+                    const notificationList = document.getElementById('notification-list');
+                    notificationList.innerHTML = '<div class="text-center p-3 text-danger">Erreur de chargement<br><button id="retryNotifications" class="btn btn-sm btn-outline-primary mt-2">Réessayer</button></div>';
+                    
+                    document.getElementById('retryNotifications')?.addEventListener('click', function() {
+                        notificationsLoaded = false;
+                        loadingError = false;
+                        retryCount = 0;
+                        notificationList.innerHTML = '<div class="notification-loading text-center py-3"><i class="fas fa-spinner fa-spin me-1"></i> Chargement...</div>';
+                        loadNotifications();
+                    });
+                }
+            });
+        }
+        
+        // Fonction pour obtenir la couleur de fond en fonction de l'icône
+        function getIconColor(icon) {
+            const iconMap = {
+                'fa-calendar-check': 'success',
+                'fa-calendar-times': 'danger',
+                'fa-receipt': 'info',
+                'fa-route': 'primary',
+                'fa-user-edit': 'warning',
+                'fa-calendar-day': 'success'
+            };
+            return iconMap[icon] || 'secondary';
+        }
+        
+        // Charger les notifications uniquement lors de l'ouverture du dropdown
+        const alertsDropdown = document.getElementById('alertsDropdown');
+        if (alertsDropdown) {
+            alertsDropdown.addEventListener('show.bs.dropdown', function() {
+                if (!notificationsLoaded && !loadingError) {
+                    loadNotifications();
+                }
+            });
+        }
+        
+        // Charger le nombre de notifications non lues au chargement de la page
+        fetch('{% url "get_notifications_count" %}', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const notificationCount = document.getElementById('notification-count');
+            if (data.count > 0) {
+                notificationCount.textContent = data.count > 9 ? '9+' : data.count;
+                notificationCount.style.display = 'block';
+            }
+        })
+        .catch(error => console.error('Erreur de chargement du compteur:', error));
+        
+        // Marquer toutes les notifications comme lues
+        document.getElementById('markAllAsRead').addEventListener('click', function(e) {
+            e.preventDefault();
+            fetch('{% url "mark_all_read" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Réinitialiser et recharger les notifications
+                    document.getElementById('notification-count').style.display = 'none';
+                    notificationsLoaded = false;
+                    loadNotifications();
+                }
+            })
+            .catch(error => console.error('Erreur:', error));
+        });
+        
+        // Fonction pour récupérer la valeur d'un cookie par son nom
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+
+<style>
+    .notification-badge {
+        top: 0.5rem;
+        right: 0.2rem;
+        font-size: 0.6rem;
+    }
     
-    {% if more_notifications %}
-    <li><hr class="dropdown-divider"></li>
-    <li>
-        <a class="dropdown-item text-center small" href="{% url 'notifications' %}">
-            <i class="fas fa-bell me-1"></i> Voir toutes les notifications
-        </a>
-    </li>
-    {% endif %}
+    .notification-dropdown .dropdown-menu {
+        left: auto;
+        right: 0;
+        width: 350px;
+        max-height: 500px;
+        overflow-y: auto;
+    }
     
-    <li><hr class="dropdown-divider"></li>
-    <li>
-        <a class="dropdown-item text-center small mark-all-read" href="{% url 'mark_all_read' %}">
-            <i class="fas fa-check-double me-1"></i> Marquer tout comme lu
-        </a>
-    </li>
-{% else %}
-    <li>
-        <span class="dropdown-item text-muted">
-            <i class="fas fa-check-circle"></i>
-            Aucune nouvelle notification
-        </span>
-    </li>
-{% endif %}
+    .notification-dropdown .dropdown-item {
+        white-space: normal;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .notification-dropdown .dropdown-item.unread {
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    .notification-dropdown .dropdown-item:hover {
+        background-color: #f8f9fc;
+    }
+    
+    .notification-dropdown .icon-circle {
+        height: 2.5rem;
+        width: 2.5rem;
+        border-radius: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .notification-dropdown .dropdown-header {
+        border-radius: 0.35rem 0.35rem 0 0;
+    }
+</style>

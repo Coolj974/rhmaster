@@ -9,7 +9,8 @@ import json
 import pandas as pd
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-from ..models import KilometricExpense, LeaveRequest, ExpenseReport
+import csv
+from ..models import KilometricExpense, LeaveRequest, ExpenseReport, Notification
 from ..forms import KilometricExpenseForm
 from .permissions import is_admin_or_hr, is_admin_hr_or_encadrant
 
@@ -340,3 +341,61 @@ def cancel_kilometric_expense(request, expense_id):
         messages.error(request, "Vous ne pouvez annuler que des frais en attente de validation.")
     
     return redirect('dashboard')
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def export_kilometric_expenses(request):
+    """
+    Exporte les frais kilométriques au format CSV
+    """
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="kilometric_expenses.csv"'
+    
+    writer = csv.writer(response, delimiter=';')
+    writer.writerow(['Employé', 'Email', 'Date', 'Description', 'Départ', 'Arrivée', 'Distance (km)', 
+                    'Type de véhicule', 'Puissance fiscale', 'Montant (€)', 'Projet', 'Statut'])
+    
+    expenses = KilometricExpense.objects.all().select_related('user')
+    
+    for expense in expenses:
+        writer.writerow([
+            expense.user.get_full_name() or expense.user.username,
+            expense.user.email,
+            expense.date.strftime('%d/%m/%Y'),
+            expense.description,
+            expense.departure,
+            expense.arrival,
+            expense.distance,
+            expense.get_vehicle_type_display(),
+            expense.get_fiscal_power_display(),
+            expense.amount,
+            expense.project or 'N/A',
+            expense.get_status_display()
+        ])
+    
+    return response
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def approve_all_kilometric_expenses(request):
+    """
+    Approuve tous les frais kilométriques en attente
+    """
+    pending_expenses = KilometricExpense.objects.filter(status='pending')
+    count = pending_expenses.count()
+    
+    for expense in pending_expenses:
+        expense.status = 'approved'
+        expense.save()
+        
+        # Notifier l'utilisateur
+        Notification.objects.create(
+            user=expense.user,
+            title="Frais kilométrique approuvé",
+            message=f"Votre trajet de {expense.distance} km entre {expense.departure} et {expense.arrival} a été approuvé pour un montant de {expense.amount} €.",
+            link_url="/my-kilometric-expenses/",
+            icon="fa-route"
+        )
+    
+    messages.success(request, f"{count} frais kilométrique(s) ont été approuvés avec succès.")
+    return redirect('manage_kilometric_expenses')

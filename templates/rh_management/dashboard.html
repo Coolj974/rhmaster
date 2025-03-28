@@ -2,371 +2,695 @@
 
 {% block extra_css %}
 <style>
-    /* Styles simples */
-    .stat-card {
-        border-radius: 0.5rem;
-        background-color: #fff;
-        border: 1px solid #e3e6f0;
+    /* Styles améliorés pour le dashboard */
+    .dashboard-container {
+        padding: 1.2rem 0;
+    }
+    
+    .welcome-section {
+        background: linear-gradient(135deg, #f8f9fa, #eaecf4);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        border-left: 4px solid #4e73df;
+        transition: all 0.3s ease;
+    }
+    
+    .welcome-section:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .action-card {
         height: 100%;
+        border: none;
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .action-card .card-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .action-card .icon-container {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+    }
+    
+    .action-card .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+    
+    .action-card .card-text {
+        color: #6c757d;
+        flex-grow: 1;
+        margin-bottom: 1.25rem;
+    }
+    
+    .action-card .btn {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
         transition: all 0.2s;
     }
     
-    .stat-card:hover {
-        border-color: #4e73df;
-        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
+    .action-card .btn:hover {
+        transform: translateY(-2px);
+    }
+    
+    .stats-card {
+        border-radius: 10px;
+        transition: all 0.3s;
+        height: 100%;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .stat-item {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        background: #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        display: flex;
+        align-items: center;
+        transition: all 0.2s;
+    }
+    
+    .stat-item:hover {
+        background-color: #f8f9fc;
+        transform: translateX(3px);
     }
     
     .stat-icon {
         width: 45px;
         height: 45px;
-        border-radius: 50%;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 15px;
-        color: white;
+        font-size: 1.2rem;
+        margin-right: 1rem;
     }
     
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
+    .stat-text {
+        flex-grow: 1;
     }
     
-    .status-pending { background-color: #fff3cd; color: #856404; }
-    .status-approved { background-color: #d4edda; color: #155724; }
-    .status-rejected { background-color: #f8d7da; color: #721c24; }
+    .stat-title {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
     
-    /* Couleurs de base */
-    .bg-lighter-primary { background-color: #eaecf4; }
-    .bg-lighter-success { background-color: #e0f5ea; }
-    .bg-lighter-warning { background-color: #fff3cd; }
-    .bg-lighter-info { background-color: #e0f5ff; }
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #3a3b45;
+    }
+    
+    .action-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        height: 100%;
+    }
+    
+    .action-link:hover {
+        color: inherit;
+    }
+    
+    /* Indicateurs d'activité avec pulsation */
+    .activity-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+        position: relative;
+    }
+    
+    .activity-indicator.active {
+        background-color: #1cc88a;
+    }
+    
+    .activity-indicator.active::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        border-radius: 50%;
+        background-color: rgba(28, 200, 138, 0.5);
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 0.8;
+        }
+        70% {
+            transform: scale(1.7);
+            opacity: 0;
+        }
+        100% {
+            transform: scale(1.7);
+            opacity: 0;
+        }
+    }
+    
+    /* Améliorations pour les devices mobiles */
+    @media (max-width: 767.98px) {
+        .welcome-section {
+            padding: 1.2rem;
+        }
+        
+        .action-card .card-body {
+            padding: 1.2rem;
+        }
+    }
+    
+    /* Messages d'alerte plus visibles */
+    .alert {
+        border-radius: 10px;
+        border-left: 4px solid;
+    }
+    
+    .alert-success {
+        border-color: #1cc88a;
+    }
+    
+    .alert-warning {
+        border-color: #f6c23e;
+    }
+    
+    .alert-danger {
+        border-color: #e74a3b;
+    }
+    
+    /* Timeline améliorée */
+    .timeline {
+        position: relative;
+        padding-left: 1.5rem;
+        margin: 0 0 0 30px;
+        color: #6c757d;
+    }
+    
+    .timeline:before {
+        content: ' ';
+        background: #e3e6f0;
+        display: inline-block;
+        position: absolute;
+        left: 0;
+        width: 2px;
+        height: 100%;
+        z-index: 1;
+    }
+    
+    .timeline-item {
+        margin: 1.5rem 0;
+        position: relative;
+    }
+    
+    .timeline-item:first-child {
+        margin-top: 0;
+    }
+    
+    .timeline-item:before {
+        content: ' ';
+        background: white;
+        display: inline-block;
+        position: absolute;
+        border-radius: 50%;
+        left: -38px;
+        width: 16px;
+        height: 16px;
+        z-index: 2;
+        border: 2px solid #4e73df;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <!-- En-tête avec actions -->
-    <div class="row mb-3 align-items-center">
-        <div class="col">
-            <h1 class="h3 mb-0 text-gray-800">Tableau de bord</h1>
-            <p class="text-muted small">Bienvenue dans votre espace cybeRH</p>
-        </div>
-        <div class="col-auto">
-            <div class="btn-group">
-                {% if is_admin or is_rh or is_encadrant %}
-                <a href="{% url 'manage_leaves' %}" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-calendar-check me-1"></i> Gérer les congés
-                    {% if new_leave_requests_count > 0 %}
-                    <span class="badge bg-danger ms-1">{{ new_leave_requests_count }}</span>
+<div class="container dashboard-container">
+    <!-- Message de bienvenue personnalisé -->
+    <div class="welcome-section mb-4">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="avatar-wrapper">
+                    {% if request.user.userprofile.profile_picture %}
+                        <img src="{{ request.user.userprofile.profile_picture.url }}" alt="Photo de profil" 
+                             class="rounded-circle shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
+                    {% else %}
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow-sm" 
+                             style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            {{ request.user.username.0|upper }}
+                        </div>
                     {% endif %}
-                </a>
-                {% endif %}
-                <a href="{% url 'leave_request' %}" class="btn btn-sm btn-primary">
-                    <i class="fas fa-plus me-1"></i> Demande de congé
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cartes statistiques -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-6 col-xl-3">
-            <div class="stat-card p-3">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-primary">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <div>
-                        <div class="fs-5 fw-bold text-primary" id="leave-count">{{ leave_balance.available|default:"0" }}</div>
-                        <div class="text-muted small">Congés disponibles</div>
-                    </div>
-                </div>
-                <div class="progress mt-3" style="height: 5px;">
-                    <div class="progress-bar bg-primary" style="width: {{ leave_balance.percentage|default:0 }}%"></div>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-6 col-xl-3">
-            <div class="stat-card p-3">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-success">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                    </div>
-                    <div>
-                        <div class="fs-5 fw-bold text-success" id="expense-count">{{ expense_count|default:0 }}</div>
-                        <div class="text-muted small">Notes de frais</div>
-                    </div>
-                </div>
-                <div class="text-end mt-3">
-                    <a href="{% url 'submit_expense' %}" class="btn btn-sm btn-outline-success">
-                        <i class="fas fa-plus me-1"></i> Ajouter
-                    </a>
-                </div>
+            <div class="col">
+                <h2 class="h4 mb-1">Bienvenue, {{ request.user.get_full_name|default:request.user.username }}</h2>
+                <p class="text-muted mb-0">
+                    <span class="activity-indicator active"></span>
+                    Connecté en tant que 
+                    {% if request.user.is_superuser %}
+                        <span class="badge bg-danger">Administrateur</span>
+                    {% elif is_rh %}
+                        <span class="badge bg-warning text-dark">RH</span>
+                    {% elif is_encadrant %}
+                        <span class="badge bg-info">Encadrant</span>
+                    {% elif is_stp %}
+                        <span class="badge bg-success">STP</span>
+                    {% else %}
+                        <span class="badge bg-primary">Employé</span>
+                    {% endif %}
+                </p>
             </div>
-        </div>
-        
-        <div class="col-md-6 col-xl-3">
-            <div class="stat-card p-3">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-warning">
-                        <i class="fas fa-car"></i>
-                    </div>
-                    <div>
-                        <div class="fs-5 fw-bold text-warning" id="km-expense-count">{{ km_expense_count|default:0 }}</div>
-                        <div class="text-muted small">Frais kilométriques</div>
-                    </div>
-                </div>
-                <div class="text-end mt-3">
-                    <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-sm btn-outline-warning">
-                        <i class="fas fa-plus me-1"></i> Ajouter
-                    </a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6 col-xl-3">
-            <div class="stat-card p-3">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-info">
-                        <i class="fas fa-key"></i>
-                    </div>
-                    <div>
-                        <div class="fs-5 fw-bold text-info" id="password-count">{{ password_count|default:0 }}</div>
-                        <div class="text-muted small">Mots de passe</div>
-                    </div>
-                </div>
-                <div class="text-end mt-3">
-                    <a href="/passwords/" class="btn btn-sm btn-outline-info">
-                        <i class="fas fa-unlock-alt me-1"></i> Gérer
-                    </a>
+            <div class="col-auto">
+                <div class="current-date text-end">
+                    <div class="h5 mb-0">{{ current_date|date:"l j F Y" }}</div>
+                    <div class="small text-muted" id="current-time">{{ current_date|time:"H:i:s" }}</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Vos demandes récentes -->
-    <div class="row g-3">
-        <!-- Congés récents -->
-        <div class="col-lg-6">
-            <div class="card border-0 mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center bg-lighter-primary">
-                    <h5 class="mb-0 text-primary">
-                        <i class="fas fa-calendar-alt me-2"></i>Congés récents 
-                        {% if new_leave_requests_count > 0 %}
-                            <span class="badge bg-danger ms-2">{{ new_leave_requests_count }}</span>
-                        {% endif %}
-                    </h5>
-                    <div>
-                        {% if is_admin or is_rh or is_encadrant %}
-                        <a href="{% url 'manage_leaves' %}" class="btn btn-sm btn-outline-primary me-2">
-                            <i class="fas fa-tasks me-1"></i> Gérer
-                        </a>
-                        {% endif %}
-                        <a href="{% url 'leave_request' %}" class="btn btn-sm btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nouvelle demande
-                        </a>
+    <!-- Actions principales pour tous les utilisateurs -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <a href="{% url 'leave_request' %}" class="action-link">
+                <div class="card action-card">
+                    <div class="card-body">
+                        <div class="icon-container bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-calendar-plus"></i>
+                        </div>
+                        <h5 class="card-title">Demande de congé</h5>
+                        <p class="card-text">Soumettez une nouvelle demande de congé ou consultez vos demandes existantes.</p>
+                        <div class="d-grid">
+                            <button class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-1"></i> Nouvelle demande
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="list-group list-group-flush">
-                    {% if leave_requests %}
-                        {% for leave in leave_requests|slice:":5" %}
-                        <div class="list-group-item p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="fw-bold">{{ leave.get_leave_type_display }}</div>
-                                    <div class="small text-muted">
-                                        <i class="fas fa-calendar-day me-1"></i> {{ leave.start_date|date:"d/m/Y" }} au {{ leave.end_date|date:"d/m/Y" }}
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <span class="status-badge status-{{ leave.status }} me-2">{{ leave.get_status_display }}</span>
-                                    {% if leave.status == "pending" %}
-                                        <a href="{% url 'cancel_leave' leave.id %}" class="btn btn-sm btn-outline-danger" 
-                                           onclick="return confirm('Êtes-vous sûr de vouloir annuler cette demande ?')">
-                                            <i class="fas fa-times"></i> Annuler
-                                        </a>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="list-group-item p-4 text-center">
-                            <p class="text-muted mb-2"><i class="fas fa-calendar-times fa-2x mb-2"></i></p>
-                            <p class="mb-2">Aucune demande de congé récente</p>
-                            <a href="{% url 'leave_request' %}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-plus me-1"></i> Nouvelle demande
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
+            </a>
         </div>
         
-        <!-- Notes de frais récentes -->
-        <div class="col-lg-6">
-            <div class="card border-0 mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center bg-lighter-success">
-                    <h5 class="mb-0 text-success">
-                        <i class="fas fa-receipt me-2"></i>Notes de frais 
-                        {% if new_expense_reports_count > 0 %}
-                            <span class="badge bg-danger ms-2">{{ new_expense_reports_count }}</span>
-                        {% endif %}
-                    </h5>
-                    <div>
-                        {% if is_admin or is_rh or is_encadrant %}
-                        <a href="{% url 'manage_expenses' %}" class="btn btn-sm btn-outline-success me-2">
-                            <i class="fas fa-tasks me-1"></i> Gérer
-                        </a>
-                        {% endif %}
-                        <a href="{% url 'submit_expense' %}" class="btn btn-sm btn-success">
-                            <i class="fas fa-plus me-1"></i> Nouvelle note
-                        </a>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <a href="{% url 'my_leaves' %}" class="action-link">
+                <div class="card action-card">
+                    <div class="card-body">
+                        <div class="icon-container bg-success bg-opacity-10 text-success">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h5 class="card-title">Mes congés</h5>
+                        <p class="card-text">Consultez l'historique de vos congés et le solde de jours disponibles.</p>
+                        <div class="d-grid">
+                            <button class="btn btn-success">
+                                <i class="fas fa-list-ul me-1"></i> Voir mes congés
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="list-group list-group-flush">
-                    {% if expense_reports %}
-                        {% for expense in expense_reports|slice:":5" %}
-                        <div class="list-group-item p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="fw-bold">{{ expense.description }}</div>
-                                    <div class="small text-muted">
-                                        <i class="fas fa-euro-sign me-1"></i> {{ expense.amount }} € 
-                                        <span class="ms-2"><i class="far fa-calendar me-1"></i>{{ expense.date|date:"d/m/Y" }}</span>
-                                        <span class="ms-2"><i class="fas fa-tag me-1"></i>{{ expense.get_expense_type_display }}</span>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <span class="status-badge status-{{ expense.status }} me-2">{{ expense.get_status_display }}</span>
-                                    {% if expense.status == "pending" %}
-                                        <a href="{% url 'cancel_expense' expense.id %}" class="btn btn-sm btn-outline-danger" 
-                                           onclick="return confirm('Êtes-vous sûr de vouloir annuler cette note de frais ?')">
-                                            <i class="fas fa-times"></i> Annuler
-                                        </a>
-                                    {% endif %}
-                                    {% if expense.receipt %}
-                                        <a href="{{ expense.receipt.url }}" class="btn btn-sm btn-outline-info ms-2" target="_blank">
-                                            <i class="fas fa-file-alt"></i>
-                                        </a>
-                                    {% endif %}
-                                </div>
-                            </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <a href="{% url 'submit_expense' %}" class="action-link">
+                <div class="card action-card">
+                    <div class="card-body">
+                        <div class="icon-container bg-warning bg-opacity-10 text-warning">
+                            <i class="fas fa-file-invoice-dollar"></i>
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="list-group-item p-4 text-center">
-                            <p class="text-muted mb-2"><i class="fas fa-file-invoice fa-2x mb-2"></i></p>
-                            <p class="mb-2">Aucune note de frais récente</p>
-                            <a href="{% url 'submit_expense' %}" class="btn btn-sm btn-success">
-                                <i class="fas fa-plus me-1"></i> Nouvelle note
-                            </a>
+                        <h5 class="card-title">Note de frais</h5>
+                        <p class="card-text">Soumettez une nouvelle note de frais pour vos dépenses professionnelles.</p>
+                        <div class="d-grid">
+                            <button class="btn btn-warning text-dark">
+                                <i class="fas fa-receipt me-1"></i> Nouvelle note
+                            </button>
                         </div>
-                    {% endif %}
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <a href="{% url 'my_expenses' %}" class="action-link">
+                <div class="card action-card">
+                    <div class="card-body">
+                        <div class="icon-container bg-info bg-opacity-10 text-info">
+                            <i class="fas fa-search-dollar"></i>
+                        </div>
+                        <h5 class="card-title">Mes notes de frais</h5>
+                        <p class="card-text">Consultez vos notes de frais existantes et leur statut actuel.</p>
+                        <div class="d-grid">
+                            <button class="btn btn-info">
+                                <i class="fas fa-list-ul me-1"></i> Voir mes notes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Section pour les demandes de congés en attente (pour les RH et admins) -->
+    {% if is_hr or is_admin %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow h-100 rounded-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center bg-white rounded-top">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-clock fa-sm mr-2"></i> Demandes en attente
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Onglets -->
+                    <ul class="nav nav-tabs mb-3" id="pendingTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="leaves-tab" data-bs-toggle="tab" data-bs-target="#leaves" type="button" role="tab">
+                                Congés 
+                                {% if pending_leaves_count > 0 %}
+                                <span class="badge bg-danger ms-1">{{ pending_leaves_count }}</span>
+                                {% endif %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="expenses-tab" data-bs-toggle="tab" data-bs-target="#expenses" type="button" role="tab">
+                                Frais 
+                                {% if pending_expenses_count > 0 %}
+                                <span class="badge bg-danger ms-1">{{ pending_expenses_count }}</span>
+                                {% endif %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="kilometrics-tab" data-bs-toggle="tab" data-bs-target="#kilometrics" type="button" role="tab">
+                                Kilométrique 
+                                {% if pending_kilometrics_count > 0 %}
+                                <span class="badge bg-danger ms-1">{{ pending_kilometrics_count }}</span>
+                                {% endif %}
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <!-- Contenu des onglets -->
+                    <div class="tab-content">
+                        <!-- ...existing code... -->
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
+    {% endif %}
 
-        <!-- Frais kilométriques récents -->
-        <div class="col-lg-6">
-            <div class="card border-0 mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center bg-lighter-warning">
-                    <h5 class="mb-0 text-warning">
-                        <i class="fas fa-car me-2"></i>Frais kilométriques 
-                        {% if new_kilometric_expenses_count > 0 %}
-                            <span class="badge bg-danger ms-2">{{ new_kilometric_expenses_count }}</span>
-                        {% endif %}
-                    </h5>
-                    <div>
-                        {% if is_admin or is_rh or is_encadrant %}
-                        <a href="{% url 'manage_kilometric_expenses' %}" class="btn btn-sm btn-outline-warning me-2">
-                            <i class="fas fa-tasks me-1"></i> Gérer
-                        </a>
-                        {% endif %}
-                        <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-sm btn-warning">
-                            <i class="fas fa-plus me-1"></i> Nouvelle demande
-                        </a>
-                    </div>
+    <div class="row">
+        <!-- Colonne des statistiques et notifications -->
+        <div class="col-lg-4 mb-4">
+            <div class="card stats-card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Mon résumé</h6>
                 </div>
-                <div class="list-group list-group-flush">
-                    {% if kilometric_expenses %}
-                        {% for expense in kilometric_expenses|slice:":5" %}
-                        <div class="list-group-item p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="fw-bold">{{ expense.departure }} → {{ expense.arrival }}</div>
-                                    <div class="small text-muted">
-                                        <i class="fas fa-route me-1"></i> {{ expense.distance }} km
-                                        <span class="ms-2"><i class="fas fa-euro-sign me-1"></i>{{ expense.amount }} €</span>
-                                        <span class="ms-2"><i class="far fa-calendar me-1"></i>{{ expense.date|date:"d/m/Y" }}</span>
-                                        {% if expense.project %}
-                                        <span class="ms-2"><i class="fas fa-briefcase me-1"></i>{{ expense.project }}</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <span class="status-badge status-{{ expense.status }} me-2">{{ expense.get_status_display }}</span>
-                                    {% if expense.status == "pending" %}
-                                        <a href="{% url 'cancel_kilometric_expense' expense.id %}" class="btn btn-sm btn-outline-danger" 
-                                           onclick="return confirm('Êtes-vous sûr de vouloir annuler ces frais kilométriques ?')">
-                                            <i class="fas fa-times"></i> Annuler
-                                        </a>
-                                    {% endif %}
-                                </div>
+                <div class="card-body">
+                    {% if leave_balance %}
+                    <div class="stat-item">
+                        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="stat-text">
+                            <div class="stat-title">Solde de congés</div>
+                            <div class="stat-value {% if leave_balance.available > 5 %}text-success{% elif leave_balance.available > 0 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ leave_balance.available }} jour(s)
                             </div>
                         </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon bg-success bg-opacity-10 text-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-text">
+                            <div class="stat-title">Congés approuvés</div>
+                            <div class="stat-value">{{ approved_leaves_count }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-text">
+                            <div class="stat-title">Demandes en attente</div>
+                            <div class="stat-value">{{ pending_leaves_count }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon bg-info bg-opacity-10 text-info">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        <div class="stat-text">
+                            <div class="stat-title">Notes de frais soumises</div>
+                            <div class="stat-value">{{ expenses_count }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notifications récentes -->
+            {% if notifications %}
+            <div class="card stats-card">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Notifications récentes</h6>
+                    <a href="{% url 'notifications' %}" class="btn btn-sm btn-primary">Tout voir</a>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for notification in notifications %}
+                        <div class="timeline-item">
+                            <small class="text-muted">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
+                            <p class="mb-0 {% if not notification.read %}fw-bold{% endif %}">
+                                <i class="fas {{ notification.icon }} text-{{ notification.color }} me-2"></i>
+                                {{ notification.title }}
+                            </p>
+                        </div>
                         {% endfor %}
-                    {% else %}
-                        <div class="list-group-item p-4 text-center">
-                            <p class="text-muted mb-2"><i class="fas fa-car fa-2x mb-2"></i></p>
-                            <p class="mb-2">Aucun frais kilométrique récent</p>
-                            <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-sm btn-warning">
-                                <i class="fas fa-plus me-1"></i> Nouvelle demande
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Colonne des actions administratives et approbations -->
+        <div class="col-lg-8">
+            <!-- Actions pour les administrateurs / RH / encadrants -->
+            {% if is_admin or is_rh or is_encadrant %}
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Actions d'administration</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if is_admin or is_rh or is_encadrant %}
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'manage_leaves' %}" class="card action-link h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                                            <i class="fas fa-tasks text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">Gestion des congés</h6>
+                                            <small class="text-muted">Approuver ou refuser des demandes</small>
+                                        </div>
+                                    </div>
+                                    {% if pending_leave_requests_count > 0 %}
+                                    <div class="badge bg-warning text-dark mt-auto">
+                                        <i class="fas fa-bell me-1"></i> {{ pending_leave_requests_count }} demande(s) en attente
+                                    </div>
+                                    {% else %}
+                                    <div class="badge bg-success mt-auto">
+                                        <i class="fas fa-check me-1"></i> Aucune demande en attente
+                                    </div>
+                                    {% endif %}
+                                </div>
                             </a>
                         </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'manage_expenses' %}" class="card action-link h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                                            <i class="fas fa-file-invoice text-warning"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">Gestion des notes de frais</h6>
+                                            <small class="text-muted">Valider ou refuser des notes</small>
+                                        </div>
+                                    </div>
+                                    {% if pending_expense_reports_count > 0 %}
+                                    <div class="badge bg-warning text-dark mt-auto">
+                                        <i class="fas fa-bell me-1"></i> {{ pending_expense_reports_count }} note(s) en attente
+                                    </div>
+                                    {% else %}
+                                    <div class="badge bg-success mt-auto">
+                                        <i class="fas fa-check me-1"></i> Aucune note en attente
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        {% if is_admin or is_rh %}
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'manage_leave_balances' %}" class="card action-link h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                                            <i class="fas fa-balance-scale text-success"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">Soldes de congés</h6>
+                                            <small class="text-muted">Gérer les soldes des employés</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'manage_kilometric_expenses' %}" class="card action-link h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                                            <i class="fas fa-route text-info"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">Frais kilométriques</h6>
+                                            <small class="text-muted">Valider les trajets</small>
+                                        </div>
+                                    </div>
+                                    {% if pending_km_expense_count > 0 %}
+                                    <div class="badge bg-warning text-dark mt-auto">
+                                        <i class="fas fa-bell me-1"></i> {{ pending_km_expense_count }} trajet(s) en attente
+                                    </div>
+                                    {% else %}
+                                    <div class="badge bg-success mt-auto">
+                                        <i class="fas fa-check me-1"></i> Aucun trajet en attente
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Congés à venir -->
+            <div class="card">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Calendrier de mes congés</h6>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_leaves %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date de début</th>
+                                    <th>Date de fin</th>
+                                    <th>Type</th>
+                                    <th>Durée</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for leave in upcoming_leaves %}
+                                <tr>
+                                    <td>{{ leave.start_date|date:"d/m/Y" }}</td>
+                                    <td>{{ leave.end_date|date:"d/m/Y" }}</td>
+                                    <td>{{ leave.get_leave_type_display }}</td>
+                                    <td>{{ leave.days_requested }} jour(s)</td>
+                                    <td>
+                                        <span class="badge {% if leave.status == 'pending' %}bg-warning
+                                            {% elif leave.status == 'approved' %}bg-success
+                                            {% elif leave.status == 'rejected' %}bg-danger{% endif %}">
+                                            {{ leave.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-day fa-3x mb-3 text-muted"></i>
+                        <p class="mb-0">Vous n'avez pas de congés à venir.</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
 {% block extra_scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Récupérer le token CSRF
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    
-    // Appel à l'API avec le token CSRF
-    fetch('/api/dashboard-stats/', {
-        headers: {
-            'X-CSRFToken': csrftoken
-        },
-        credentials: 'same-origin'
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Erreur réseau');
-        return response.json();
-    })
-    .then(data => {
-        // Mise à jour des compteurs
-        const elements = {
-            'leave-count': data.leave_count || 0,
-            'expense-count': data.expense_count || 0,
-            'km-expense-count': data.km_expense_count || 0,
-            'password-count': data.password_count || 0
-        };
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mettre à jour l'heure en temps réel
+        function updateClock() {
+            const now = new Date();
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                timeElement.textContent = now.toLocaleTimeString('fr-FR');
+                setTimeout(updateClock, 1000);
+            }
+        }
+        updateClock();
         
-        Object.entries(elements).forEach(([id, value]) => {
-            const element = document.getElementById(id);
-            if (element) element.textContent = value;
+        // Animation au survol pour les cartes d'action
+        const actionCards = document.querySelectorAll('.action-card');
+        actionCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px)';
+                this.style.boxShadow = '0 15px 30px rgba(0,0,0,0.1)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+                this.style.boxShadow = '';
+            });
         });
-    })
-    .catch(error => console.error('Erreur API:', error));
-});
+    });
 </script>
+{% endblock %}
 {% endblock %}

@@ -27,14 +27,16 @@ from rh_management.views import (
     api_leaves,
     password_manager, password_add, password_view, password_edit, password_delete,
     leave_action, expense_action, kilometric_expense_action, manage_leave_balances,
-    update_leave_balance, dashboard_stats_api
+    update_leave_balance, dashboard_stats_api,
+    export_leave_balances, get_leave_balance_history, adjust_leave_balance, adjust_collective_leave_balance
 )
 
 # Import les nouvelles vues de notification
 from rh_management.views.notification_views import (
     notifications_view, mark_notification_read, mark_all_read,
     delete_notification, delete_all_read, get_notifications_count,
-    get_notifications_dropdown
+    get_notifications_dropdown,
+    get_notifications, mark_notification_as_read, mark_all_as_read, notifications_page
 )
 
 # Import pour la nouvelle vue
@@ -43,6 +45,12 @@ from rh_management.views.leave_views import (
     approve_leave, reject_leave, delete_leave, leave_action, 
     export_leaves, manage_leave_balances, update_leave_balance, 
     my_leaves, approve_all_leaves
+)
+
+# Import pour la gestion des rôles et utilisateurs
+from rh_management.views.user_management_views import (
+    manage_roles_view, create_role, edit_role, 
+    assign_permissions, assign_users, delete_role
 )
 
 # Error handlers
@@ -116,6 +124,10 @@ urlpatterns = [
     # Role management - explicitly define these paths
     path("manage-roles/", manage_roles_view, name="manage_roles"),
     path("delete-role/<int:role_id>/", delete_role, name="delete_role"),
+    path('roles/create/', create_role, name='create_role'),
+    path('roles/<int:role_id>/edit/', edit_role, name='edit_role'),
+    path('roles/<int:role_id>/permissions/', assign_permissions, name='assign_permissions'),
+    path('roles/<int:role_id>/users/', assign_users, name='assign_users'),
     
     # Leave Management
     path("leave-request/", leave_request_view, name="leave_request"),  # Leave request page
@@ -130,6 +142,10 @@ urlpatterns = [
     path('update-leave-balance/<int:user_id>/', update_leave_balance, name='update_leave_balance'),
     path('my-leaves/', my_leaves, name='my_leaves'),
     path('approve-all-leaves/', approve_all_leaves, name='approve_all_leaves'),  # Nouvelle URL
+    path('export-leave-balances/', export_leave_balances, name='export_leave_balances'),
+    path('leave-balance-history/<int:user_id>/', get_leave_balance_history, name='leave_balance_history'),
+    path('adjust-leave-balance/', adjust_leave_balance, name='adjust_leave_balance'),
+    path('adjust-collective-leave-balance/', adjust_collective_leave_balance, name='adjust_collective_leave_balance'),
 
     # Expense Management
     path("submit-expense/", submit_expense, name="submit_expense"),  # Submit expense
@@ -179,6 +195,11 @@ urlpatterns = [
     path("notifications/delete-all-read/", delete_all_read, name="delete_all_read"),
     path("api/notifications/count/", get_notifications_count, name="get_notifications_count"),
     path("api/notifications/dropdown/", get_notifications_dropdown, name="get_notifications_dropdown"),
+    path('notifications/get/', get_notifications, name='get_notifications'),
+    path('notifications/count/', get_notifications_count, name='get_notifications_count'),
+    path('notifications/mark-read/<int:notification_id>/', mark_notification_as_read, name='mark_notification_as_read'),
+    path('notifications/mark-all-read/', mark_all_as_read, name='mark_all_as_read'),
+    path('notifications/', notifications_page, name='notifications_page'),
 
     # API
     path("api/leaves/", api_leaves, name="api_leaves"),

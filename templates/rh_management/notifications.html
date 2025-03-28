@@ -1,32 +1,144 @@
 <!-- filepath: c:\Users\Cyberun 002\OneDrive\RHCYBER\hr_tool\rhmaster\templates\rh_management\notifications.html -->
 {% extends "base.html" %}
 
+{% block extra_css %}
+<style>
+    /* Styles pour la page de notifications */
+    .notification-card {
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+        border-radius: 0.75rem;
+        overflow: hidden;
+    }
+    
+    .notification-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
+    }
+    
+    .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background-color: #f8f9fc;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .notification-title {
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .notification-time {
+        font-size: 0.8rem;
+        color: #858796;
+    }
+    
+    .notification-body {
+        padding: 1rem;
+        background-color: #fff;
+    }
+    
+    .notification-message {
+        margin-bottom: 0.75rem;
+    }
+    
+    .notification-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+    
+    .filter-badge {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .filter-badge:hover {
+        opacity: 0.8;
+    }
+    
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+    }
+    
+    .notification-unread {
+        border-left: 3px solid #4e73df;
+    }
+    
+    .notification-read {
+        border-left: 3px solid #e3e6f0;
+        opacity: 0.8;
+    }
+    
+    .stats-card {
+        border-radius: 0.75rem;
+        box-shadow: 0 0.15rem 1.75rem rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 0;
+    }
+    
+    .empty-icon {
+        font-size: 3.5rem;
+        margin-bottom: 1.5rem;
+        color: #dddfeb;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.4s ease-in-out forwards;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-bell me-2"></i>Mes notifications</h1>
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-bell me-2"></i>Mes notifications
+        </h1>
         <div>
-            <a href="{% url 'mark_all_read' %}" class="btn btn-sm btn-outline-secondary">
+            <button id="markAllAsReadBtn" class="btn btn-outline-primary shadow-sm me-2">
                 <i class="fas fa-check-double me-1"></i> Tout marquer comme lu
-            </a>
-            <a href="{% url 'delete_all_read' %}" class="btn btn-sm btn-outline-danger">
-                <i class="fas fa-trash me-1"></i> Supprimer toutes les notifications lues
-            </a>
-            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-primary">
-                <i class="fas fa-arrow-left me-1"></i> Retour
-            </a>
+            </button>
+            <button id="deleteAllReadBtn" class="btn btn-outline-danger shadow-sm">
+                <i class="fas fa-trash me-1"></i> Supprimer les notifications lues
+            </button>
         </div>
     </div>
 
-    <!-- Statistiques des notifications -->
+    <!-- Statistiques -->
     <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-primary shadow h-100 py-2">
+        <div class="col-lg-4">
+            <div class="stats-card">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total</div>
+                                Total notifications
+                            </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total }}</div>
                         </div>
                         <div class="col-auto">
@@ -36,52 +148,35 @@
                 </div>
             </div>
         </div>
-
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-danger shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                Non lues</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.unread }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-bell-slash fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Congés</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.leave }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-warning shadow h-100 py-2">
+        <div class="col-lg-4">
+            <div class="stats-card">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Frais</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.expense|add:stats.km_expense }}</div>
+                                Non lues
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.unread }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-file-invoice fa-2x text-gray-300"></i>
+                            <i class="fas fa-envelope fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Lues
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.read }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-envelope-open fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -89,135 +184,229 @@
         </div>
     </div>
 
-    <!-- Liste des notifications -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-            <h6 class="m-0 font-weight-bold text-primary">Toutes mes notifications</h6>
-            <div class="dropdown no-arrow">
-                <a class="dropdown-toggle" href="#" role="button" id="filterDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i class="fas fa-filter fa-sm"></i>
-                </a>
-                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="filterDropdown">
-                    <a class="dropdown-item" href="?filter=all">Toutes</a>
-                    <a class="dropdown-item" href="?filter=unread">Non lues</a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="?filter=leave">Congés</a>
-                    <a class="dropdown-item" href="?filter=expense">Notes de frais</a>
-                    <a class="dropdown-item" href="?filter=km_expense">Frais kilométriques</a>
-                    <a class="dropdown-item" href="?filter=system">Système</a>
-                </div>
-            </div>
-        </div>
-        <div class="card-body p-0">
-            {% if notifications %}
-                <ul class="list-group list-group-flush notification-list">
-                    {% for notification in notifications %}
-                        <li class="list-group-item notification-item {% if not notification.read %}bg-light{% endif %}">
-                            <div class="d-flex">
-                                <div class="me-3">
-                                    <div class="notification-icon bg-{{ notification.color }} text-white rounded-circle p-3">
-                                        <i class="fas {{ notification.icon }} fa-lg"></i>
-                                    </div>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <h6 class="mb-1 {% if not notification.read %}fw-bold{% endif %}">{{ notification.title }}</h6>
-                                        <div class="d-flex">
-                                            {% if not notification.read %}
-                                                <a href="{% url 'mark_notification_read' notification.id %}" class="btn btn-sm btn-outline-success me-1" title="Marquer comme lu">
-                                                    <i class="fas fa-check"></i>
-                                                </a>
-                                            {% endif %}
-                                            <a href="{% url 'delete_notification' notification.id %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <p class="mb-1">{{ notification.message }}</p>
-                                    <div class="d-flex justify-content-between">
-                                        <small class="text-muted">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
-                                        {% if notification.url %}
-                                            <a href="{{ notification.url }}" class="btn btn-sm btn-link">
-                                                Voir détails <i class="fas fa-angle-right ms-1"></i>
-                                            </a>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                    {% endfor %}
-                </ul>
-                
-                <!-- Pagination -->
-                {% if notifications.has_other_pages %}
-                    <div class="p-3">
-                        <nav>
-                            <ul class="pagination justify-content-center mb-0">
-                                {% if notifications.has_previous %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page=1">&laquo; Début</a>
-                                    </li>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ notifications.previous_page_number }}">&lsaquo;</a>
-                                    </li>
-                                {% endif %}
-            
-                                {% for page_num in notifications.paginator.page_range %}
-                                    {% if notifications.number == page_num %}
-                                        <li class="page-item active">
-                                            <span class="page-link">{{ page_num }}</span>
-                                        </li>
-                                    {% else %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
-                                        </li>
-                                    {% endif %}
-                                {% endfor %}
-            
-                                {% if notifications.has_next %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ notifications.next_page_number }}">&rsaquo;</a>
-                                    </li>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ notifications.paginator.num_pages }}">Fin &raquo;</a>
-                                    </li>
-                                {% endif %}
-                            </ul>
-                        </nav>
-                    </div>
-                {% endif %}
-                
-            {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
-                    <p class="lead text-muted">Aucune notification à afficher</p>
-                </div>
-            {% endif %}
+    <!-- Filtres -->
+    <div class="mb-4">
+        <div class="btn-group" role="group" aria-label="Filtres de notifications">
+            <a href="{% url 'notifications_page' %}" class="btn {% if current_filter == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                <i class="fas fa-list-ul me-1"></i> Toutes ({{ stats.total }})
+            </a>
+            <a href="{% url 'notifications_page' %}?filter=unread" class="btn {% if current_filter == 'unread' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                <i class="fas fa-envelope me-1"></i> Non lues ({{ stats.unread }})
+            </a>
         </div>
     </div>
+
+    {% if notifications %}
+        <div class="notifications-list fade-in">
+            {% for notification in notifications %}
+                <div class="notification-card {% if notification.read %}notification-read{% else %}notification-unread{% endif %} shadow-sm" id="notification-{{ notification.id }}">
+                    <div class="notification-header">
+                        <div class="d-flex align-items-center">
+                            <div class="notification-icon 
+                                {% if notification.icon == 'fa-calendar-check' %}bg-success text-white
+                                {% elif notification.icon == 'fa-calendar-times' %}bg-danger text-white
+                                {% elif notification.icon == 'fa-route' %}bg-primary text-white
+                                {% elif notification.icon == 'fa-receipt' %}bg-info text-white
+                                {% else %}bg-secondary text-white{% endif %}">
+                                <i class="fas {{ notification.icon|default:'fa-bell' }}"></i>
+                            </div>
+                            <div>
+                                <h5 class="notification-title">{{ notification.title }}</h5>
+                                <span class="notification-time">{{ notification.created_at|timesince }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            {% if notification.read %}
+                                <span class="badge bg-success">Lu</span>
+                            {% else %}
+                                <span class="badge bg-warning">Non lu</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="notification-body">
+                        <p class="notification-message">{{ notification.message }}</p>
+                        <div class="notification-actions">
+                            {% if notification.url %}
+                                <a href="{{ notification.url }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt me-1"></i> Voir
+                                </a>
+                            {% endif %}
+                            
+                            {% if not notification.read %}
+                                <button class="btn btn-sm btn-outline-success mark-read" data-id="{{ notification.id }}">
+                                    <i class="fas fa-check me-1"></i> Marquer comme lu
+                                </button>
+                            {% endif %}
+                            
+                            <button class="btn btn-sm btn-outline-danger delete-notification" data-id="{{ notification.id }}">
+                                <i class="fas fa-trash me-1"></i> Supprimer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state fade-in">
+            <div class="empty-icon">
+                <i class="fas fa-bell-slash"></i>
+            </div>
+            <h4>Aucune notification</h4>
+            <p class="text-muted">
+                {% if current_filter == 'unread' %}
+                    Vous n'avez pas de notifications non lues
+                {% else %}
+                    Vous n'avez pas encore reçu de notifications
+                {% endif %}
+            </p>
+            {% if current_filter == 'unread' %}
+                <a href="{% url 'notifications_page' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-list-ul me-1"></i> Voir toutes les notifications
+                </a>
+            {% else %}
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-home me-1"></i> Retour à l'accueil
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
 </div>
 
 {% block extra_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Confirmation pour la suppression
-    const deleteButtons = document.querySelectorAll('.notification-list a[href^="/notifications/delete"]');
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            if (!confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
-                e.preventDefault();
+    // Marquer une notification comme lue
+    document.querySelectorAll('.mark-read').forEach(button => {
+        button.addEventListener('click', function() {
+            const notificationId = this.getAttribute('data-id');
+            fetch(`/notifications/mark-read/${notificationId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const card = document.getElementById(`notification-${notificationId}`);
+                    card.classList.remove('notification-unread');
+                    card.classList.add('notification-read');
+                    
+                    // Mettre à jour les badges
+                    const readBadge = document.createElement('span');
+                    readBadge.classList.add('badge', 'bg-success');
+                    readBadge.innerText = 'Lu';
+                    
+                    const statusContainer = card.querySelector('.notification-header > div:last-child');
+                    statusContainer.innerHTML = '';
+                    statusContainer.appendChild(readBadge);
+                    
+                    // Supprimer le bouton "marquer comme lu"
+                    this.remove();
+                    
+                    // Mise à jour des compteurs
+                    updateCounters();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+    
+    // Supprimer une notification
+    document.querySelectorAll('.delete-notification').forEach(button => {
+        button.addEventListener('click', function() {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
+                const notificationId = this.getAttribute('data-id');
+                fetch(`/notifications/delete/${notificationId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const card = document.getElementById(`notification-${notificationId}`);
+                        card.remove();
+                        
+                        // Mise à jour des compteurs
+                        updateCounters();
+                        
+                        // Si plus de notifications, afficher l'état vide
+                        if (document.querySelectorAll('.notification-card').length === 0) {
+                            location.reload();
+                        }
+                    }
+                })
+                .catch(error => console.error('Error:', error));
             }
         });
     });
     
-    // Confirmation pour la suppression de toutes les notifications lues
-    const deleteAllReadBtn = document.querySelector('a[href="{% url "delete_all_read" %}"]');
-    if (deleteAllReadBtn) {
-        deleteAllReadBtn.addEventListener('click', function(e) {
-            if (!confirm('Êtes-vous sûr de vouloir supprimer toutes les notifications lues ?')) {
-                e.preventDefault();
+    // Marquer toutes les notifications comme lues
+    document.getElementById('markAllAsReadBtn').addEventListener('click', function() {
+        if (confirm('Marquer toutes les notifications comme lues ?')) {
+            fetch('/notifications/mark-all-read/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Actualiser la page pour refléter les changements
+                    location.reload();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    });
+    
+    // Supprimer toutes les notifications lues
+    document.getElementById('deleteAllReadBtn').addEventListener('click', function() {
+        if (confirm('Supprimer toutes les notifications lues ?')) {
+            fetch('/notifications/delete-all-read/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Actualiser la page pour refléter les changements
+                    location.reload();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    });
+    
+    // Fonction pour mettre à jour les compteurs (non implémentée, nécessiterait un rechargement AJAX)
+    function updateCounters() {
+        // Cette fonction pourrait faire un appel AJAX pour mettre à jour les compteurs
+        // Pour l'instant on ne fait rien de spécial
+    }
+    
+    // Fonction pour récupérer le token CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
-        });
+        }
+        return cookieValue;
     }
 });
 </script>

@@ -1,875 +1,829 @@
 {% extends "base.html" %}
 
+{% block extra_css %}
+<style>
+    /* Styles pour le formulaire de frais kilométriques */
+    .form-panel {
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .form-panel:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #36b9cc 0%, #1a8a98 100%);
+        color: #ffffff;
+        padding: 1.5rem;
+    }
+    
+    .form-body {
+        padding: 2rem;
+    }
+    
+    .form-step {
+        position: relative;
+        padding-left: 2.5rem;
+        margin-bottom: 2.5rem;
+    }
+    
+    .step-number {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 32px;
+        height: 32px;
+        background-color: #36b9cc;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
+    .map-container {
+        height: 350px;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .trip-summary {
+        background-color: #f8f9fc;
+        border-radius: 8px;
+        padding: 1.2rem;
+        margin-top: 1.5rem;
+        border-left: 4px solid #36b9cc;
+    }
+    
+    .summary-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #36b9cc;
+    }
+    
+    .vehicle-card {
+        border: 2px solid #e3e6f0;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        height: 100%;
+    }
+    
+    .vehicle-card:hover {
+        border-color: #36b9cc;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .vehicle-card.selected {
+        border-color: #36b9cc;
+        background-color: rgba(54, 185, 204, 0.05);
+    }
+    
+    .vehicle-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #36b9cc;
+    }
+    
+    .route-details {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .route-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+    
+    .route-dot.start {
+        background-color: #1cc88a;
+    }
+    
+    .route-dot.end {
+        background-color: #e74a3b;
+    }
+    
+    .route-info {
+        flex-grow: 1;
+    }
+    
+    .route-address {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+    
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255,255,255,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        border-radius: 8px;
+    }
+    
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(54, 185, 204, 0.2);
+        border-top: 5px solid #36b9cc;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .info-box {
+        background-color: #e8f4f8;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        border-left: 4px solid #36b9cc;
+    }
+    
+    .info-box i {
+        color: #36b9cc;
+    }
+    
+    .btn-submit {
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animated {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    /* Styles responsifs */
+    @media (max-width: 767.98px) {
+        .form-header, .form-body {
+            padding: 1rem;
+        }
+        
+        .form-step {
+            padding-left: 2rem;
+        }
+        
+        .map-container {
+            height: 250px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="fas fa-car me-2"></i>Déclaration de frais kilométriques</h4>
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-route me-2"></i>Déclarer un trajet professionnel</h1>
+        <div>
+            <a href="{% url 'my_kilometric_expenses' %}" class="btn btn-primary shadow-sm me-2">
+                <i class="fas fa-list me-1"></i> Mes trajets
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm">
+                <i class="fas fa-arrow-left me-1"></i> Tableau de bord
+            </a>
         </div>
-        <div class="card-body p-4">
-            <div class="alert alert-info mb-4">
-                <i class="fas fa-info-circle me-2"></i>
-                Sélectionnez votre itinéraire sur la carte ou saisissez les adresses directement.
+    </div>
+
+    {% if messages %}
+    <div class="mb-4 animated">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            
-            <form id="kilometric-expense-form" method="post" class="needs-validation" novalidate action="{% url 'submit_kilometric_expense' %}">
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Formulaire de frais kilométriques -->
+    <div class="form-panel">
+        <div class="form-header">
+            <h5 class="mb-0"><i class="fas fa-car me-2"></i>Formulaire de frais kilométriques</h5>
+        </div>
+        <div class="form-body">
+            <form method="post" action="{% url 'submit_kilometric_expense' %}" id="kilometricForm">
                 {% csrf_token %}
                 
-                <!-- Champs obligatoires -->
-                <input type="hidden" name="departure_lat" id="departure_lat" required>
-                <input type="hidden" name="departure_lng" id="departure_lng" required>
-                <input type="hidden" name="arrival_lat" id="arrival_lat" required>
-                <input type="hidden" name="arrival_lng" id="arrival_lng" required>
-                <input type="hidden" name="distance" id="distance" required>
-                <input type="hidden" name="amount" id="amount" required>
-
-                <div class="row">
-                    <!-- Panneau d'information du véhicule -->
-                    <div class="col-lg-5 mb-4">
-                        <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-car-side me-2"></i>Information véhicule</h5>
-                        
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="id_date" class="form-label">Date <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                                    {{ form.date }}
-                                </div>
-                                {% if form.date.errors %}
-                                <div class="text-danger small mt-1">{{ form.date.errors }}</div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <label for="id_vehicle_type" class="form-label">Type de véhicule <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-car"></i></span>
-                                    {{ form.vehicle_type }}
-                                </div>
-                                {% if form.vehicle_type.errors %}
-                                <div class="text-danger small mt-1">{{ form.vehicle_type.errors }}</div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <label for="id_fiscal_power" class="form-label">Puissance fiscale <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-tachometer-alt"></i></span>
-                                    {{ form.fiscal_power }}
-                                </div>
-                                {% if form.fiscal_power.errors %}
-                                <div class="text-danger small mt-1">{{ form.fiscal_power.errors }}</div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <label for="id_project" class="form-label">Projet <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-project-diagram"></i></span>
-                                    {{ form.project }}
-                                </div>
-                                {% if form.project.errors %}
-                                <div class="text-danger small mt-1">{{ form.project.errors }}</div>
-                                {% endif %}
+                <!-- Étape 1: Informations générales -->
+                <div class="form-step animated" style="animation-delay: 0ms;">
+                    <div class="step-number">1</div>
+                    <h5 class="mb-3">Informations générales</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="description" name="description" placeholder="Description" required>
+                                <label for="description">Motif du déplacement <span class="text-danger">*</span></label>
                             </div>
                         </div>
                         
-                        <h5 class="mt-4 mb-3 border-bottom pb-2"><i class="fas fa-calculator me-2"></i>Remboursement</h5>
-                        
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="distance_field" class="form-label">Distance (km)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-road"></i></span>
-                                    <input type="text" id="distance_field" name="distance" class="form-control" readonly required>
-                                </div>
-                                <div class="form-text">Calculée selon l'itinéraire</div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <label for="reimbursement" class="form-label">Montant (€)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-euro-sign"></i></span>
-                                    <input type="text" id="reimbursement" name="reimbursement" class="form-control text-success" readonly required>
-                                </div>
-                            </div>
-                            
-                            <div class="col-12">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="aller_retour">
-                                    <label class="form-check-label" for="aller_retour">
-                                        <i class="fas fa-exchange-alt me-2"></i>Aller-retour
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="card bg-light mt-3">
-                            <div class="card-body">
-                                <h6 class="mb-2"><i class="fas fa-bell me-2"></i>Notifications</h6>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="notify_manager" checked>
-                                    <label class="form-check-label" for="notify_manager">
-                                        <i class="fas fa-user-tie me-1"></i> Informer mon responsable
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="notify_hr" checked>
-                                    <label class="form-check-label" for="notify_hr">
-                                        <i class="fas fa-users-cog me-1"></i> Informer les ressources humaines
-                                    </label>
-                                </div>
-                                <input type="hidden" name="notification_emails" id="notification_emails">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="date" class="form-control" id="date" name="date" placeholder="Date" required>
+                                <label for="date">Date du trajet <span class="text-danger">*</span></label>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Carte et itinéraire -->
-                    <div class="col-lg-7">
-                        <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-route me-2"></i>Itinéraire</h5>
-                        
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label for="departure" class="form-label">Départ <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-map-marker-alt text-danger"></i></span>
-                                    <input type="text" id="departure" name="departure" class="form-control" placeholder="Adresse de départ" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="arrival" class="form-label">Arrivée <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-flag-checkered text-success"></i></span>
-                                    <input type="text" id="arrival" name="arrival" class="form-control" placeholder="Adresse d'arrivée" required>
-                                </div>
-                            </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="project" name="project" placeholder="Projet associé">
+                        <label for="project">Projet ou client associé</label>
+                    </div>
+                </div>
+                
+                <!-- Étape 2: Itinéraire -->
+                <div class="form-step animated" style="animation-delay: 100ms;">
+                    <div class="step-number">2</div>
+                    <h5 class="mb-3">Itinéraire</h5>
+                    
+                    <div class="position-relative mb-3">
+                        <div class="map-container" id="map-canvas"></div>
+                        <div class="loading-overlay" id="map-loader">
+                            <div class="loading-spinner"></div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span><i class="fas fa-map me-2"></i>Carte interactive</span>
-                                <button type="button" id="clearMap" class="btn btn-sm btn-outline-secondary">
-                                    <i class="fas fa-trash-alt me-1"></i>Effacer
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label for="departure" class="form-label">Point de départ <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-success text-white">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </span>
+                                <input type="text" class="form-control" id="departure" name="departure" placeholder="Adresse de départ" required>
+                                <button type="button" class="btn btn-outline-secondary" id="locate-departure">
+                                    <i class="fas fa-location-arrow"></i>
                                 </button>
                             </div>
-                            <div id="map" style="height: 400px;" class="border rounded"></div>
-                            <div class="form-text" id="map-instructions">
-                                Cliquez d'abord sur votre point de départ, puis sur votre destination.
-                            </div>
+                            <input type="hidden" id="departure_lat" name="departure_lat">
+                            <input type="hidden" id="departure_lng" name="departure_lng">
                         </div>
                         
-                        <input type="hidden" id="departure_lat" name="departure_lat" required>
-                        <input type="hidden" id="departure_lng" name="departure_lng" required>
-                        <input type="hidden" id="arrival_lat" name="arrival_lat" required>
-                        <input type="hidden" id="arrival_lng" name="arrival_lng" required>
-                        <input type="hidden" name="distance" id="distance" required>
-                        <input type="hidden" name="amount" id="amount" required>
-
-                        <div class="text-center mt-4">
-                            <button type="submit" class="btn btn-primary px-4 py-2" id="submitBtn">
-                                <i class="fas fa-paper-plane me-2"></i> Soumettre ma demande
-                            </button>
+                        <div class="col-md-6 mb-3">
+                            <label for="arrival" class="form-label">Point d'arrivée <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-danger text-white">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </span>
+                                <input type="text" class="form-control" id="arrival" name="arrival" placeholder="Adresse d'arrivée" required>
+                                <button type="button" class="btn btn-outline-secondary" id="locate-arrival">
+                                    <i class="fas fa-location-arrow"></i>
+                                </button>
+                            </div>
+                            <input type="hidden" id="arrival_lat" name="arrival_lat">
+                            <input type="hidden" id="arrival_lng" name="arrival_lng">
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="button" class="btn btn-info" id="calculate-route">
+                            <i class="fas fa-calculator me-1"></i> Calculer l'itinéraire
+                        </button>
+                    </div>
+                    
+                    <div class="trip-summary mt-4" id="trip-summary" style="display: none;">
+                        <h6><i class="fas fa-info-circle me-2"></i>Récapitulatif du trajet</h6>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="route-details">
+                                    <div class="route-dot start"></div>
+                                    <div class="route-info">
+                                        <small class="text-muted d-block">Départ</small>
+                                        <div class="route-address" id="summary-departure">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="route-details">
+                                    <div class="route-dot end"></div>
+                                    <div class="route-info">
+                                        <small class="text-muted d-block">Arrivée</small>
+                                        <div class="route-address" id="summary-arrival">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <small class="text-muted d-block">Distance calculée</small>
+                                <div class="summary-value" id="summary-distance">-</div>
+                                <input type="hidden" id="distance" name="distance" value="0">
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Affichage des valeurs calculées -->
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="distance_display" class="form-label">Distance (km)</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-road"></i></span>
-                            <input type="text" id="distance_display" class="form-control" readonly>
+                <!-- Étape 3: Véhicule et montant -->
+                <div class="form-step animated" style="animation-delay: 200ms;">
+                    <div class="step-number">3</div>
+                    <h5 class="mb-3">Véhicule et montant</h5>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="vehicle-card" data-vehicle-type="car" data-fiscal-power="normal">
+                                <div class="vehicle-icon">
+                                    <i class="fas fa-car"></i>
+                                </div>
+                                <h6 class="mb-1">Voiture</h6>
+                                <p class="small mb-0 text-muted">5 CV et moins</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="vehicle-card" data-vehicle-type="car" data-fiscal-power="high">
+                                <div class="vehicle-icon">
+                                    <i class="fas fa-car-side"></i>
+                                </div>
+                                <h6 class="mb-1">Voiture</h6>
+                                <p class="small mb-0 text-muted">6 CV et plus</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="vehicle-card" data-vehicle-type="electric_car" data-fiscal-power="electric">
+                                <div class="vehicle-icon">
+                                    <i class="fas fa-charging-station"></i>
+                                </div>
+                                <h6 class="mb-1">Voiture électrique</h6>
+                                <p class="small mb-0 text-muted">Tous modèles</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="vehicle-card" data-vehicle-type="motorbike" data-fiscal-power="motorbike">
+                                <div class="vehicle-icon">
+                                    <i class="fas fa-motorcycle"></i>
+                                </div>
+                                <h6 class="mb-1">Moto</h6>
+                                <p class="small mb-0 text-muted">2 roues motorisé</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <label for="amount_display" class="form-label">Montant (€)</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-euro-sign"></i></span>
-                            <input type="text" id="amount_display" class="form-control" readonly>
+                    
+                    <input type="hidden" id="vehicle_type" name="vehicle_type" required>
+                    <input type="hidden" id="fiscal_power" name="fiscal_power" required>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="amount" name="amount" placeholder="0.00" readonly>
+                                <label for="amount">Montant estimé (€)</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="info-box">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <span id="rate-info">Sélectionnez un type de véhicule pour voir le taux appliqué.</span>
+                            </div>
                         </div>
                     </div>
+                    
+                    <div class="form-floating mb-4">
+                        <textarea class="form-control" id="comment" name="comment" style="height: 100px" placeholder="Commentaire"></textarea>
+                        <label for="comment">Commentaire (facultatif)</label>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-2 border-top">
+                    <a href="{% url 'my_kilometric_expenses' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-info btn-submit" id="submitButton" disabled>
+                        <i class="fas fa-paper-plane me-1"></i> Soumettre le trajet
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Leaflet.js -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>   
+{% block extra_scripts %}
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&callback=initMap" async defer></script>
+
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Éléments du formulaire
-        const form = document.getElementById("kilometric-expense-form");
-        const allerRetourCheckbox = document.getElementById("aller_retour");
-        const distanceField = document.getElementById("distance_field");
-        const reimbursementField = document.getElementById("reimbursement");
-        const vehicleTypeField = document.getElementById("id_vehicle_type");
-        const fiscalPowerField = document.getElementById("id_fiscal_power");
-        const clearMapBtn = document.getElementById("clearMap");
-        const mapInstructions = document.getElementById("map-instructions");
-        
-        // Taux de remboursement simplifiés
-        const reimbursementRates = {
-            'car': {
-                3: 0.529, 4: 0.606, 5: 0.636, 
-                6: 0.665, 7: 0.697, 8: 0.697
-            },
-            'electric_car': {
-                3: 0.635, 4: 0.727, 5: 0.763, 
-                6: 0.798, 7: 0.836, 8: 0.875
-            },
-            'motorbike': {
-                3: 0.635, 4: 0.727, 5: 0.763, 
-                6: 0.798, 7: 0.836
-            },
-            'bicycle': {
-                1: 0.25, 2: 0.25, 3: 0.25
-            }
-        };
+// Variables globales
+let map;
+let directionsService;
+let directionsRenderer;
+let departureMarker;
+let arrivalMarker;
+let departureAutocomplete;
+let arrivalAutocomplete;
 
-        // Calculer le remboursement - Déplacer la fonction au début
-        function updateReimbursement(distance) {
-            // Vérifier que la distance est un nombre valide
-            if (isNaN(distance) || distance === '' || distance === null) {
-                distance = 0;
-            }
-            
-            const vehicleType = document.getElementById('id_vehicle_type').value;
-            const fiscalPower = parseInt(document.getElementById('id_fiscal_power').value) || 0;
-            const reimbursementField = document.getElementById('reimbursement');
+// Taux kilométriques (en € par km)
+const rates = {
+    'normal': 0.32,   // 5CV et moins
+    'high': 0.41,     // 6CV et plus
+    'electric': 0.45, // Voiture électrique
+    'motorbike': 0.21 // Moto
+};
 
-            if (vehicleType && fiscalPower && reimbursementRates[vehicleType] && reimbursementRates[vehicleType][fiscalPower]) {
-                const rate = reimbursementRates[vehicleType][fiscalPower];
-                const reimbursement = parseFloat(distance) * rate;
-                reimbursementField.value = reimbursement.toFixed(2);
-                document.getElementById('amount').value = reimbursement.toFixed(2);
-            } else {
-                reimbursementField.value = "0.00";
-                document.getElementById('amount').value = "0.00";
-            }
-        }
-
-        // Fonction mise à jour de la distance
-        function updateDistance(distance) {
-            // S'assurer que la distance est un nombre valide
-            const validDistance = !isNaN(parseFloat(distance)) ? parseFloat(distance) : 0;
-            
-            document.getElementById('distance_field').value = validDistance.toFixed(2);
-            document.getElementById('distance').value = validDistance.toFixed(2);
-            updateReimbursement(validDistance);
-        }
-
-        // Stocker la distance initiale
-        let distanceInitiale = 0;
-
-        // Gérer l'aller-retour
-        allerRetourCheckbox.addEventListener("change", function() {
-            if (distanceInitiale === 0) {
-                distanceInitiale = parseFloat(distanceField.value) || 0;
-            }
-            
-            if (this.checked) {
-                distanceField.value = (distanceInitiale * 2).toFixed(2);
-                mapInstructions.innerHTML = "Distance doublée pour l'aller-retour";
-            } else {
-                distanceField.value = distanceInitiale.toFixed(2);
-                mapInstructions.innerHTML = "Distance simple pour l'aller simple";
-            }
-            updateReimbursement(parseFloat(distanceField.value));
-        });
-
-        // Mise à jour quand la distance change
-        distanceField.addEventListener("input", function() {
-            if (!allerRetourCheckbox.checked) {
-                distanceInitiale = parseFloat(this.value) || 0;
-            }
-            updateReimbursement(parseFloat(this.value));
-        });
-
-        // Mise à jour quand le type de véhicule change
-        vehicleTypeField.addEventListener("change", function() {
-            updateReimbursement(parseFloat(distanceField.value));
-        });
-        fiscalPowerField.addEventListener("change", function() {
-            updateReimbursement(parseFloat(distanceField.value));
-        });
-
-        // Configuration de la carte
-        let map = L.map('map').setView([-21.1151, 55.5364], 10); // Centré sur l'île de la Réunion
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        let departureMarker, arrivalMarker;
-        let routeLayer = null;
-        const openRouteServiceApiKey = "5b3ce3597851110001cf6248b85e99a3c95448b8a83d306fd7b84056";
-
-        // Géocodage des adresses
-        document.getElementById('departure').addEventListener('change', function() {
-            if(this.value && !departureMarker) {
-                geocodeAddress(this.value, 'departure');
-            }
-        });
-        
-        document.getElementById('arrival').addEventListener('change', function() {
-            if(this.value && !arrivalMarker && departureMarker) {
-                geocodeAddress(this.value, 'arrival');
-            }
-        });
-        
-        // Recherche d'adresse
-        function geocodeAddress(address, type) {
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`)
-                .then(response => response.json())
-                .then(data => {
-                    if(data.length > 0) {
-                        const lat = parseFloat(data[0].lat);
-                        const lng = parseFloat(data[0].lon);
-                        updateMarker(lat, lng, type);
-                    } else {
-                        alert("Adresse non trouvée");
-                    }
-                })
-                .catch(error => console.error("Erreur:", error));
-        }
-
-        // Mise à jour des marqueurs
-        function updateMarker(lat, lng, type) {
-            if (type === 'departure') {
-                if (departureMarker) map.removeLayer(departureMarker);
-                departureMarker = L.marker([lat, lng]).addTo(map).bindPopup("Départ").openPopup();
-                document.getElementById("departure_lat").value = lat;
-                document.getElementById("departure_lng").value = lng;
-                reverseGeocode(lat, lng, "departure");
-                mapInstructions.innerHTML = "Maintenant, cliquez sur votre point d'arrivée";
-            } else {
-                if (arrivalMarker) map.removeLayer(arrivalMarker);
-                arrivalMarker = L.marker([lat, lng]).addTo(map).bindPopup("Arrivée").openPopup();
-                document.getElementById("arrival_lat").value = lat;
-                document.getElementById("arrival_lng").value = lng;
-                reverseGeocode(lat, lng, "arrival");
-                mapInstructions.innerHTML = "Itinéraire calculé!";
-            }
-            calculateRoute();
-        }
-
-        // Conversion coordonnées -> adresse
-        function reverseGeocode(lat, lng, type) {
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-                .then(response => response.json())
-                .then(data => {
-                    let address = data.display_name;
-                    if (type === "departure") {
-                        document.getElementById("departure").value = address;
-                    } else {
-                        document.getElementById("arrival").value = address;
-                    }
-                })
-                .catch(error => console.error("Erreur:", error));
-        }
-
-        // Calcul de l'itinéraire
-        function calculateRoute() {
-            if (!departureMarker || !arrivalMarker) return;
-
-            const lat1 = departureMarker.getLatLng().lat;
-            const lng1 = departureMarker.getLatLng().lng;
-            const lat2 = arrivalMarker.getLatLng().lat;
-            const lng2 = arrivalMarker.getLatLng().lng;
-
-            // Utilisation de l'API OSRM pour plus de fiabilité
-            const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full`;
-
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.routes && data.routes.length > 0) {
-                        // Récupération de la distance en kilomètres
-                        const distance = data.routes[0].distance / 1000;
-                        
-                        // Mise à jour de l'affichage de la distance
-                        updateDistance(distance);  // Utiliser la fonction updateDistance
-
-                        // Tracé de l'itinéraire
-                        if (routeLayer) {
-                            map.removeLayer(routeLayer);
-                        }
-
-                        // Décodage de la géométrie de l'itinéraire
-                        const coordinates = decodePolyline(data.routes[0].geometry);
-                        routeLayer = L.polyline(coordinates, {color: 'blue'}).addTo(map);
-                        map.fitBounds(routeLayer.getBounds(), {padding: [30, 30]});
-
-                        // Mise à jour du montant
-                        updateReimbursement(distance);
-                        
-                        // Activation du bouton de soumission
-                        document.getElementById('submitBtn').disabled = false;
-                        enableSubmitButton();
-                    } else {
-                        alert("Impossible de calculer l'itinéraire entre ces deux points.");
-                    }
-                })
-                .catch(error => {
-                    console.error("Erreur:", error);
-                    // Calcul de la distance à vol d'oiseau en fallback
-                    const distance = calculateDirectDistance(lat1, lng1, lat2, lng2);
-                    updateDistance(distance);  // Utiliser la fonction updateDistance
-                });
-        }
-
-        // Fonction pour calculer la distance à vol d'oiseau (en cas d'échec de l'API)
-        function calculateDirectDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Rayon de la Terre en km
-            const dLat = toRad(lat2 - lat1);
-            const dLon = toRad(lon1 - lon2);
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
-                    Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
-
-        function toRad(degrees) {
-            return degrees * Math.PI / 180;
-        }
-
-        // Fonction pour décoder la géométrie de l'itinéraire
-        function decodePolyline(str, precision = 5) {
-            let index = 0,
-                lat = 0,
-                lng = 0,
-                coordinates = [],
-                shift = 0,
-                result = 0,
-                byte = null,
-                latitude_change,
-                longitude_change,
-                factor = Math.pow(10, precision);
-
-            while (index < str.length) {
-                byte = null;
-                shift = 0;
-                result = 0;
-
-                do {
-                    byte = str.charCodeAt(index++) - 63;
-                    result |= (byte & 0x1f) << shift;
-                    shift += 5;
-                } while (byte >= 0x20);
-
-                latitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
-                shift = result = 0;
-
-                do {
-                    byte = str.charCodeAt(index++) - 63;
-                    result |= (byte & 0x1f) << shift;
-                    shift += 5;
-                } while (byte >= 0x20);
-
-                longitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
-
-                lat += latitude_change;
-                lng += longitude_change;
-
-                coordinates.push([lat / factor, lng / factor]);
-            }
-
-            return coordinates;
-        }
-
-        // Réinitialiser la carte
-        clearMapBtn.addEventListener('click', function() {
-            if (departureMarker) {
-                map.removeLayer(departureMarker);
-                departureMarker = null;
-                document.getElementById("departure").value = "";
-                document.getElementById("departure_lat").value = "";
-                document.getElementById("departure_lng").value = "";
-            }
-            
-            if (arrivalMarker) {
-                map.removeLayer(arrivalMarker);
-                arrivalMarker = null;
-                document.getElementById("arrival").value = "";
-                document.getElementById("arrival_lat").value = "";
-                document.getElementById("arrival_lng").value = "";
-            }
-            
-            if (routeLayer) {
-                map.removeLayer(routeLayer);
-                routeLayer = null;
-            }
-            
-            distanceField.value = "0.00";
-            reimbursementField.value = "0.00";
-            distanceInitiale = 0;
-            
-            mapInstructions.innerHTML = "Cliquez d'abord sur votre point de départ, puis sur votre destination.";
-        });
-
-        // Clic sur la carte
-        map.on('click', function(e) {
-            if (!departureMarker) {
-                updateMarker(e.latlng.lat, e.latlng.lng, 'departure');
-            } else if (!arrivalMarker) {
-                updateMarker(e.latlng.lat, e.latlng.lng, 'arrival');
-            }
-        });
-
-        // Validation du formulaire
-        form.addEventListener("submit", function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-                
-                const requiredFields = form.querySelectorAll('[required]');
-                requiredFields.forEach(field => {
-                    if (!field.value) {
-                        field.classList.add('is-invalid');
-                    } else {
-                        field.classList.remove('is-invalid');
-                    }
-                });
-            } else {
-                const submitBtn = form.querySelector('button[type="submit"]');
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Traitement...';
-                submitBtn.disabled = true;
-            }
-            form.classList.add("was-validated");
-        });
-        
-        // Gérer les notifications par email
-        const notifyManagerCheckbox = document.getElementById('notify_manager');
-        const notifyHRCheckbox = document.getElementById('notify_hr');
-        const notificationEmailsInput = document.getElementById('notification_emails');
-        
-        function updateNotificationEmails() {
-            let emails = [];
-            if (notifyManagerCheckbox.checked) {
-                emails.push('manager@example.com');
-            }
-            if (notifyHRCheckbox.checked) {
-                emails.push('bcc:hr@example.com');
-            }
-            notificationEmailsInput.value = emails.join(',');
-        }
-        
-        notifyManagerCheckbox.addEventListener('change', updateNotificationEmails);
-        notifyHRCheckbox.addEventListener('change', updateNotificationEmails);
-        
-        // Initialiser les notifications
-        updateNotificationEmails();
-
-        // Nouvelle fonction pour vérifier la validité du formulaire
-        function enableSubmitButton() {
-            const departure = document.getElementById('departure').value;
-            const arrival = document.getElementById('arrival').value;
-            const distance = document.getElementById('distance').value;
-            const date = document.getElementById('id_date').value;
-            const vehicleType = document.getElementById('id_vehicle_type').value;
-            const fiscalPower = document.getElementById('id_fiscal_power').value;
-            const project = document.getElementById('id_project').value;
-
-            const isValid = departure && arrival && distance && date && vehicleType && fiscalPower && project;
-            document.getElementById('submitBtn').disabled = !isValid;
-        }
-
-        // Ajouter les écouteurs d'événements pour tous les champs requis
-        const requiredFields = document.querySelectorAll('input[required], select[required]');
-        requiredFields.forEach(field => {
-            field.addEventListener('change', enableSubmitButton);
-            field.addEventListener('input', enableSubmitButton);
-        });
-
-        // Supprimer le disabled initial du bouton
-        document.getElementById('submitBtn').removeAttribute('disabled');
+// Initialisation de la carte
+function initMap() {
+    // Cacher le loader une fois la carte chargée
+    const mapLoader = document.getElementById('map-loader');
+    mapLoader.style.display = 'none';
+    
+    // Créer la carte centrée sur la France
+    map = new google.maps.Map(document.getElementById('map-canvas'), {
+        center: { lat: 46.227638, lng: 2.213749 },
+        zoom: 6,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        mapTypeControl: false,
+        fullscreenControl: false
     });
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('kilometric-expense-form');
-        const submitBtn = document.getElementById('submitBtn');
-
-        // Fonction pour vérifier si le formulaire est valide
-        function checkFormValidity() {
-            const requiredFields = form.querySelectorAll('[required]');
-            let isValid = true;
+    
+    // Initialiser les services de direction
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        map: map,
+        suppressMarkers: true,
+        polylineOptions: {
+            strokeColor: '#36b9cc',
+            strokeWeight: 5
+        }
+    });
+    
+    // Initialiser les marqueurs (invisibles au départ)
+    departureMarker = new google.maps.Marker({
+        map: map,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 10,
+            fillColor: '#1cc88a',
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: '#FFFFFF'
+        },
+        visible: false
+    });
+    
+    arrivalMarker = new google.maps.Marker({
+        map: map,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 10,
+            fillColor: '#e74a3b',
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: '#FFFFFF'
+        },
+        visible: false
+    });
+    
+    // Initialiser les autocompletions
+    const departureInput = document.getElementById('departure');
+    const arrivalInput = document.getElementById('arrival');
+    
+    departureAutocomplete = new google.maps.places.Autocomplete(departureInput, {
+        types: ['address'],
+        componentRestrictions: { country: 'fr' }
+    });
+    
+    arrivalAutocomplete = new google.maps.places.Autocomplete(arrivalInput, {
+        types: ['address'],
+        componentRestrictions: { country: 'fr' }
+    });
+    
+    // Écouter les changements d'adresse via l'autocomplétion
+    departureAutocomplete.addListener('place_changed', function() {
+        const place = departureAutocomplete.getPlace();
+        
+        if (place && place.geometry) {
+            const location = place.geometry.location;
+            document.getElementById('departure_lat').value = location.lat();
+            document.getElementById('departure_lng').value = location.lng();
             
-            requiredFields.forEach(field => {
-                if (!field.value) {
-                    isValid = false;
+            departureMarker.setPosition(location);
+            departureMarker.setVisible(true);
+            
+            // Zoom sur le marqueur
+            map.setCenter(location);
+            map.setZoom(14);
+        }
+    });
+    
+    arrivalAutocomplete.addListener('place_changed', function() {
+        const place = arrivalAutocomplete.getPlace();
+        
+        if (place && place.geometry) {
+            const location = place.geometry.location;
+            document.getElementById('arrival_lat').value = location.lat();
+            document.getElementById('arrival_lng').value = location.lng();
+            
+            arrivalMarker.setPosition(location);
+            arrivalMarker.setVisible(true);
+            
+            // Zoom sur le marqueur
+            map.setCenter(location);
+            map.setZoom(14);
+        }
+    });
+    
+    // Initialiser les boutons de géolocalisation
+    document.getElementById('locate-departure').addEventListener('click', function() {
+        getCurrentLocation(function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            // Faire une géocodage inverse pour obtenir l'adresse
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ location: { lat, lng } }, function(results, status) {
+                if (status === 'OK' && results[0]) {
+                    departureInput.value = results[0].formatted_address;
+                    document.getElementById('departure_lat').value = lat;
+                    document.getElementById('departure_lng').value = lng;
+                    
+                    departureMarker.setPosition({ lat, lng });
+                    departureMarker.setVisible(true);
+                    
+                    map.setCenter({ lat, lng });
+                    map.setZoom(14);
+                } else {
+                    alert("Impossible de déterminer votre adresse actuelle.");
                 }
             });
-            
-            submitBtn.disabled = !isValid;
-        }
-
-        // Vérifier à chaque modification du formulaire
-        form.addEventListener('change', checkFormValidity);
-
-        // Validation avant soumission
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Vérifier les coordonnées
-            if (!document.getElementById('departure_lat').value || 
-                !document.getElementById('arrival_lat').value) {
-                alert('Veuillez sélectionner un point de départ et d\'arrivée sur la carte');
-                return;
-            }
-
-            // Vérifier la distance
-            if (!document.getElementById('distance').value) {
-                alert('La distance n\'a pas pu être calculée');
-                return;
-            }
-
-            // Si tout est OK, soumettre le formulaire
-            this.submit();
+        }, function(error) {
+            alert("Erreur de géolocalisation: " + error.message);
         });
+    });
+    
+    document.getElementById('locate-arrival').addEventListener('click', function() {
+        getCurrentLocation(function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            // Faire une géocodage inverse pour obtenir l'adresse
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ location: { lat, lng } }, function(results, status) {
+                if (status === 'OK' && results[0]) {
+                    arrivalInput.value = results[0].formatted_address;
+                    document.getElementById('arrival_lat').value = lat;
+                    document.getElementById('arrival_lng').value = lng;
+                    
+                    arrivalMarker.setPosition({ lat, lng });
+                    arrivalMarker.setVisible(true);
+                    
+                    map.setCenter({ lat, lng });
+                    map.setZoom(14);
+                } else {
+                    alert("Impossible de déterminer votre adresse actuelle.");
+                }
+            });
+        }, function(error) {
+            alert("Erreur de géolocalisation: " + error.message);
+        });
+    });
+    
+    // Initialiser le bouton de calcul d'itinéraire
+    document.getElementById('calculate-route').addEventListener('click', calculateRoute);
+}
 
-        // Mettre à jour les champs cachés lors du calcul de l'itinéraire
-        function updateFormFields(route) {
-            document.getElementById('distance').value = route.distance.toFixed(2);
-            document.getElementById('amount').value = calculateAmount(route.distance);
+// Fonction pour obtenir la géolocalisation actuelle
+function getCurrentLocation(successCallback, errorCallback) {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(successCallback, errorCallback, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        });
+    } else {
+        alert("La géolocalisation n'est pas supportée par ce navigateur.");
+    }
+}
+
+// Fonction pour calculer l'itinéraire
+function calculateRoute() {
+    const departure = document.getElementById('departure').value;
+    const arrival = document.getElementById('arrival').value;
+    
+    if (!departure || !arrival) {
+        alert("Veuillez indiquer les adresses de départ et d'arrivée.");
+        return;
+    }
+    
+    const departureLatInput = document.getElementById('departure_lat');
+    const departureLngInput = document.getElementById('departure_lng');
+    const arrivalLatInput = document.getElementById('arrival_lat');
+    const arrivalLngInput = document.getElementById('arrival_lng');
+    
+    let origin, destination;
+    
+    if (departureLatInput.value && departureLngInput.value) {
+        origin = {
+            lat: parseFloat(departureLatInput.value),
+            lng: parseFloat(departureLngInput.value)
+        };
+    } else {
+        origin = departure;
+    }
+    
+    if (arrivalLatInput.value && arrivalLngInput.value) {
+        destination = {
+            lat: parseFloat(arrivalLatInput.value),
+            lng: parseFloat(arrivalLngInput.value)
+        };
+    } else {
+        destination = arrival;
+    }
+    
+    // Montrer le loader
+    const mapLoader = document.getElementById('map-loader');
+    mapLoader.style.display = 'flex';
+    
+    // Lancer le calcul de l'itinéraire
+    directionsService.route({
+        origin: origin,
+        destination: destination,
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.METRIC
+    }, function(response, status) {
+        // Cacher le loader
+        mapLoader.style.display = 'none';
+        
+        if (status === "OK") {
+            // Afficher l'itinéraire sur la carte
+            directionsRenderer.setDirections(response);
+            
+            // Récupérer les détails de l'itinéraire
+            const route = response.routes[0];
+            const leg = route.legs[0];
+            
+            // Placer les marqueurs aux bonnes positions
+            departureMarker.setPosition(leg.start_location);
+            arrivalMarker.setPosition(leg.end_location);
+            departureMarker.setVisible(true);
+            arrivalMarker.setVisible(true);
+            
+            // Mettre à jour les coordonnées
+            document.getElementById('departure_lat').value = leg.start_location.lat();
+            document.getElementById('departure_lng').value = leg.start_location.lng();
+            document.getElementById('arrival_lat').value = leg.end_location.lat();
+            document.getElementById('arrival_lng').value = leg.end_location.lng();
+            
+            // Arrondir la distance au km supérieur
+            const distance = Math.ceil(leg.distance.value / 1000);
+            
+            // Mettre à jour le récapitulatif
+            document.getElementById('summary-departure').textContent = leg.start_address;
+            document.getElementById('summary-arrival').textContent = leg.end_address;
+            document.getElementById('summary-distance').textContent = distance + ' km';
+            document.getElementById('distance').value = distance;
+            
+            // Afficher le récapitulatif
+            document.getElementById('trip-summary').style.display = 'block';
+            
+            // Ajuster la carte pour montrer tout l'itinéraire
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(leg.start_location);
+            bounds.extend(leg.end_location);
+            map.fitBounds(bounds);
+            
+            // Mettre à jour le montant si un véhicule est sélectionné
+            updateAmount();
+            
+            // Vérifier si on peut activer le bouton de soumission
             checkFormValidity();
-        }
-
-        // Calcul du montant en fonction de la distance et du type de véhicule
-        function calculateAmount(distance) {
-            const vehicleType = document.getElementById('id_vehicle_type').value;
-            const fiscalPower = document.getElementById('id_fiscal_power').value;
-            // ...existing code pour le calcul du montant...
+        } else {
+            alert("Impossible de calculer l'itinéraire. Veuillez vérifier vos adresses.");
         }
     });
+}
 
-    document.addEventListener("DOMContentLoaded", function() {
-        // Éléments du formulaire
-        const form = document.getElementById("kilometric-expense-form");
-        const distanceField = document.getElementById("distance_field");
-        const reimbursementField = document.getElementById("reimbursement");
-        const vehicleTypeField = document.getElementById("id_vehicle_type");
-        const fiscalPowerField = document.getElementById("id_fiscal_power");
-        
-        // Calcul du remboursement
-        function calculateReimbursement(distance) {
-            const vehicleType = vehicleTypeField.value;
-            const fiscalPower = parseInt(fiscalPowerField.value);
+document.addEventListener('DOMContentLoaded', function() {
+    // Gérer la sélection des véhicules
+    const vehicleCards = document.querySelectorAll('.vehicle-card');
+    const vehicleTypeInput = document.getElementById('vehicle_type');
+    const fiscalPowerInput = document.getElementById('fiscal_power');
+    const rateInfo = document.getElementById('rate-info');
+    
+    vehicleCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Désélectionner toutes les cartes
+            vehicleCards.forEach(c => c.classList.remove('selected'));
             
-            // Taux fixes pour chaque type de véhicule
-            const rates = {
-                'car': 0.603,
-                'motorcycle': 0.368,
-                'bicycle': 0.25
-            };
+            // Sélectionner cette carte
+            this.classList.add('selected');
             
-            const rate = rates[vehicleType] || 0;
-            const amount = distance * rate;
+            // Récupérer les informations du véhicule
+            const vehicleType = this.getAttribute('data-vehicle-type');
+            const fiscalPower = this.getAttribute('data-fiscal-power');
             
-            // Mise à jour des champs
-            reimbursementField.value = amount.toFixed(2);
-            document.getElementById('amount').value = amount.toFixed(2);
-        }
-
-        // Mise à jour de la distance
-        function updateDistance(distance) {
-            distanceField.value = distance.toFixed(2);
-            document.getElementById('distance').value = distance.toFixed(2);
-            calculateReimbursement(distance);
-        }
-
-        // Calcul de l'itinéraire
-        function calculateRoute(departureLat, departureLng, arrivalLat, arrivalLng) {
-            const url = `https://router.project-osrm.org/route/v1/driving/${departureLng},${departureLat};${arrivalLng},${arrivalLat}?overview=false`;
+            // Mettre à jour les champs cachés
+            vehicleTypeInput.value = vehicleType;
+            fiscalPowerInput.value = fiscalPower;
             
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.routes && data.routes.length > 0) {
-                        const distance = data.routes[0].distance / 1000;
-                        updateDistance(distance);
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur lors du calcul de l\'itinéraire:', error);
-                    // Fallback : calculer la distance à vol d'oiseau
-                    const distance = calculateDirectDistance(departureLat, departureLng, arrivalLat, arrivalLng);
-                    updateDistance(distance);
-                });
-        }
-
-        // ...existing code...
-    });
-
-    document.addEventListener("DOMContentLoaded", function() {
-        // ...existing code...
-
-        // Remplacer la fonction enableSubmitButton
-        function enableSubmitButton() {
-            const departure = document.getElementById('departure').value;
-            const arrival = document.getElementById('arrival').value;
-            const distance = parseFloat(document.getElementById('distance_field').value) || 0;
-            const date = document.getElementById('id_date').value;
-            const vehicleType = document.getElementById('id_vehicle_type').value;
-            const fiscalPower = document.getElementById('id_fiscal_power').value;
-            const project = document.getElementById('id_project').value;
-            const departureLat = document.getElementById('departure_lat').value;
-            const arrivalLat = document.getElementById('arrival_lat').value;
-
-            const isValid = departure && 
-                           arrival && 
-                           distance > 0 && 
-                           date && 
-                           vehicleType && 
-                           fiscalPower && 
-                           project &&
-                           departureLat &&
-                           arrivalLat;
-
-            const submitBtn = document.getElementById('submitBtn');
-            if (submitBtn) {
-                submitBtn.disabled = !isValid;
-                submitBtn.classList.toggle('btn-secondary', !isValid);
-                submitBtn.classList.toggle('btn-primary', isValid);
-            }
-
-            // Debug des valeurs
-            console.log({
-                departure,
-                arrival,
-                distance,
-                date,
-                vehicleType,
-                fiscalPower,
-                project,
-                departureLat,
-                arrivalLat,
-                isValid
-            });
-        }
-
-        // Ajouter des écouteurs d'événements pour tous les champs
-        const fieldsToWatch = ['departure', 'arrival', 'id_date', 'id_vehicle_type', 'id_fiscal_power', 'id_project'];
-        
-        fieldsToWatch.forEach(fieldId => {
-            const element = document.getElementById(fieldId);
-            if (element) {
-                ['change', 'input', 'blur'].forEach(eventType => {
-                    element.addEventListener(eventType, enableSubmitButton);
-                });
-            }
+            // Mettre à jour l'info sur le taux
+            const rate = rates[fiscalPower];
+            rateInfo.textContent = `Taux appliqué: ${rate} € par km`;
+            
+            // Mettre à jour le montant
+            updateAmount();
+            
+            // Vérifier si on peut activer le bouton de soumission
+            checkFormValidity();
         });
-
-        // Appeler enableSubmitButton après le calcul de l'itinéraire
-        const originalCalculateRoute = calculateRoute;
-        calculateRoute = function() {
-            originalCalculateRoute.apply(this, arguments);
-            setTimeout(enableSubmitButton, 500); // Vérifier après le calcul
-        };
-
-        // Vérifier l'état initial du formulaire
-        setTimeout(enableSubmitButton, 100);
     });
+    
+    // Initialiser la date à aujourd'hui
+    document.getElementById('date').valueAsDate = new Date();
+    
+    // Validation du formulaire
+    document.getElementById('kilometricForm').addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+        }
+    });
+});
 
-    // Remplacer la fonction calculateReimbursement existante par celle-ci
-    function calculateReimbursement(distance) {
-        const vehicleType = document.getElementById('id_vehicle_type').value;
-        const fiscalPower = parseInt(document.getElementById('id_fiscal_power').value) || 0;
-        
-        // Barème kilométrique 2024
-        const rates = {
-            'car': {
-                3: 0.529, 4: 0.606, 5: 0.636, 6: 0.665, 7: 0.697
-            },
-            'electric_car': {
-                3: 0.635, 4: 0.727, 5: 0.763, 6: 0.798, 7: 0.836
-            },
-            'motorbike': {
-                3: 0.635, 4: 0.727, 5: 0.763, 6: 0.798, 7: 0.836
-            },
-            'bicycle': {
-                1: 0.25, 2: 0.25, 3: 0.25
-            }
-        };
-
-        // S'assurer que la distance est un nombre valide
-        const validDistance = parseFloat(distance) || 0;
-
-        // Récupérer le taux applicable
-        const vehicleRates = rates[vehicleType] || {};
-        const rate = vehicleRates[fiscalPower] || 0.503; // Taux par défaut
-
-        // Calculer le montant
-        const amount = validDistance * rate;
-
-        // Mettre à jour les champs de formulaire
-        document.getElementById('distance_field').value = validDistance.toFixed(2);
-        document.getElementById('distance').value = validDistance.toFixed(2);
-        document.getElementById('reimbursement').value = amount.toFixed(2);
-        document.getElementById('amount').value = amount.toFixed(2);
-
-        return amount;
+// Fonction pour mettre à jour le montant
+function updateAmount() {
+    const distanceInput = document.getElementById('distance');
+    const fiscalPowerInput = document.getElementById('fiscal_power');
+    const amountInput = document.getElementById('amount');
+    
+    const distance = parseInt(distanceInput.value) || 0;
+    const fiscalPower = fiscalPowerInput.value;
+    
+    if (distance > 0 && fiscalPower && rates[fiscalPower]) {
+        const rate = rates[fiscalPower];
+        const amount = (distance * rate).toFixed(2);
+        amountInput.value = amount;
+    } else {
+        amountInput.value = '';
     }
+}
 
-    // Ajouter cet écouteur d'événements après le calcul de l'itinéraire
-    function updateRouteData(distance) {
-        // Mettre à jour les champs cachés avec les vraies valeurs
-        document.getElementById('distance').value = distance.toFixed(2);
-        document.getElementById('distance_field').value = distance.toFixed(2);
-        
-        // Calculer et mettre à jour le montant
-        const amount = calculateReimbursement(distance);
-        document.getElementById('amount').value = amount.toFixed(2);
-        document.getElementById('reimbursement').value = amount.toFixed(2);
-    }
+// Vérifier si le formulaire est valide
+function checkFormValidity() {
+    const departureInput = document.getElementById('departure').value.trim();
+    const arrivalInput = document.getElementById('arrival').value.trim();
+    const distanceInput = document.getElementById('distance').value;
+    const vehicleTypeInput = document.getElementById('vehicle_type').value;
+    const descriptionInput = document.getElementById('description').value.trim();
+    
+    const isValid = departureInput !== '' && 
+                   arrivalInput !== '' && 
+                   distanceInput !== '0' && 
+                   vehicleTypeInput !== '' && 
+                   descriptionInput !== '';
+    
+    document.getElementById('submitButton').disabled = !isValid;
+    return isValid;
+}
 
-    // Ajouter après le calcul de l'itinéraire dans la fonction calculateRoute
-    function calculateRoute() {
-        // ...existing code...
-        
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                if (data.routes && data.routes.length > 0) {
-                    const distance = data.routes[0].distance / 1000;
-                    updateRouteData(distance);
-                    // ...existing code...
-                }
-            });
+// Validation finale avant l'envoi
+function validateForm() {
+    if (!checkFormValidity()) {
+        alert("Veuillez remplir tous les champs obligatoires et calculer l'itinéraire.");
+        return false;
     }
-
-    // Fonction pour mettre à jour les valeurs
-    function updateValues(distance) {
-        // Conversion et nettoyage des valeurs
-        distance = parseFloat(distance) || 0;
-        
-        // Mise à jour des champs cachés
-        document.getElementById('distance').value = distance.toFixed(2);
-        document.getElementById('distance_display').value = distance.toFixed(2);
-        
-        // Calcul et mise à jour du montant
-        const vehicleType = document.getElementById('id_vehicle_type').value;
-        const rate = {
-            'car': 0.603,
-            'electric_car': 0.751,
-            'motorbike': 0.368,
-            'bicycle': 0.25
-        }[vehicleType] || 0.603;
-        
-        const amount = distance * rate;
-        document.getElementById('amount').value = amount.toFixed(2);
-        document.getElementById('amount_display').value = amount.toFixed(2);
-        
-        // Debug - afficher les valeurs dans la console
-        console.log('Distance:', distance, 'Amount:', amount);
-    }
-
-    // Ajouter après le calcul de l'itinéraire
-    function handleRouteCalculated(distance) {
-        updateValues(distance);
-    }
+    
+    return true;
+}
 </script>
+{% endblock %}
 {% endblock %}

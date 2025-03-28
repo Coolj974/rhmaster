@@ -1,333 +1,664 @@
 {% extends "base.html" %}
 
+{% block extra_css %}
+<style>
+    /* Styles pour le formulaire de note de frais */
+    .form-panel {
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .form-panel:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        color: #ffffff;
+        padding: 1.5rem;
+    }
+    
+    .form-body {
+        padding: 2rem;
+    }
+    
+    .form-step {
+        position: relative;
+        padding-left: 2.5rem;
+        margin-bottom: 2.5rem;
+    }
+    
+    .step-number {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 32px;
+        height: 32px;
+        background-color: #4e73df;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
+    .upload-area {
+        border: 2px dashed #d1d3e2;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.2s ease;
+        background-color: #f8f9fc;
+        cursor: pointer;
+        margin-bottom: 1rem;
+    }
+    
+    .upload-area:hover {
+        border-color: #4e73df;
+        background-color: #eaecf4;
+    }
+    
+    .upload-icon {
+        font-size: 2rem;
+        color: #b7b9cc;
+        margin-bottom: 0.5rem;
+    }
+    
+    .file-preview {
+        background-color: #eaecf4;
+        padding: 0.8rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+    
+    .file-name {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 1rem;
+        background-color: white;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .file-name i.remove-file {
+        cursor: pointer;
+        color: #e74a3b;
+        transition: transform 0.2s;
+    }
+    
+    .file-name i.remove-file:hover {
+        transform: scale(1.2);
+    }
+    
+    .receipt-preview {
+        width: 100%;
+        max-height: 200px;
+        object-fit: contain;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+        border: 1px solid #e3e6f0;
+    }
+    
+    .amount-preview {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #4e73df;
+    }
+    
+    .project-hint {
+        background-color: #fff3cd;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        border-left: 4px solid #f6c23e;
+    }
+    
+    .project-hint i {
+        color: #f6c23e;
+    }
+    
+    .expense-type-card {
+        border: 2px solid #e3e6f0;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .expense-type-card:hover {
+        border-color: #4e73df;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .expense-type-card.selected {
+        border-color: #4e73df;
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    .expense-type-icon {
+        font-size: 1.5rem;
+        color: #4e73df;
+        margin-bottom: 0.5rem;
+    }
+    
+    .expense-type-title {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .expense-type-description {
+        font-size: 0.8rem;
+        color: #858796;
+    }
+    
+    .btn-submit {
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .vat-calculator {
+        background-color: #f8f9fc;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .calculator-result {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #4e73df;
+    }
+    
+    .form-floating > label {
+        color: #858796;
+    }
+    
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label {
+        color: #4e73df;
+        font-weight: 500;
+    }
+    
+    .form-control:focus {
+        border-color: #bac8f3;
+        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+    }
+    
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animated {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    /* Styles responsives */
+    @media (max-width: 767.98px) {
+        .form-header, .form-body {
+            padding: 1rem;
+        }
+        
+        .form-step {
+            padding-left: 2rem;
+        }
+    }
+</style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-receipt me-2"></i>Note de frais</h1>
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-file-invoice-dollar me-2"></i>Soumettre une note de frais</h1>
         <div>
-            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary shadow-sm">
-                <i class="fas fa-arrow-left fa-sm me-1"></i> Retour au tableau de bord
+            <a href="{% url 'my_expenses' %}" class="btn btn-primary shadow-sm me-2">
+                <i class="fas fa-list me-1"></i> Mes notes de frais
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm">
+                <i class="fas fa-arrow-left me-1"></i> Tableau de bord
             </a>
         </div>
     </div>
-    
+
     {% if messages %}
-        <div class="mb-4">
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
-                    <i class="{% if message.tags == 'success' %}fas fa-check-circle{% elif message.tags == 'error' %}fas fa-exclamation-circle{% else %}fas fa-info-circle{% endif %} me-2"></i>
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        </div>
+    <div class="mb-4 animated">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
     {% endif %}
-    
-    <div class="row">
-        <!-- Formulaire de soumission de note de frais -->
-        <div class="col-lg-8">
-            <div class="card shadow mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Nouvelle note de frais</h5>
-                    <a href="{% url 'my_expenses' %}" class="btn btn-outline-secondary">
-                        <i class="fas fa-list me-1"></i> Mes notes de frais
-                    </a>
-                </div>
-                <div class="card-body">
-                    <form method="post" action="{% url 'submit_expense' %}" enctype="multipart/form-data" id="expenseForm">
-                        {% csrf_token %}
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="expense_date" class="form-label">Date de la dépense <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                                    <input type="date" class="form-control" id="expense_date" name="expense_date" required max="{{ today|date:'Y-m-d' }}">
-                                </div>
-                                <div class="form-text">Date à laquelle la dépense a été effectuée</div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <label for="amount" class="form-label">Montant <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-euro-sign"></i></span>
-                                    <input type="number" step="0.01" min="0.01" class="form-control" id="amount" name="amount" required placeholder="0.00">
-                                    <span class="input-group-text">€</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="category" class="form-label">Catégorie <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-tag"></i></span>
-                                <select class="form-select" id="category" name="category" required>
-                                    <option value="">-- Sélectionner une catégorie --</option>
-                                    <option value="transport">Transport (hors kilométrique)</option>
-                                    <option value="meal">Repas</option>
-                                    <option value="accommodation">Hébergement</option>
-                                    <option value="supplies">Fournitures</option>
-                                    <option value="communication">Communication</option>
-                                    <option value="representation">Frais de représentation</option>
-                                    <option value="other">Autre</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-align-left"></i></span>
-                                <textarea class="form-control" id="description" name="description" rows="3" required placeholder="Détails de la dépense..."></textarea>
-                            </div>
-                            <div class="form-text">Précisez le contexte et le but de cette dépense</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="receipt" class="form-label">Justificatif <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-file-invoice"></i></span>
-                                <input type="file" class="form-control" id="receipt" name="receipt" accept=".pdf,.jpg,.jpeg,.png" required>
-                            </div>
-                            <div class="form-text">Formats acceptés: PDF, JPEG, PNG. Taille maximale: 5 Mo.</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="vat_receipt" name="vat_receipt">
-                                <label class="form-check-label" for="vat_receipt">
-                                    Cette facture contient de la TVA récupérable
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div id="vat_details" class="mb-3 card bg-light p-3 d-none">
-                            <h6 class="card-title">Détails de TVA</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label for="vat_amount" class="form-label">Montant de TVA</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-euro-sign"></i></span>
-                                        <input type="number" step="0.01" min="0" class="form-control" id="vat_amount" name="vat_amount" placeholder="0.00">
-                                        <span class="input-group-text">€</span>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="vat_rate" class="form-label">Taux de TVA</label>
-                                    <select class="form-select" id="vat_rate" name="vat_rate">
-                                        <option value="">-- Sélectionner --</option>
-                                        <option value="20">20%</option>
-                                        <option value="10">10%</option>
-                                        <option value="5.5">5.5%</option>
-                                        <option value="2.1">2.1%</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="notify_manager" name="notify_manager" checked>
-                                <label class="form-check-label" for="notify_manager">Notifier mon responsable</label>
-                            </div>
-                            
-                            <div>
-                                <button type="reset" class="btn btn-light me-2">
-                                    <i class="fas fa-undo me-1"></i> Réinitialiser
-                                </button>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-paper-plane me-1"></i> Soumettre ma note de frais
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
+
+    <div class="form-panel">
+        <div class="form-header">
+            <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Formulaire de note de frais</h5>
         </div>
-        
-        <!-- Aide et informations -->
-        <div class="col-lg-4">
-            <div class="card shadow mb-4">
-            <div class="card-header py-3 bg-info text-white">
-                <h6 class="m-0 font-weight-bold"><i class="fas fa-info-circle me-2"></i>Informations</h6>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                <h5 class="h6 font-weight-bold">Politique de remboursement</h5>
-                <ul class="small">
-                    <li>Les notes de frais sont traitées sous 7 jours.</li>
-                    <li>Le remboursement est effectué avec la paie du mois suivant.</li>
-                    <li>Un justificatif original est requis pour toute dépense.</li>
-                    <li>Les frais kilométriques doivent être soumis séparément.</li>
-                </ul>
-                </div>
+        <div class="form-body">
+            <form method="post" action="{% url 'submit_expense' %}" enctype="multipart/form-data" id="expenseForm">
+                {% csrf_token %}
                 
-                <div class="mb-3">
-                <h5 class="h6 font-weight-bold">Plafonds par catégorie</h5>
-                <table class="table table-sm table-striped small">
-                    <tr>
-                    <td>Repas</td>
-                    <td class="text-right">25€ / repas</td>
-                    </tr>
-                    <tr>
-                    <td>Hôtel (Province)</td>
-                    <td class="text-right">90€ / nuit</td>
-                    </tr>
-                    <tr>
-                    <td>Hôtel (Paris)</td>
-                    <td class="text-right">120€ / nuit</td>
-                    </tr>
-                    <tr>
-                    <td>Hôtel (La Réunion)</td>
-                    <td class="text-right">140€ / nuit</td>
-                    </tr>
-                </table>
-                </div>
-                
-                <div class="mb-3">
-                <h5 class="h6 font-weight-bold">Spécificités pour La Réunion</h5>
-                <ul class="small">
-                    <li>Prime d'éloignement DOM de 35% applicable sur les indemnités journalières.</li>
-                    <li>Frais de déplacement locaux majorés de 20%.</li>
-                    <li>Présenter les justificatifs de cartes d'embarquement pour les vols.</li>
-                </ul>
-                </div>
-                
-                <div class="alert alert-warning mb-0 small">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                Les notes de frais soumises sans justificatif valide seront automatiquement refusées.
-                </div>
-            </div>
-            </div>
-            
-            <!-- Dernières notes de frais -->
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-history me-2"></i>Vos dernières notes de frais</h6>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        {% for expense in recent_expenses %}
-                        <div class="list-group-item py-3">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1 text-truncate">{{ expense.description|truncatechars:25 }}</h6>
-                                <span class="badge {% if expense.status == 'approved' %}bg-success{% elif expense.status == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}">
-                                    {{ expense.get_status_display }}
-                                </span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center small">
-                                <span class="text-muted">
-                                    <i class="fas fa-calendar-day me-1"></i>{{ expense.expense_date|date:"d/m/Y" }}
-                                </span>
-                                <span class="fw-bold">{{ expense.amount }} €</span>
+                <!-- Étape 1: Type de dépense -->
+                <div class="form-step animated">
+                    <div class="step-number">1</div>
+                    <h5 class="mb-3">Type de dépense</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3 col-6 mb-2">
+                            <div class="expense-type-card" data-type="transport">
+                                <div class="expense-type-icon">
+                                    <i class="fas fa-plane"></i>
+                                </div>
+                                <div class="expense-type-title">Transport</div>
+                                <div class="expense-type-description">Train, avion, bus, etc.</div>
                             </div>
                         </div>
-                        {% empty %}
-                        <div class="list-group-item py-4 text-center">
-                            <i class="fas fa-receipt text-muted fa-2x mb-3"></i>
-                            <p class="mb-0">Vous n'avez pas encore soumis de note de frais</p>
+                        <div class="col-md-3 col-6 mb-2">
+                            <div class="expense-type-card" data-type="accommodation">
+                                <div class="expense-type-icon">
+                                    <i class="fas fa-bed"></i>
+                                </div>
+                                <div class="expense-type-title">Hébergement</div>
+                                <div class="expense-type-description">Hôtel, AirBnB, etc.</div>
+                            </div>
                         </div>
-                        {% endfor %}
+                        <div class="col-md-3 col-6 mb-2">
+                            <div class="expense-type-card" data-type="food">
+                                <div class="expense-type-icon">
+                                    <i class="fas fa-utensils"></i>
+                                </div>
+                                <div class="expense-type-title">Repas</div>
+                                <div class="expense-type-description">Restaurant, nourriture</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-2">
+                            <div class="expense-type-card" data-type="other">
+                                <div class="expense-type-icon">
+                                    <i class="fas fa-shopping-bag"></i>
+                                </div>
+                                <div class="expense-type-title">Autre</div>
+                                <div class="expense-type-description">Fournitures, etc.</div>
+                            </div>
+                        </div>
                     </div>
                     
-                    {% if recent_expenses %}
-                    <div class="card-footer text-center">
-                        <a href="{% url 'my_expenses' %}" class="btn btn-sm btn-outline-primary">
-                            Voir toutes mes notes de frais
-                        </a>
-                    </div>
-                    {% endif %}
+                    <input type="hidden" name="expense_type" id="expense_type" required>
                 </div>
-            </div>
+                
+                <!-- Étape 2: Détails de la dépense -->
+                <div class="form-step animated">
+                    <div class="step-number">2</div>
+                    <h5 class="mb-3">Détails de la dépense</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="description" name="description" placeholder="Description" required>
+                                <label for="description">Description <span class="text-danger">*</span></label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="date" class="form-control datepicker" id="date" name="date" placeholder="Date" required>
+                                <label for="date">Date <span class="text-danger">*</span></label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4 mb-3">
+                            <div class="form-floating">
+                                <input type="number" class="form-control" id="amount" name="amount" min="0.01" step="0.01" placeholder="0.00" required>
+                                <label for="amount">Montant (€) <span class="text-danger">*</span></label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="form-floating">
+                                <select class="form-select" id="vat" name="vat">
+                                    <option value="0">0%</option>
+                                    <option value="5.5">5.5%</option>
+                                    <option value="10">10%</option>
+                                    <option value="20" selected>20%</option>
+                                </select>
+                                <label for="vat">TVA</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="vat-calculator">
+                                <p class="mb-0"><strong>Total avec TVA:</strong></p>
+                                <p class="calculator-result mb-0" id="totalAmount">0.00 €</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="project" name="project" placeholder="Projet">
+                                <label for="project">Projet associé</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="location" name="location" placeholder="Lieu">
+                                <label for="location">Lieu</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="project-hint mt-3">
+                        <i class="fas fa-lightbulb me-2"></i> 
+                        <span>Si cette dépense est liée à un projet client spécifique, veuillez indiquer le nom du projet pour faciliter la refacturation.</span>
+                    </div>
+                </div>
+                
+                <!-- Étape 3: Justificatifs et options -->
+                <div class="form-step animated">
+                    <div class="step-number">3</div>
+                    <h5 class="mb-3">Justificatifs et options</h5>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Reçu principal <span class="text-danger">*</span></label>
+                        <div class="upload-area" id="receipt-upload-area">
+                            <div class="upload-icon">
+                                <i class="fas fa-receipt"></i>
+                            </div>
+                            <p class="mb-0">Glissez et déposez votre reçu ici ou cliquez pour parcourir</p>
+                            <p class="text-muted small">Formats acceptés : PDF, PNG, JPG, JPEG (max. 5 Mo)</p>
+                            <input type="file" name="receipt" id="receipt" accept=".pdf,.png,.jpg,.jpeg" style="display: none;" required>
+                        </div>
+                        <div id="receipt-preview" class="d-none file-preview">
+                            <div class="file-name">
+                                <div><i class="fas fa-file-image me-2"></i> <span id="receipt-name-text"></span></div>
+                                <i class="fas fa-times remove-file" data-target="receipt"></i>
+                            </div>
+                            <img id="receipt-image-preview" class="receipt-preview d-none" alt="Aperçu du reçu">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Document complémentaire (facultatif)</label>
+                        <div class="upload-area" id="attachment-upload-area">
+                            <div class="upload-icon">
+                                <i class="fas fa-paperclip"></i>
+                            </div>
+                            <p class="mb-0">Glissez et déposez un document complémentaire ici</p>
+                            <p class="text-muted small">Formats acceptés : PDF, PNG, JPG, JPEG, DOC, DOCX, XLS, XLSX (max. 5 Mo)</p>
+                            <input type="file" name="attachment" id="attachment" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" style="display: none;">
+                        </div>
+                        <div id="attachment-preview" class="d-none file-preview">
+                            <div class="file-name">
+                                <div><i class="fas fa-file-alt me-2"></i> <span id="attachment-name-text"></span></div>
+                                <i class="fas fa-times remove-file" data-target="attachment"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-floating">
+                            <textarea class="form-control" id="comment" name="comment" rows="4" placeholder="Commentaire" style="height: 100px"></textarea>
+                            <label for="comment">Commentaire (facultatif)</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="refacturable" name="refacturable">
+                        <label class="form-check-label" for="refacturable">
+                            Cette dépense est refacturable au client
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-2 border-top">
+                    <a href="{% url 'my_expenses' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-submit" id="submitButton" disabled>
+                        <i class="fas fa-paper-plane me-1"></i> Soumettre la note de frais
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Afficher ou masquer les détails de TVA
-    const vatCheckbox = document.getElementById('vat_receipt');
-    const vatDetails = document.getElementById('vat_details');
-    
-    vatCheckbox.addEventListener('change', function() {
-        if (this.checked) {
-            vatDetails.classList.remove('d-none');
-        } else {
-            vatDetails.classList.add('d-none');
-        }
+    // Initialiser le datepicker
+    flatpickr("#date", {
+        dateFormat: "Y-m-d",
+        locale: "fr",
+        maxDate: "today",
+        defaultDate: "today"
     });
     
-    // Validation du formulaire
-    const expenseForm = document.getElementById('expenseForm');
-    const receiptInput = document.getElementById('receipt');
+    // Gestion du type de dépense
+    const expenseTypeCards = document.querySelectorAll('.expense-type-card');
+    const expenseTypeInput = document.getElementById('expense_type');
     
-    expenseForm.addEventListener('submit', function(e) {
-        // Vérifier la taille du fichier
-        if (receiptInput.files.length > 0) {
-            const fileSize = receiptInput.files[0].size;
-            const maxSize = 5 * 1024 * 1024; // 5 Mo
+    expenseTypeCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Retirer la classe selected de toutes les cartes
+            expenseTypeCards.forEach(c => c.classList.remove('selected'));
             
-            if (fileSize > maxSize) {
-                e.preventDefault();
-                alert('Le fichier est trop volumineux. La taille maximale autorisée est de 5 Mo.');
-                return;
-            }
+            // Ajouter la classe selected à la carte cliquée
+            this.classList.add('selected');
             
-            // Vérifier le type du fichier
-            const fileName = receiptInput.files[0].name;
-            const fileExt = fileName.split('.').pop().toLowerCase();
-            const allowedExts = ['pdf', 'jpg', 'jpeg', 'png'];
+            // Mettre à jour le champ caché
+            expenseTypeInput.value = this.getAttribute('data-type');
             
-            if (!allowedExts.includes(fileExt)) {
-                e.preventDefault();
-                alert('Type de fichier non autorisé. Seuls les formats PDF, JPEG et PNG sont acceptés.');
-                return;
-            }
-        }
-        
-        // Validation de la date (pas de date future)
-        const dateInput = document.getElementById('expense_date');
-        const selectedDate = new Date(dateInput.value);
-        const today = new Date();
-
-        // Reset time parts for both dates to compare dates only
-        selectedDate.setHours(0, 0, 0, 0);
-        today.setHours(0, 0, 0, 0);
-
-        if (selectedDate > today) {
-            e.preventDefault();
-            alert('La date de dépense ne peut pas être dans le futur.');
-            return;
-        }
-        
-        // Validation du montant (positif)
-        const amountInput = document.getElementById('amount');
-        if (parseFloat(amountInput.value) <= 0) {
-            e.preventDefault();
-            alert('Le montant doit être supérieur à zéro.');
-            return;
-        }
+            // Vérifier si on peut activer le bouton de soumission
+            validateForm();
+        });
     });
     
-    // Calcul automatique de la TVA
+    // Calcul du montant avec TVA
     const amountInput = document.getElementById('amount');
-    const vatRateSelect = document.getElementById('vat_rate');
-    const vatAmountInput = document.getElementById('vat_amount');
+    const vatSelect = document.getElementById('vat');
+    const totalAmountDisplay = document.getElementById('totalAmount');
     
-    function calculateVAT() {
+    function calculateTotal() {
         const amount = parseFloat(amountInput.value) || 0;
-        const rate = parseFloat(vatRateSelect.value) || 0;
+        const vat = parseFloat(vatSelect.value) || 0;
+        const total = amount * (1 + (vat / 100));
+        totalAmountDisplay.textContent = total.toFixed(2) + ' €';
+    }
+    
+    amountInput.addEventListener('input', calculateTotal);
+    vatSelect.addEventListener('change', calculateTotal);
+    
+    // Gestion de l'upload des fichiers
+    function setupFileUpload(uploadAreaId, fileInputId, previewId, nameTextId, imagePreviewId = null) {
+        const uploadArea = document.getElementById(uploadAreaId);
+        const fileInput = document.getElementById(fileInputId);
+        const preview = document.getElementById(previewId);
+        const nameText = document.getElementById(nameTextId);
+        const imagePreview = imagePreviewId ? document.getElementById(imagePreviewId) : null;
         
-        // Calculer la TVA: montant * taux / (100 + taux)
-        if (amount > 0 && rate > 0) {
-            const vatAmount = (amount * rate / (100 + rate)).toFixed(2);
-            vatAmountInput.value = vatAmount;
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#4e73df';
+            this.style.backgroundColor = '#eaecf4';
+        });
+        
+        uploadArea.addEventListener('dragleave', function() {
+            this.style.borderColor = '';
+            this.style.backgroundColor = '';
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '';
+            this.style.backgroundColor = '';
+            
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect(fileInput);
+            }
+        });
+        
+        fileInput.addEventListener('change', function() {
+            handleFileSelect(this);
+        });
+        
+        function handleFileSelect(input) {
+            if (input.files.length) {
+                const file = input.files[0];
+                
+                // Vérifier la taille du fichier (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Le fichier est trop volumineux. Veuillez choisir un fichier de moins de 5Mo.');
+                    input.value = '';
+                    return;
+                }
+                
+                nameText.textContent = file.name;
+                preview.classList.remove('d-none');
+                
+                // Afficher l'aperçu de l'image si c'est une image et si l'élément d'aperçu existe
+                if (imagePreview && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.classList.remove('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                } else if (imagePreview) {
+                    imagePreview.classList.add('d-none');
+                }
+                
+                validateForm();
+            }
         }
     }
     
-    vatRateSelect.addEventListener('change', calculateVAT);
-    amountInput.addEventListener('change', calculateVAT);
-    amountInput.addEventListener('input', calculateVAT);
+    setupFileUpload('receipt-upload-area', 'receipt', 'receipt-preview', 'receipt-name-text', 'receipt-image-preview');
+    setupFileUpload('attachment-upload-area', 'attachment', 'attachment-preview', 'attachment-name-text');
+    
+    // Gestion de la suppression de fichiers
+    document.querySelectorAll('.remove-file').forEach(button => {
+        button.addEventListener('click', function() {
+            const target = this.getAttribute('data-target');
+            const fileInput = document.getElementById(target);
+            const preview = document.getElementById(target + '-preview');
+            const imagePreview = document.getElementById(target + '-image-preview');
+            
+            fileInput.value = '';
+            preview.classList.add('d-none');
+            if (imagePreview) {
+                imagePreview.classList.add('d-none');
+                imagePreview.src = '';
+            }
+            
+            validateForm();
+        });
+    });
+    
+    // Validation du formulaire pour activer/désactiver le bouton de soumission
+    function validateForm() {
+        const expenseType = expenseTypeInput.value;
+        const description = document.getElementById('description').value.trim();
+        const amount = parseFloat(amountInput.value) || 0;
+        const date = document.getElementById('date').value;
+        const receipt = document.getElementById('receipt').files.length > 0;
+        
+        const isValid = expenseType && description && amount > 0 && date && receipt;
+        
+        document.getElementById('submitButton').disabled = !isValid;
+    }
+    
+    // Ajouter des écouteurs d'événements pour la validation en temps réel
+    document.getElementById('description').addEventListener('input', validateForm);
+    document.getElementById('amount').addEventListener('input', validateForm);
+    document.getElementById('date').addEventListener('change', validateForm);
+    
+    // Validation finale avant l'envoi
+    document.getElementById('expenseForm').addEventListener('submit', function(e) {
+        const expenseType = expenseTypeInput.value;
+        const description = document.getElementById('description').value.trim();
+        const amount = parseFloat(amountInput.value) || 0;
+        const receipt = document.getElementById('receipt').files.length > 0;
+        
+        if (!expenseType) {
+            e.preventDefault();
+            alert('Veuillez sélectionner un type de dépense.');
+            return;
+        }
+        
+        if (!description) {
+            e.preventDefault();
+            alert('Veuillez entrer une description.');
+            return;
+        }
+        
+        if (amount <= 0) {
+            e.preventDefault();
+            alert('Veuillez entrer un montant valide.');
+            return;
+        }
+        
+        if (!receipt) {
+            e.preventDefault();
+            alert('Veuillez ajouter un reçu.');
+            return;
+        }
+    });
+    
+    // Animation des sections du formulaire
+    function animateSections() {
+        const sections = document.querySelectorAll('.form-step');
+        sections.forEach((section, index) => {
+            setTimeout(() => {
+                section.style.opacity = '1';
+            }, index * 100);
+        });
+    }
+    
+    animateSections();
 });
 </script>
+{% endblock %}
 {% endblock %}

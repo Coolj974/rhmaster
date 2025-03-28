@@ -1,90 +1,776 @@
 {% extends "base.html" %}
 
+{% block extra_css %}
+<style>
+    /* Styles pour la page des notes de frais */
+    .expense-header {
+        padding: 1rem 0;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stats-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+        border: none;
+        overflow: hidden;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .stats-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .stats-header {
+        margin-bottom: 1rem;
+        color: #5a5c69;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    
+    .stats-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+    
+    .stats-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .expense-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.15rem 1.25rem rgba(0,0,0,0.075);
+        border: none;
+    }
+    
+    .expense-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
+    }
+    
+    .expense-card .card-header {
+        padding: 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #fff;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .expense-card .status-badge {
+        padding: 0.35rem 0.85rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .expense-card .card-body {
+        padding: 1.25rem;
+    }
+    
+    .expense-details {
+        margin-bottom: 1.25rem;
+    }
+    
+    .expense-details .detail-label {
+        color: #6c757d;
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .expense-details .detail-value {
+        font-weight: 600;
+    }
+    
+    .expense-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .expense-actions .created-date {
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+    
+    .table-expenses {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0.15rem 1.25rem rgba(0,0,0,0.075);
+    }
+    
+    .table-expenses thead {
+        background-color: #f8f9fc;
+    }
+    
+    .table-expenses th {
+        font-weight: 600;
+        padding: 1rem;
+        border-top: none;
+    }
+    
+    .status-pending {
+        background-color: rgba(246, 194, 62, 0.15);
+        color: #f6c23e;
+    }
+    
+    .status-approved {
+        background-color: rgba(28, 200, 138, 0.15);
+        color: #1cc88a;
+    }
+    
+    .status-rejected {
+        background-color: rgba(231, 74, 59, 0.15);
+        color: #e74a3b;
+    }
+    
+    /* Styles pour les onglets */
+    .nav-tabs {
+        border-bottom: none;
+        margin-bottom: 1rem;
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        margin-right: 0.5rem;
+        font-weight: 500;
+        color: #6e707e;
+        transition: all 0.2s ease;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        background-color: rgba(78, 115, 223, 0.05);
+        color: #4e73df;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background-color: #4e73df;
+        color: white;
+    }
+    
+    /* États vides */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: #dddfeb;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
+    
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .slide-up {
+        animation: slideUp 0.5s ease forwards;
+    }
+    
+    /* Carte de résumé pour la vue détaillée */
+    .expense-summary-card {
+        border-left: 4px solid;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .expense-summary-card.approved {
+        border-left-color: #1cc88a;
+    }
+    
+    .expense-summary-card.pending {
+        border-left-color: #f6c23e;
+    }
+    
+    .expense-summary-card.rejected {
+        border-left-color: #e74a3b;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Mes notes de frais</h1>
+    <!-- En-tête de la page -->
+    <div class="d-sm-flex align-items-center justify-content-between expense-header">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-receipt me-2"></i>Mes notes de frais</h1>
         <div>
-            <a href="{% url 'submit_expense' %}" class="btn btn-sm btn-primary shadow-sm">
-                <i class="fas fa-plus fa-sm me-1"></i> Nouvelle note de frais
+            <a href="{% url 'submit_expense' %}" class="btn btn-primary shadow-sm me-2">
+                <i class="fas fa-plus-circle me-1"></i> Nouvelle note
             </a>
-            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary shadow-sm ms-2">
-                <i class="fas fa-arrow-left fa-sm me-1"></i> Retour au tableau de bord
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm">
+                <i class="fas fa-arrow-left me-1"></i> Tableau de bord
             </a>
         </div>
     </div>
 
     {% if messages %}
-    <div class="mb-4">
+    <div class="mb-4 fade-in">
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         {% endfor %}
     </div>
     {% endif %}
-    
-    <div class="card shadow">
-        <div class="card-body">
+
+    <!-- Statistiques des notes de frais -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-primary">TOTAL NOTES</div>
+                            <div class="stats-value">{{ stats.total_count }}</div>
+                            <div class="text-xs text-muted">notes soumises</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="fas fa-file-invoice"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-warning">EN ATTENTE</div>
+                            <div class="stats-value">{{ stats.pending_count }}</div>
+                            <div class="text-xs text-muted">notes à valider</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-success">APPROUVÉES</div>
+                            <div class="stats-value">{{ stats.approved_count }}</div>
+                            <div class="text-xs text-muted">notes validées</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-success bg-opacity-10 text-success">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-danger">MONTANT TOTAL</div>
+                            <div class="stats-value">{{ stats.total_amount|floatformat:2 }}€</div>
+                            <div class="text-xs text-muted">{{ stats.approved_amount|default:"0.00" }}€ remboursés</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-danger bg-opacity-10 text-danger">
+                                <i class="fas fa-euro-sign"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onglets de navigation -->
+    <ul class="nav nav-tabs" id="expensesTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="card-view-tab" data-bs-toggle="tab" href="#card-view" role="tab" aria-selected="true">
+                <i class="fas fa-th-large me-1"></i> Vue en cartes
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="table-view-tab" data-bs-toggle="tab" href="#table-view" role="tab" aria-selected="false">
+                <i class="fas fa-table me-1"></i> Vue en tableau
+            </a>
+        </li>
+    </ul>
+
+    <!-- Contenu des onglets -->
+    <div class="tab-content" id="expensesTabContent">
+        <!-- Vue en cartes -->
+        <div class="tab-pane fade show active" id="card-view" role="tabpanel" aria-labelledby="card-view-tab">
             {% if expenses %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Montant</th>
-                                <th>Catégorie</th>
-                                <th>Statut</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for expense in expenses %}
-                            <tr>
-                                <td>{{ expense.date|date:"d/m/Y" }}</td>
-                                <td>{{ expense.description }}</td>
-                                <td>{{ expense.amount }} €</td>
-                                <td>{{ expense.get_expense_type_display }}</td>
-                                <td>
-                                    <span class="badge {% if expense.status == 'approved' %}bg-success
-                                        {% elif expense.status == 'rejected' %}bg-danger
-                                        {% else %}bg-warning{% endif %}">
-                                        {{ expense.get_status_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if expense.status == "pending" %}
-                                    <a href="{% url 'cancel_expense' expense.id %}" 
-                                       class="btn btn-danger btn-sm"
-                                       onclick="return confirm('Êtes-vous sûr de vouloir annuler cette note de frais ?')">
-                                        <i class="fas fa-times"></i> Annuler
-                                    </a>
-                                    {% endif %}
-                                    {% if expense.receipt %}
-                                    <a href="{{ expense.receipt.url }}" 
-                                       class="btn btn-info btn-sm" 
-                                       target="_blank">
-                                        <i class="fas fa-file-alt"></i> Justificatif
-                                    </a>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="row">
+                    {% for expense in expenses %}
+                        <div class="col-lg-6 slide-up" style="animation-delay: {{ forloop.counter0|divisibleby:2 }}0ms">
+                            <div class="expense-card">
+                                <div class="card-header">
+                                    <div>
+                                        <h5 class="card-title mb-0">{{ expense.description }}</h5>
+                                        <span class="text-muted small">{{ expense.get_expense_type_display }}</span>
+                                    </div>
+                                    <span class="status-badge status-{{ expense.status }}">{{ expense.get_status_display }}</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="expense-details">
+                                                <div class="detail-label">Date</div>
+                                                <div class="detail-value">{{ expense.date|date:"d/m/Y" }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="expense-details">
+                                                <div class="detail-label">Montant</div>
+                                                <div class="detail-value text-primary">{{ expense.amount|floatformat:2 }} €</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="expense-details">
+                                                <div class="detail-label">Projet</div>
+                                                <div class="detail-value">{{ expense.project|default:"Non spécifié" }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="expense-details">
+                                                <div class="detail-label">Lieu</div>
+                                                <div class="detail-value">{{ expense.location|default:"Non spécifié" }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="expense-actions">
+                                        <span class="created-date">Créée le {{ expense.created_at|date:"d/m/Y" }}</span>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary view-expense"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#viewExpenseModal"
+                                                    data-id="{{ expense.id }}"
+                                                    data-description="{{ expense.description }}"
+                                                    data-amount="{{ expense.amount|floatformat:2 }}"
+                                                    data-date="{{ expense.date|date:'d/m/Y' }}"
+                                                    data-type="{{ expense.get_expense_type_display }}"
+                                                    data-vat="{{ expense.vat|default:'0' }}"
+                                                    data-project="{{ expense.project|default:'Non spécifié' }}"
+                                                    data-location="{{ expense.location|default:'Non spécifié' }}"
+                                                    data-status="{{ expense.get_status_display }}"
+                                                    data-status-code="{{ expense.status }}"
+                                                    data-refacturable="{{ expense.refacturable|yesno:'Oui,Non' }}"
+                                                    data-created-at="{{ expense.created_at|date:'d/m/Y H:i' }}"
+                                                    data-comment="{{ expense.comment|default:'' }}"
+                                                    data-has-receipt="{{ expense.receipt|yesno:'true,false' }}"
+                                                    data-has-attachment="{{ expense.attachment|yesno:'true,false' }}"
+                                                    {% if expense.receipt %}data-receipt-url="{{ expense.receipt.url }}"{% endif %}
+                                                    {% if expense.attachment %}data-attachment-url="{{ expense.attachment.url }}"{% endif %}>
+                                                <i class="fas fa-eye me-1"></i> Détails
+                                            </button>
+                                            
+                                            {% if expense.status == 'pending' %}
+                                                <a href="{% url 'cancel_expense' expense.id %}" class="btn btn-sm btn-outline-danger"
+                                                   onclick="return confirm('Êtes-vous sûr de vouloir annuler cette note de frais ?')">
+                                                    <i class="fas fa-times me-1"></i> Annuler
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
             {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
-                    <p class="mb-3">Vous n'avez pas encore soumis de note de frais.</p>
+                <div class="empty-state fade-in">
+                    <div class="empty-icon">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <h4 class="mb-3">Aucune note de frais</h4>
+                    <p class="text-muted mb-4">Vous n'avez pas encore soumis de note de frais.</p>
                     <a href="{% url 'submit_expense' %}" class="btn btn-primary">
-                        <i class="fas fa-plus me-1"></i> Créer une note de frais
+                        <i class="fas fa-plus-circle me-1"></i> Créer ma première note
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Vue en tableau -->
+        <div class="tab-pane fade" id="table-view" role="tabpanel" aria-labelledby="table-view-tab">
+            {% if expenses %}
+                <div class="card shadow table-expenses">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0" id="expensesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Type</th>
+                                        <th>Projet</th>
+                                        <th>Montant</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for expense in expenses %}
+                                    <tr>
+                                        <td>{{ expense.date|date:"d/m/Y" }}</td>
+                                        <td>{{ expense.description }}</td>
+                                        <td>{{ expense.get_expense_type_display }}</td>
+                                        <td>{{ expense.project|default:"Non spécifié" }}</td>
+                                        <td>{{ expense.amount|floatformat:2 }} €</td>
+                                        <td>
+                                            <span class="badge status-{{ expense.status }} px-2 py-1">
+                                                {{ expense.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-primary view-expense"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#viewExpenseModal"
+                                                    data-id="{{ expense.id }}"
+                                                    data-description="{{ expense.description }}"
+                                                    data-amount="{{ expense.amount|floatformat:2 }}"
+                                                    data-date="{{ expense.date|date:'d/m/Y' }}"
+                                                    data-type="{{ expense.get_expense_type_display }}"
+                                                    data-vat="{{ expense.vat|default:'0' }}"
+                                                    data-project="{{ expense.project|default:'Non spécifié' }}"
+                                                    data-location="{{ expense.location|default:'Non spécifié' }}"
+                                                    data-status="{{ expense.get_status_display }}"
+                                                    data-status-code="{{ expense.status }}"
+                                                    data-refacturable="{{ expense.refacturable|yesno:'Oui,Non' }}"
+                                                    data-created-at="{{ expense.created_at|date:'d/m/Y H:i' }}"
+                                                    data-comment="{{ expense.comment|default:'' }}"
+                                                    data-has-receipt="{{ expense.receipt|yesno:'true,false' }}"
+                                                    data-has-attachment="{{ expense.attachment|yesno:'true,false' }}"
+                                                    {% if expense.receipt %}data-receipt-url="{{ expense.receipt.url }}"{% endif %}
+                                                    {% if expense.attachment %}data-attachment-url="{{ expense.attachment.url }}"{% endif %}>
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            
+                                            {% if expense.status == 'pending' %}
+                                                <a href="{% url 'cancel_expense' expense.id %}" class="btn btn-sm btn-outline-danger"
+                                                   onclick="return confirm('Êtes-vous sûr de vouloir annuler cette note de frais ?')">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state fade-in">
+                    <div class="empty-icon">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <h4 class="mb-3">Aucune note de frais</h4>
+                    <p class="text-muted mb-4">Vous n'avez pas encore soumis de note de frais.</p>
+                    <a href="{% url 'submit_expense' %}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-1"></i> Créer ma première note
                     </a>
                 </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<!-- Modal de détail des notes de frais -->
+<div class="modal fade" id="viewExpenseModal" tabindex="-1" aria-labelledby="viewExpenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewExpenseModalLabel">Détails de la note de frais</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Récapitulatif de la note de frais -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="expense-summary-card p-3" id="expense-summary-card">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0" id="modal-description"></h5>
+                                <span class="status-badge" id="modal-status-badge"></span>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <span class="text-muted">Date:</span>
+                                        <span class="fw-medium" id="modal-date"></span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <span class="text-muted">Type:</span>
+                                        <span class="fw-medium" id="modal-type"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <div class="mb-2">
+                                        <span class="text-muted">Montant:</span>
+                                        <span class="fw-bold text-primary" id="modal-amount"></span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <span class="text-muted">TVA:</span>
+                                        <span class="fw-medium" id="modal-vat"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <!-- Informations générales -->
+                    <div class="col-md-6">
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title text-primary mb-3"><i class="fas fa-info-circle me-2"></i>Informations générales</h6>
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Projet</div>
+                                    <div id="modal-project" class="fw-medium"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Lieu</div>
+                                    <div id="modal-location" class="fw-medium"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Refacturable</div>
+                                    <div id="modal-refacturable" class="fw-medium"></div>
+                                </div>
+                                <div class="mb-0">
+                                    <div class="text-muted small mb-1">Date de création</div>
+                                    <div id="modal-created-at" class="fw-medium"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pièces justificatives -->
+                    <div class="col-md-6">
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title text-primary mb-3"><i class="fas fa-paperclip me-2"></i>Justificatifs</h6>
+                                <div class="mb-3" id="receipt-container">
+                                    <div class="text-muted small mb-2">Reçu principal</div>
+                                    <a href="#" id="modal-receipt-link" class="btn btn-sm btn-outline-primary w-100" target="_blank">
+                                        <i class="fas fa-receipt me-1"></i> Voir le reçu
+                                    </a>
+                                </div>
+                                <div id="attachment-container">
+                                    <div class="text-muted small mb-2">Document complémentaire</div>
+                                    <a href="#" id="modal-attachment-link" class="btn btn-sm btn-outline-primary w-100" target="_blank">
+                                        <i class="fas fa-file-alt me-1"></i> Voir le document
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Commentaires -->
+                <div class="card shadow-sm mb-0" id="comment-container">
+                    <div class="card-body">
+                        <h6 class="card-title text-primary mb-3"><i class="fas fa-comment-alt me-2"></i>Commentaires</h6>
+                        <div class="bg-light p-3 rounded">
+                            <p id="modal-comment" class="mb-0"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <a href="#" id="modal-cancel-btn" class="btn btn-danger">
+                    <i class="fas fa-times me-1"></i> Annuler cette note
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser DataTable si présent
+    if (typeof $.fn.DataTable !== 'undefined' && document.getElementById('expensesTable')) {
+        $('#expensesTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
+            },
+            order: [[0, 'desc']], // Trier par date décroissante
+            pageLength: 10
+        });
+    }
+    
+    // Conservation de l'onglet actif après rafraîchissement
+    const activeTab = localStorage.getItem('activeExpenseTab');
+    if (activeTab) {
+        const tab = document.querySelector(activeTab);
+        if (tab) {
+            const tabInstance = new bootstrap.Tab(tab);
+            tabInstance.show();
+        }
+    }
+    
+    // Enregistrer l'onglet actif lors du changement
+    document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            localStorage.setItem('activeExpenseTab', '#' + e.target.id);
+        });
+    });
+    
+    // Gestion du modal pour voir les détails d'une note de frais
+    const viewExpenseButtons = document.querySelectorAll('.view-expense');
+    
+    viewExpenseButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Récupérer les données
+            const id = this.getAttribute('data-id');
+            const description = this.getAttribute('data-description');
+            const amount = this.getAttribute('data-amount');
+            const date = this.getAttribute('data-date');
+            const type = this.getAttribute('data-type');
+            const vat = this.getAttribute('data-vat');
+            const project = this.getAttribute('data-project');
+            const location = this.getAttribute('data-location');
+            const status = this.getAttribute('data-status');
+            const statusCode = this.getAttribute('data-status-code');
+            const refacturable = this.getAttribute('data-refacturable');
+            const createdAt = this.getAttribute('data-created-at');
+            const comment = this.getAttribute('data-comment');
+            const hasReceipt = this.getAttribute('data-has-receipt') === 'true';
+            const hasAttachment = this.getAttribute('data-has-attachment') === 'true';
+            const receiptUrl = this.getAttribute('data-receipt-url');
+            const attachmentUrl = this.getAttribute('data-attachment-url');
+            
+            // Calculer le montant total avec TVA
+            const baseAmount = parseFloat(amount);
+            const vatRate = parseFloat(vat);
+            const totalAmount = baseAmount * (1 + (vatRate / 100));
+            
+            // Mettre à jour le modal avec les données
+            document.getElementById('modal-description').textContent = description;
+            document.getElementById('modal-amount').textContent = totalAmount.toFixed(2) + " €";
+            document.getElementById('modal-date').textContent = date;
+            document.getElementById('modal-type').textContent = type;
+            document.getElementById('modal-vat').textContent = vat + "%";
+            document.getElementById('modal-project').textContent = project;
+            document.getElementById('modal-location').textContent = location;
+            document.getElementById('modal-refacturable').textContent = refacturable;
+            document.getElementById('modal-created-at').textContent = createdAt;
+            
+            // Style du statut
+            const statusBadge = document.getElementById('modal-status-badge');
+            statusBadge.textContent = status;
+            statusBadge.className = 'status-badge status-' + statusCode;
+            
+            // Style de la carte de résumé
+            const summaryCard = document.getElementById('expense-summary-card');
+            summaryCard.className = 'expense-summary-card p-3 ' + statusCode;
+            
+            // Afficher/cacher les justificatifs
+            const receiptContainer = document.getElementById('receipt-container');
+            const attachmentContainer = document.getElementById('attachment-container');
+            
+            if (hasReceipt) {
+                document.getElementById('modal-receipt-link').href = receiptUrl;
+                receiptContainer.style.display = 'block';
+            } else {
+                receiptContainer.style.display = 'none';
+            }
+            
+            if (hasAttachment) {
+                document.getElementById('modal-attachment-link').href = attachmentUrl;
+                attachmentContainer.style.display = 'block';
+            } else {
+                attachmentContainer.style.display = 'none';
+            }
+            
+            // Afficher/cacher les commentaires
+            const commentContainer = document.getElementById('comment-container');
+            if (comment && comment.trim() !== '') {
+                document.getElementById('modal-comment').textContent = comment;
+                commentContainer.style.display = 'block';
+            } else {
+                commentContainer.style.display = 'none';
+            }
+            
+            // Configurer le bouton d'annulation
+            const cancelBtn = document.getElementById('modal-cancel-btn');
+            if (statusCode === 'pending') {
+                cancelBtn.href = `/cancel-expense/${id}/`;
+                cancelBtn.style.display = 'block';
+            } else {
+                cancelBtn.style.display = 'none';
+            }
+        });
+    });
+    
+    // Animation au défilement pour les cartes
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    document.querySelectorAll('.expense-card').forEach(card => {
+        observer.observe(card);
+    });
+});
+</script>
+{% endblock %}
 {% endblock %}

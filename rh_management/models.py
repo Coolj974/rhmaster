@@ -83,6 +83,78 @@ class LeaveRequest(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+class Leave(models.Model):
+    """Modèle pour les demandes de congés"""
+    LEAVE_TYPE_CHOICES = (
+        ('annual', 'Congé annuel'),
+        ('sick', 'Congé maladie'),
+        ('parental', 'Congé parental'),
+        ('unpaid', 'Congé sans solde'),
+        ('bereavement', 'Congé pour décès'),
+        ('marriage', 'Congé pour mariage'),
+        ('moving', 'Congé pour déménagement'),
+        ('other', 'Autre'),
+    )
+    STATUS_CHOICES = (
+        ('pending', 'En attente'),
+        ('approved', 'Approuvé'),
+        ('rejected', 'Rejeté'),
+    )
+    HALF_DAY_PERIOD_CHOICES = (
+        ('morning', 'Matin'),
+        ('afternoon', 'Après-midi'),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='leaves')
+    start_date = models.DateField()
+    end_date = models.DateField()
+    leave_type = models.CharField(max_length=20, choices=LEAVE_TYPE_CHOICES)
+    days_requested = models.DecimalField(max_digits=5, decimal_places=1)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    reason = models.TextField(blank=True, null=True)
+    comment = models.TextField(blank=True, null=True)  # Commentaire pour approbation/rejet
+    attachment = models.FileField(upload_to='leave_attachments/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    half_day = models.BooleanField(default=False)
+    half_day_period = models.CharField(max_length=10, choices=HALF_DAY_PERIOD_CHOICES, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.get_leave_type_display()} ({self.start_date} au {self.end_date})"
+
+    class Meta:
+        ordering = ['-created_at']
+
+class LeaveBalance(models.Model):
+    """Modèle pour suivre le solde de congés des employés"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='leave_balance')
+    acquired = models.DecimalField(max_digits=5, decimal_places=1, default=0)  # Jours acquis
+    taken = models.DecimalField(max_digits=5, decimal_places=1, default=0)     # Jours pris
+    available = models.DecimalField(max_digits=5, decimal_places=1, default=0)  # Solde disponible
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Solde de congés de {self.user.username}: {self.available} jours"
+
+    def update_balance(self, days_used=0):
+        """Met à jour le solde de congés après une demande de congé approuvée"""
+        self.taken += days_used
+        self.available = self.acquired - self.taken
+        self.save()
+
+class LeaveAdjustment(models.Model):
+    """Modèle pour suivre les ajustements de solde de congés"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='leave_adjustments')
+    adjustment = models.DecimalField(max_digits=5, decimal_places=1)  # Positif pour ajout, négatif pour déduction
+    reason = models.CharField(max_length=255)
+    adjusted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='leave_adjustments_made')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        adjustment_type = "Ajout" if self.adjustment > 0 else "Déduction"
+        return f"{adjustment_type} de {abs(self.adjustment)} jours pour {self.user.username}"
+
 class ExpenseReport(models.Model):
     """Modèle pour les notes de frais."""
     STATUS_CHOICES = (
@@ -123,87 +195,92 @@ class ExpenseReport(models.Model):
     class Meta:
         ordering = ['-created_at']
 
-class KilometricExpense(models.Model):
-    """Model to handle kilometric expenses."""
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+class Expense(models.Model):
+    """Modèle pour les notes de frais"""
+    EXPENSE_TYPE_CHOICES = (
+        ('transport', 'Transport'),
+        ('accommodation', 'Hébergement'),
+        ('food', 'Repas'),
+        ('supplies', 'Fournitures'),
+        ('other', 'Autre'),
+    )
+    STATUS_CHOICES = (
+        ('pending', 'En attente'),
+        ('approved', 'Approuvé'),
+        ('rejected', 'Rejeté'),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='expenses')
     date = models.DateField()
-    created_at = models.DateTimeField(auto_now_add=True)  # Date de soumission automatique
-    vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPES)
-    fiscal_power = models.IntegerField()
-    departure = models.CharField(max_length=255)
-    departure_lat = models.FloatField(blank=True, null=True)
-    departure_lng = models.FloatField(blank=True, null=True)
-    arrival = models.CharField(max_length=255)
-    arrival_lat = models.FloatField(blank=True, null=True)
-    arrival_lng = models.FloatField(blank=True, null=True)
-    distance = models.FloatField(blank=True, null=True)
-    project = models.CharField(max_length=255, blank=True, null=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-    description = models.CharField(max_length=255, blank=True)
-    notification_emails = models.TextField(blank=True, null=True)
-
-    def save(self, *args, **kwargs):
-        """Override save to ensure amount is calculated."""
-        if self.distance is None:
-            self.distance = 0
-        
-        self.distance = abs(float(self.distance))
-        self.amount = self.calculate_amount()
-        
-        # Ensure we have valid numeric values
-        if not isinstance(self.amount, (int, float)):
-            self.amount = 0
-            
-        super().save(*args, **kwargs)
-        self.send_notification_emails()
-
-    def calculate_amount(self):
-        """Calculate the reimbursement amount based on the vehicle type and fiscal power."""
-        if not self.distance or not self.vehicle_type or not self.fiscal_power:
-            return 0
-
-        # Barème kilométrique 2024 unifié
-        rates = {
-            'car': {
-                3: 0.529, 4: 0.606, 5: 0.636, 
-                6: 0.665, 7: 0.697, 8: 0.697
-            },
-            'electric_car': {
-                3: 0.635, 4: 0.727, 5: 0.763, 
-                6: 0.798, 7: 0.836, 8: 0.875
-            },
-            'motorbike': {
-                3: 0.635, 4: 0.727, 5: 0.763, 
-                6: 0.798, 7: 0.836
-            },
-            'bicycle': {
-                1: 0.25, 2: 0.25, 3: 0.25
-            }
-        }
-
-        vehicle_rates = rates.get(self.vehicle_type, {})
-        rate = vehicle_rates.get(self.fiscal_power, 0.503)  # Taux par défaut
-        return round(float(self.distance) * rate, 2)
-
-    def send_notification_emails(self):
-        """Send notification emails when a kilometric expense is created."""
-        if self.notification_emails:
-            try:
-                emails = json.loads(self.notification_emails)
-                subject = f"Nouvelle dépense kilométrique: {self.description}"
-                message = (
-                    f"Une nouvelle dépense kilométrique a été soumise par {self.user.username}.\n\n"
-                    f"Description: {self.description}\n"
-                    f"Montant: {self.amount:.2f} €\n"
-                    f"Statut: {self.status}"
-                )
-                send_mail(subject, message, 'no-reply@example.com', emails)
-            except json.JSONDecodeError:
-                pass
+    description = models.CharField(max_length=255)
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    expense_type = models.CharField(max_length=20, choices=EXPENSE_TYPE_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    receipt = models.FileField(upload_to='expense_receipts/', blank=True, null=True)
+    project = models.CharField(max_length=100, blank=True, null=True)
+    location = models.CharField(max_length=100, blank=True, null=True)
+    vat = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    refacturable = models.BooleanField(default=False)
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.date} ({self.distance} km) - {self.amount:.2f} €"
+        return f"{self.description} ({self.amount} €) - {self.user.username}"
+        
+    @property
+    def amount_with_vat(self):
+        """Calcule le montant TTC"""
+        if self.vat:
+            return self.amount * (1 + self.vat / 100)
+        return self.amount
+
+    class Meta:
+        ordering = ['-date']
+
+class KilometricExpense(models.Model):
+    """Modèle pour les frais kilométriques"""
+    VEHICLE_TYPE_CHOICES = (
+        ('car', 'Voiture'),
+        ('electric_car', 'Voiture électrique'),
+        ('motorbike', 'Moto'),
+    )
+    FISCAL_POWER_CHOICES = (
+        ('normal', '5 CV et moins'),
+        ('high', '6 CV et plus'),
+        ('electric', 'Électrique'),
+        ('motorbike', 'Moto/Scooter'),
+    )
+    STATUS_CHOICES = (
+        ('pending', 'En attente'),
+        ('approved', 'Approuvé'),
+        ('rejected', 'Rejeté'),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='kilometric_expenses')
+    date = models.DateField()
+    description = models.CharField(max_length=255)
+    departure = models.CharField(max_length=255)
+    arrival = models.CharField(max_length=255)
+    departure_lat = models.FloatField(blank=True, null=True)
+    departure_lng = models.FloatField(blank=True, null=True)
+    arrival_lat = models.FloatField(blank=True, null=True)
+    arrival_lng = models.FloatField(blank=True, null=True)
+    distance = models.IntegerField()  # en km
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPE_CHOICES)
+    fiscal_power = models.CharField(max_length=20, choices=FISCAL_POWER_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    project = models.CharField(max_length=100, blank=True, null=True)
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Trajet {self.departure} → {self.arrival} ({self.distance} km) - {self.user.username}"
+
+    class Meta:
+        ordering = ['-date']
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -251,18 +328,27 @@ class UserProfile(models.Model):
             return "Employé"
         return "Sans rôle"
 
-class LeaveBalance(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='leave_balance')
-    acquired = models.FloatField(default=0.0, help_text="Total des jours de congés acquis")
-    taken = models.FloatField(default=0.0, help_text="Total des jours de congés pris")
-    
-    @property
-    def available(self):
-        """Calcule le solde de congés disponible."""
-        return self.acquired - self.taken
-        
+class Profile(models.Model):
+    """Modèle de profil utilisateur"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    department = models.ForeignKey('Department', on_delete=models.SET_NULL, null=True, blank=True, related_name="employees")
+    position = models.CharField(max_length=100, blank=True, null=True, verbose_name="Poste")
+    phone_number = models.CharField(max_length=20, blank=True, null=True, verbose_name="Téléphone")
+    address = models.TextField(blank=True, null=True, verbose_name="Adresse")
+    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True, verbose_name="Photo de profil")
+    date_of_birth = models.DateField(blank=True, null=True, verbose_name="Date de naissance")
+    hire_date = models.DateField(blank=True, null=True, verbose_name="Date d'embauche")
+    manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="subordinates", verbose_name="Responsable")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     def __str__(self):
-        return f"Solde de congés de {self.user.username}: {self.available} jours"
+        return f"Profil de {self.user.username}"
+    
+    class Meta:
+        verbose_name = "Profil"
+        verbose_name_plural = "Profils"
+        ordering = ['user__first_name', 'user__last_name']
 
 class PasswordManager(models.Model):
     """Model to handle password entries securely."""
@@ -477,3 +563,20 @@ class Notification(models.Model):
             icon="fa-info-circle",
             color='info'
         )
+
+class Department(models.Model):
+    """Modèle pour les départements de l'entreprise"""
+    name = models.CharField(max_length=100, verbose_name="Nom")
+    description = models.TextField(blank=True, null=True, verbose_name="Description")
+    manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="managed_departments", verbose_name="Responsable")
+    is_active = models.BooleanField(default=True, verbose_name="Actif")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Département"
+        verbose_name_plural = "Départements"
+        ordering = ['name']

@@ -16,36 +16,49 @@ from .dashboard_views import (
     dashboard_view,
     some_view,
     dashboard_filtered,
-    dashboard_stats_api
+    dashboard_stats_api,
+    index as dashboard,  # Correction de l'import
+    dashboard as index,  # Importer dashboard sous le nom index
+    dashboard  # Importer dashboard directement aussi
 )
 
 # Importation des vues de gestion des congés
 from .leave_views import (
     leave_request_view,
+    leave_request,
     manage_leave_balances,
     update_leave_balance,
     bulk_update_leave_balance,
     manage_leaves_view,
+    manage_leaves,
     approve_leave,
     reject_leave,
     leave_action,
+    approve_all_leaves,
     delete_leave,
     export_leaves,  # Ajout de l'import
     my_leaves,
-    cancel_leave  # Ajout de cette ligne
+    cancel_leave,  # Ajout de cette ligne
+    export_leave_balances,  # Ajout de export_leave_balances
+    adjust_leave_balance,
+    adjust_collective_leave_balance,
+    get_leave_balance_history
 )
 
 # Importation des vues de gestion des notes de frais
 from .expense_views import (
     submit_expense,
     my_expenses_view,
+    my_expenses,
     manage_expenses_view,
+    manage_expenses,
     approve_expense,
     reject_expense,
     cancel_expense,
     export_expenses,
     delete_expense,
-    expense_action
+    expense_action,
+    approve_all_expenses
 )
 
 # Importation des vues de gestion des frais kilométriques
@@ -55,9 +68,11 @@ from .kilometric_expense_views import (
     my_kilometric_expenses,
     export_expenses_excel,
     export_expenses_pdf,
+    export_kilometric_expenses,
     manage_kilometric_expenses,
     approve_kilometric_expense,
     reject_kilometric_expense,
+    approve_all_kilometric_expenses,
     edit_kilometric_expense,
     delete_kilometric_expense,
     kilometric_expense_action,
@@ -73,16 +88,22 @@ from .user_management_views import (
     toggle_user_status,
     mass_action,
     manage_roles_view,
+    create_role,
+    edit_role,
+    assign_permissions,
+    assign_users,
     delete_role
 )
 
 # Importation des vues de gestion des profils
 from .profile_views import (
     profile_view,
+    profile,
     update_profile,
     change_password,
     view_user_profile,
-    edit_preferences
+    edit_preferences,
+    profile  # Ajout de profile
 )
 
 # Importation des vues du gestionnaire de mots de passe

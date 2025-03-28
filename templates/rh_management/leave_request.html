@@ -1,748 +1,619 @@
 {% extends "base.html" %}
 
 {% block extra_css %}
-<!-- FullCalendar CSS -->
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
 <style>
-    /* Styles pour le formulaire */
-    .form-card {
-        border-radius: 0.75rem;
+    /* Styles pour le formulaire de demande de congés */
+    .form-panel {
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
         overflow: hidden;
-        border: none;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        transition: all 0.3s;
+        margin-bottom: 2rem;
     }
     
-    .form-card:hover {
+    .form-panel:hover {
         transform: translateY(-5px);
-        box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
     }
     
-    .header-gradient {
-        background: linear-gradient(135deg, #4e73df, #224abe);
-        color: white;
+    .form-header {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        color: #ffffff;
         padding: 1.5rem;
     }
     
-    /* Styles pour les inputs */
-    .form-control, .form-select {
-        border-radius: 0.5rem;
-        padding: 0.75rem 1rem;
-        border: 1px solid #d1d3e2;
+    .form-body {
+        padding: 2rem;
     }
     
-    .form-control:focus, .form-select:focus {
-        border-color: #4e73df;
-        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+    .form-step {
+        position: relative;
+        padding-left: 2.5rem;
+        margin-bottom: 2rem;
     }
     
-    .input-group-text {
-        border-radius: 0.5rem 0 0 0.5rem;
-        background-color: #f8f9fc;
-        border: 1px solid #d1d3e2;
-        border-right: none;
-    }
-    
-    .form-control.is-invalid, .form-select.is-invalid {
-        border-color: #e74a3b;
-        background-image: none;
-    }
-    
-    /* Styles pour le calendrier */
-    #calendar {
-        height: 500px;
-        margin-top: 20px;
-        font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    
-    .fc th {
-        font-weight: 600;
-        padding: 10px 0;
-        background-color: #f8f9fc;
-    }
-    
-    .fc-day-today {
-        background-color: rgba(78, 115, 223, 0.1) !important;
-    }
-    
-    .fc-event {
-        padding: 6px 10px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        margin: 2px 0;
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .fc-event:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-    
-    /* Types d'événements */
-    .leave-pending {
-        background-color: #f6c23e !important;
-        border-color: #f6c23e !important;
-        color: white !important;
-        border-left: 4px solid #e0a800 !important;
-    }
-    
-    .leave-approved {
-        background-color: #1cc88a !important;
-        border-color: #1cc88a !important;
-        color: white !important;
-        border-left: 4px solid #169b6b !important;
-    }
-    
-    .leave-rejected {
-        background-color: #e74a3b !important;
-        border-color: #e74a3b !important;
-        color: white !important;
-        border-left: 4px solid #be3e32 !important;
-    }
-    
-    .new-leave-selection {
-        background-color: rgba(78, 115, 223, 0.5) !important;
-        border-color: #4e73df !important;
-        color: white !important;
-        border-left: 4px solid #224abe !important;
-    }
-    
-    /* Styles pour les boutons */
-    .btn-gradient {
-        background: linear-gradient(135deg, #4e73df, #224abe);
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.5rem;
-        font-weight: 600;
-        transition: all 0.3s;
-    }
-    
-    .btn-gradient:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
-        color: white;
-    }
-    
-    /* Switch pour demi-journée */
-    .form-switch .form-check-input {
-        width: 3rem;
-        height: 1.5rem;
-    }
-    
-    .form-switch .form-check-input:checked {
+    .step-number {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 32px;
+        height: 32px;
         background-color: #4e73df;
-        border-color: #4e73df;
-    }
-    
-    /* Styles pour le calcul de la durée */
-    #leave-duration {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #4e73df;
-        text-align: center;
-        padding: 1rem;
-        background-color: #f8f9fc;
-        border-radius: 0.5rem;
-        margin-top: 1rem;
-    }
-    
-    /* Légende du calendrier */
-    .calendar-legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-top: 1rem;
-        padding: 1rem;
-        background-color: #f8f9fc;
-        border-radius: 0.5rem;
-    }
-    
-    .legend-item {
+        color: white;
+        border-radius: 50%;
         display: flex;
         align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
+    .date-range-preview {
+        background-color: #f8f9fc;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .date-range-preview.is-valid {
+        border-left: 4px solid #1cc88a;
+    }
+    
+    .date-range-preview.is-invalid {
+        border-left: 4px solid #e74a3b;
+    }
+    
+    .preview-value {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .leave-balance {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: linear-gradient(to right, #f8f9fc, #ffffff);
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-left: 4px solid #4e73df;
+    }
+    
+    .balance-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .balance-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .upload-area {
+        border: 2px dashed #d1d3e2;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.2s ease;
+        background-color: #f8f9fc;
+        cursor: pointer;
+        margin-bottom: 1rem;
+    }
+    
+    .upload-area:hover {
+        border-color: #4e73df;
+        background-color: #eaecf4;
+    }
+    
+    .upload-icon {
+        font-size: 2rem;
+        color: #b7b9cc;
+        margin-bottom: 0.5rem;
+    }
+    
+    .file-name {
+        background-color: #eaecf4;
         padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        background-color: white;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        transition: all 0.2s;
-    }
-    
-    .legend-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
-    }
-    
-    .legend-color {
-        width: 16px;
-        height: 16px;
         border-radius: 4px;
-        margin-right: 8px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 0.5rem;
     }
     
-    /* Animation */
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(78, 115, 223, 0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(78, 115, 223, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(78, 115, 223, 0); }
+    .file-name i {
+        cursor: pointer;
+        color: #e74a3b;
     }
     
-    .pulse {
-        animation: pulse 1.5s infinite;
+    .custom-control-input:checked ~ .custom-control-label::before {
+        border-color: #4e73df;
+        background-color: #4e73df;
     }
     
-    /* Responsive */
-    @media (max-width: 992px) {
-        #calendar {
-            height: 400px;
+    .animated-alert {
+        animation: fadeInDown 0.5s ease-out;
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
     
-    @media (max-width: 768px) {
-        .legend-item {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.8rem;
+    .calendar-hint {
+        background-color: #e8f4f8;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        border-left: 4px solid #36b9cc;
+    }
+    
+    .calendar-hint i {
+        color: #36b9cc;
+    }
+    
+    /* Style pour les boutons */
+    .btn-submit {
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Styles responsives */
+    @media (max-width: 767.98px) {
+        .form-header, .form-body {
+            padding: 1rem;
         }
         
-        .form-card:hover {
-            transform: none;
+        .form-step {
+            padding-left: 2rem;
         }
     }
 </style>
+
+<!-- Lien vers le datepicker -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 {% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="form-card mb-4">
-                <div class="header-gradient">
-                    <h2 class="mb-0 text-center">
-                        <i class="fas fa-calendar-plus me-2"></i>Demande de Congé
-                    </h2>
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-calendar-plus me-2"></i>Demande de congé</h1>
+        <div>
+            <a href="{% url 'my_leaves' %}" class="btn btn-primary shadow-sm me-2">
+                <i class="fas fa-list-alt me-1"></i> Mes congés
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm">
+                <i class="fas fa-arrow-left me-1"></i> Tableau de bord
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-4 animated-alert">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Informations sur le solde de congés -->
+    {% if leave_balance %}
+    <div class="leave-balance mb-4">
+        <div>
+            <div class="balance-label">Votre solde de congés disponible</div>
+            <div class="balance-value {% if leave_balance.available > 5 %}text-success{% elif leave_balance.available > 0 %}text-warning{% else %}text-danger{% endif %}">
+                {{ leave_balance.available }} jour(s)
+            </div>
+        </div>
+        <div class="text-end">
+            <div class="balance-label">Congés acquis</div>
+            <div class="fw-bold">{{ leave_balance.acquired }} jour(s)</div>
+        </div>
+        <div class="text-end">
+            <div class="balance-label">Congés pris</div>
+            <div class="fw-bold">{{ leave_balance.taken }} jour(s)</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Formulaire de demande de congé -->
+    <div class="form-panel">
+        <div class="form-header">
+            <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Formulaire de demande de congé</h5>
+        </div>
+        <div class="form-body">
+            <form method="post" action="{% url 'leave_request' %}" enctype="multipart/form-data" id="leaveRequestForm">
+                {% csrf_token %}
+                
+                <!-- Étape 1: Type de congé -->
+                <div class="form-step">
+                    <div class="step-number">1</div>
+                    <h5 class="mb-3">Type de congé</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="leave_type" class="form-label">Sélectionnez un type de congé <span class="text-danger">*</span></label>
+                                <select class="form-select form-control-lg" id="leave_type" name="leave_type" required>
+                                    <option value="">Choisir un type...</option>
+                                    <option value="annual">Congé annuel</option>
+                                    <option value="sick">Congé maladie</option>
+                                    <option value="parental">Congé parental</option>
+                                    <option value="unpaid">Congé sans solde</option>
+                                    <option value="bereavement">Congé pour décès</option>
+                                    <option value="marriage">Congé pour mariage</option>
+                                    <option value="moving">Congé pour déménagement</option>
+                                    <option value="other">Autre</option>
+                                </select>
+                                <div class="form-text" id="leaveTypeHelp"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="card-body p-4">
-                    {% if messages %}
-                    <div class="mb-4">
-                        {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
+                <!-- Étape 2: Période du congé -->
+                <div class="form-step">
+                    <div class="step-number">2</div>
+                    <h5 class="mb-3">Période du congé</h5>
                     
-                    <!-- Information sur le solde de congés -->
-                    <div class="alert alert-info mb-4">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-info-circle fa-2x me-3"></i>
-                            <div>
-                                <h5 class="alert-heading">Solde de congés</h5>
-                                <p class="mb-0">
-                                    Vous disposez actuellement de <strong>{{ leave_balance.available }} jours</strong> de congés.
-                                    <span class="ms-2 small text-muted">({{ leave_balance.taken }} jours pris / {{ leave_balance.acquired }} jours acquis)</span>
-                                </p>
-                                <div class="progress mt-2" style="height: 8px;">
-                                    <div class="progress-bar bg-primary" 
-                                         role="progressbar" 
-                                         style="width: {{ leave_balance.percentage }}%;" 
-                                         aria-valuenow="{{ leave_balance.percentage }}" 
-                                         aria-valuemin="0" 
-                                         aria-valuemax="100"></div>
-                                </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="start_date" class="form-label">Date de début <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control datepicker" id="start_date" name="start_date" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="end_date" class="form-label">Date de fin <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control datepicker" id="end_date" name="end_date" required>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <!-- Formulaire de demande -->
-                        <div class="col-lg-5">
-                            <form method="post" enctype="multipart/form-data" id="leave-form" class="needs-validation" novalidate>
-                                {% csrf_token %}
-                                
-                                <div class="mb-3">
-                                    <label for="{{ form.leave_type.id_for_label }}" class="form-label">Type de congé <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-tag"></i></span>
-                                        {{ form.leave_type }}
-                                    </div>
-                                    {% if form.leave_type.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.leave_type.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="{{ form.start_date.id_for_label }}" class="form-label">Date de début <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-calendar-day"></i></span>
-                                        {{ form.start_date }}
-                                    </div>
-                                    {% if form.start_date.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.start_date.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="{{ form.end_date.id_for_label }}" class="form-label">Date de fin <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-calendar-check"></i></span>
-                                        {{ form.end_date }}
-                                    </div>
-                                    {% if form.end_date.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.end_date.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="half_day">
-                                        <label class="form-check-label" for="half_day">Demi-journée</label>
-                                    </div>
-                                    
-                                    <div id="half_day_options" class="mt-2 ms-4" style="display: none;">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="half_day_period" id="morning" value="morning" checked>
-                                            <label class="form-check-label" for="morning">
-                                                <i class="fas fa-sun me-1 text-warning"></i> Matin
-                                            </label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="half_day_period" id="afternoon" value="afternoon">
-                                            <label class="form-check-label" for="afternoon">
-                                                <i class="fas fa-moon me-1 text-primary"></i> Après-midi
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div id="leave-duration" class="mb-3">
-                                    <span id="duration-value">0</span> jour(s)
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="{{ form.reason.id_for_label }}" class="form-label">Motif</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-comment-alt"></i></span>
-                                        {{ form.reason }}
-                                    </div>
-                                    {% if form.reason.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.reason.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="{{ form.attachment.id_for_label }}" class="form-label">Pièce jointe</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-paperclip"></i></span>
-                                        {{ form.attachment }}
-                                    </div>
-                                    <div class="form-text">Format accepté: PDF, JPG, PNG (max 5 Mo)</div>
-                                    {% if form.attachment.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.attachment.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Notifications</label>
-                                    <div class="card border-light">
-                                        <div class="card-body bg-light rounded">
-                                            <div class="form-check mb-2">
-                                                <input class="form-check-input" type="checkbox" id="notify_manager" checked>
-                                                <label class="form-check-label" for="notify_manager">
-                                                    <i class="fas fa-user-tie me-1"></i> Informer mon responsable
-                                                </label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="notify_hr" checked>
-                                                <label class="form-check-label" for="notify_hr">
-                                                    <i class="fas fa-users-cog me-1"></i> Informer les ressources humaines
-                                                </label>
-                                            </div>
-                                            <input type="hidden" name="notification_emails" id="notification_emails">
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-gradient">
-                                        <i class="fas fa-paper-plane me-2"></i> Soumettre ma demande
-                                    </button>
-                                </div>
-                            </form>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="half_day" name="half_day">
+                        <label class="form-check-label" for="half_day">
+                            Demi-journée
+                        </label>
+                    </div>
+                    
+                    <div id="half_day_options" class="mb-3" style="display: none;">
+                        <label class="form-label">Période</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="half_day_period" id="morning" value="morning" checked>
+                            <label class="form-check-label" for="morning">
+                                Matin
+                            </label>
                         </div>
-                        
-                        <!-- Calendrier -->
-                        <div class="col-lg-7">
-                            <div class="card border-0 shadow-sm h-100">
-                                <div class="card-header bg-light py-3">
-                                    <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Calendrier des congés</h5>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="half_day_period" id="afternoon" value="afternoon">
+                            <label class="form-check-label" for="afternoon">
+                                Après-midi
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="date-range-preview" id="dateRangePreview">
+                        <p class="mb-1">Récapitulatif de votre demande :</p>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-2">
+                                    <small class="text-muted">Période</small><br>
+                                    <span class="preview-value" id="previewDateRange">-</span>
                                 </div>
-                                <div class="card-body">
-                                    <div id="calendar"></div>
-                                    
-                                    <div class="calendar-legend">
-                                        <div class="legend-item">
-                                            <div class="legend-color" style="background-color: #4e73df;"></div>
-                                            <span>Sélection</span>
-                                        </div>
-                                        <div class="legend-item">
-                                            <div class="legend-color" style="background-color: #1cc88a;"></div>
-                                            <span>Approuvé</span>
-                                        </div>
-                                        <div class="legend-item">
-                                            <div class="legend-color" style="background-color: #f6c23e;"></div>
-                                            <span>En attente</span>
-                                        </div>
-                                        <div class="legend-item">
-                                            <div class="legend-color" style="background-color: #e74a3b;"></div>
-                                            <span>Refusé</span>
-                                        </div>
-                                    </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-2">
+                                    <small class="text-muted">Jours ouvrables</small><br>
+                                    <span class="preview-value" id="previewWorkDays">-</span>
                                 </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-2">
+                                    <small class="text-muted">Durée totale</small><br>
+                                    <span class="preview-value" id="previewTotalDays">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="days_requested" name="days_requested" value="0">
+                    </div>
+                    
+                    <div class="calendar-hint mt-3">
+                        <i class="fas fa-info-circle me-2"></i> 
+                        <span>Les week-ends et jours fériés sont automatiquement exclus du calcul des jours de congé.</span>
+                    </div>
+                </div>
+                
+                <!-- Étape 3: Justificatif et informations complémentaires -->
+                <div class="form-step">
+                    <div class="step-number">3</div>
+                    <h5 class="mb-3">Informations complémentaires</h5>
+                    
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Motif (facultatif)</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="Précisez le motif de votre demande de congé..."></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="attachment" class="form-label">Pièce justificative (facultatif)</label>
+                        <div class="upload-area" id="upload-area">
+                            <div class="upload-icon">
+                                <i class="fas fa-file-upload"></i>
+                            </div>
+                            <p class="mb-0">Glissez et déposez un fichier ici ou cliquez pour parcourir</p>
+                            <p class="text-muted small">Formats acceptés : PDF, PNG, JPG, JPEG (max. 5 Mo)</p>
+                            <input type="file" name="attachment" id="attachment" accept=".pdf,.png,.jpg,.jpeg" style="display: none;">
+                        </div>
+                        <div id="file-preview" class="d-none">
+                            <div class="file-name">
+                                <span id="file-name-text"></span>
+                                <i class="fas fa-times remove-file"></i>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+                
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-2">
+                    <a href="{% url 'my_leaves' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-submit">
+                        <i class="fas fa-paper-plane me-1"></i> Soumettre ma demande
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-{% endblock %}
 
 {% block extra_scripts %}
-<!-- FullCalendar JS -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js"></script>
+<!-- Scripts nécessaires pour le datepicker -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialisation du calendrier
-        const calendarEl = document.getElementById('calendar');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-            locale: 'fr',
-            initialView: 'dayGridMonth',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek'
-            },
-            buttonText: {
-                today: 'Aujourd\'hui',
-                month: 'Mois',
-                week: 'Semaine'
-            },
-            selectable: true,
-            select: function(info) {
-                // Mettre à jour les dates dans le formulaire
-                document.getElementById('id_start_date').value = info.startStr;
-                
-                // Pour la date de fin, on doit ajuster car FullCalendar utilise des dates exclusives
-                const endDate = new Date(info.end);
-                endDate.setDate(endDate.getDate() - 1);
-                const endStr = endDate.toISOString().split('T')[0];
-                document.getElementById('id_end_date').value = endStr;
-                
-                // Mettre à jour la durée
-                calculateDuration();
-                
-                // Mettre à jour l'affichage de la sélection sur le calendrier
-                updateCalendarSelection();
-            },
-            events: [
-                // Jours fériés 2025
-                {
-                    title: 'Jour de l\'an',
-                    start: '2025-01-01',
-                    allDay: true,
-                    display: 'background',
-                    color: '#ff9f89'
-                },
-                {
-                    title: 'Lundi de Pâques',
-                    start: '2025-04-21',
-                    allDay: true,
-                    display: 'background',
-                    color: '#ff9f89'
-                },
-                {
-                    title: 'Fête du Travail',
-                    start: '2025-05-01',
-                    allDay: true,
-                    display: 'background',
-                    color: '#ff9f89'
-                },
-                {
-                    title: 'Victoire 1945',
-                    start: '2025-05-08',
-                    allDay: true,
-                    display: 'background',
-                    color: '#ff9f89'
-                },
-                {
-                    title: 'Ascension',
-                    start: '2025-05-29',
-                    allDay: true,
-                    display: 'background',
-                    color: '#ff9f89'
-                },
-                {
-                    title: 'Lundi de Pentecôte',
-                    start: '2025-06-09',
-                    allDay: true,
-                    display: 'background',
-                    color: '#ff9f89'
-                },
-                {
-                    title: 'Fête Nationale',
-                    start: '2025-07-14',
-                    allDay: true,
-                    display: 'background',
-                    color: '#ff9f89'
-                },
-                {
-                    title: 'Assomption',
-                    start: '2025-08-15',
-                    allDay: true,
-                    display: 'background',
-                    color: '#ff9f89'
-                },
-                {
-                    title: 'Toussaint',
-                    start: '2025-11-01',
-                    allDay: true,
-                    display: 'background',
-                    color: '#ff9f89'
-                },
-                {
-                    title: 'Armistice',
-                    start: '2025-11-11',
-                    allDay: true,
-                    display: 'background',
-                    color: '#ff9f89'
-                },
-                {
-                    title: 'Noël',
-                    start: '2025-12-25',
-                    allDay: true,
-                    display: 'background',
-                    color: '#ff9f89'
-                },
-                // Vacances scolaires Réunion 2025
-                {
-                    title: 'Vacances d\'été',
-                    start: '2025-01-01',
-                    end: '2025-01-23',
-                    display: 'background',
-                    color: '#e8f4f8'
-                },
-                {
-                    title: 'Vacances de Mars',
-                    start: '2025-03-09',
-                    end: '2025-03-24',
-                    display: 'background',
-                    color: '#e8f4f8'
-                },
-                {
-                    title: 'Vacances de Mai',
-                    start: '2025-05-08',
-                    end: '2025-05-19',
-                    display: 'background',
-                    color: '#e8f4f8'
-                },
-                {
-                    title: 'Vacances de Juillet',
-                    start: '2025-07-06',
-                    end: '2025-07-21',
-                    display: 'background',
-                    color: '#e8f4f8'
-                },
-                {
-                    title: 'Vacances d\'Octobre',
-                    start: '2025-10-12',
-                    end: '2025-10-27',
-                    display: 'background',
-                    color: '#e8f4f8'
-                },
-                {
-                    title: 'Vacances d\'été',
-                    start: '2025-12-14',
-                    end: '2025-12-31',
-                    display: 'background',
-                    color: '#e8f4f8'
-                },
-                // Conserver les événements de congés existants
-                {% for leave in existing_leaves %}
-                {
-                    title: '{{ leave.user.get_full_name|default:leave.user.username }} - {{ leave.get_leave_type_display }}',
-                    start: '{{ leave.start_date|date:"Y-m-d" }}',
-                    end: '{{ leave.end_date|date:"Y-m-d" }}',
-                    classNames: ['leave-{{ leave.status }}']
-                },
-                {% endfor %}
-            ],
-            eventDidMount: function(info) {
-                // Ajouter des tooltips aux événements
-                new bootstrap.Tooltip(info.el, {
-                    title: info.event.title,
-                    placement: 'top',
-                    boundary: 'window'
-                });
-            }
-        });
-        
-        calendar.render();
-        
-        // Fonction pour afficher la sélection sur le calendrier
-        function updateCalendarSelection() {
-            // Supprimer les événements de sélection existants
-            const existingSelections = calendar.getEvents().filter(event => event.id === 'selection');
-            existingSelections.forEach(event => event.remove());
-            
-            const startDate = document.getElementById('id_start_date').value;
-            const endDate = document.getElementById('id_end_date').value;
-            
-            if (startDate && endDate) {
-                // Calculer la date de fin exclusive pour FullCalendar
-                const exclusiveEndDate = new Date(endDate);
-                exclusiveEndDate.setDate(exclusiveEndDate.getDate() + 1);
-                
-                // Ajouter le nouvel événement de sélection
-                calendar.addEvent({
-                    id: 'selection',
-                    title: 'Votre sélection',
-                    start: startDate,
-                    end: exclusiveEndDate.toISOString().split('T')[0],
-                    classNames: ['new-leave-selection']
-                });
-            }
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les date pickers
+    const startDatePicker = flatpickr("#start_date", {
+        dateFormat: "Y-m-d",
+        locale: "fr",
+        minDate: "today",
+        onChange: function(selectedDates, dateStr, instance) {
+            endDatePicker.set("minDate", dateStr);
+            calculateDays();
         }
-        
-        // Calculer la durée du congé
-        function calculateDuration() {
-            const startDate = new Date(document.getElementById('id_start_date').value);
-            const endDate = new Date(document.getElementById('id_end_date').value);
-            const halfDayCheckbox = document.getElementById('half_day');
-            
-            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-                document.getElementById('duration-value').textContent = '0';
-                return;
-            }
-            
-            // Nombre de jours entre les deux dates (inclus)
-            const diffTime = Math.abs(endDate - startDate);
-            let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            
-            // Si c'est une demi-journée
-            if (halfDayCheckbox.checked) {
-                diffDays = 0.5;
-            }
-            
-            document.getElementById('duration-value').textContent = diffDays;
-            
-            // Animation si la durée change
-            const durationElement = document.getElementById('leave-duration');
-            durationElement.classList.add('pulse');
-            setTimeout(() => {
-                durationElement.classList.remove('pulse');
-            }, 1000);
-        }
-        
-        // Écouter les changements de date
-        document.getElementById('id_start_date').addEventListener('change', function() {
-            // Si la date de début est après la date de fin, ajuster la date de fin
-            const startDate = new Date(this.value);
-            const endDate = new Date(document.getElementById('id_end_date').value);
-            
-            if (startDate > endDate) {
-                document.getElementById('id_end_date').value = this.value;
-            }
-            
-            calculateDuration();
-            updateCalendarSelection();
-        });
-        
-        document.getElementById('id_end_date').addEventListener('change', function() {
-            // Si la date de fin est avant la date de début, ajuster la date de début
-            const startDate = new Date(document.getElementById('id_start_date').value);
-            const endDate = new Date(this.value);
-            
-            if (endDate < startDate) {
-                document.getElementById('id_start_date').value = this.value;
-            }
-            
-            calculateDuration();
-            updateCalendarSelection();
-        });
-        
-        // Gérer l'option demi-journée
-        const halfDayCheckbox = document.getElementById('half_day');
-        const halfDayOptions = document.getElementById('half_day_options');
-        
-        halfDayCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                halfDayOptions.style.display = 'block';
-                // Si demi-journée est cochée, la date de fin devient égale à la date de début
-                document.getElementById('id_end_date').value = document.getElementById('id_start_date').value;
-                document.getElementById('id_end_date').disabled = true;
-            } else {
-                halfDayOptions.style.display = 'none';
-                document.getElementById('id_end_date').disabled = false;
-            }
-            calculateDuration();
-            updateCalendarSelection();
-        });
-        
-        // Gérer les notifications par email
-        const notifyManagerCheckbox = document.getElementById('notify_manager');
-        const notifyHRCheckbox = document.getElementById('notify_hr');
-        const notificationEmailsInput = document.getElementById('notification_emails');
-        
-        function updateNotificationEmails() {
-            let emails = [];
-            if (notifyManagerCheckbox.checked) {
-                // Les responsables avec copie normale
-                emails.push('manager@example.com');
-            }
-            if (notifyHRCheckbox.checked) {
-                // Les RH en copie cachée
-                emails.push('bcc:hr@example.com');
-            }
-            notificationEmailsInput.value = emails.join(',');
-        }
-        
-        notifyManagerCheckbox.addEventListener('change', updateNotificationEmails);
-        notifyHRCheckbox.addEventListener('change', updateNotificationEmails);
-        
-        // Initialiser les notifications
-        updateNotificationEmails();
-        
-        // Validation du formulaire avant soumission
-        document.getElementById('leave-form').addEventListener('submit', function(event) {
-            const startDate = new Date(document.getElementById('id_start_date').value);
-            const endDate = new Date(document.getElementById('id_end_date').value);
-            
-            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-                event.preventDefault();
-                alert('Veuillez sélectionner des dates valides pour votre demande de congé.');
-                return;
-            }
-            
-            const leaveType = document.getElementById('id_leave_type').value;
-            if (!leaveType) {
-                event.preventDefault();
-                alert('Veuillez sélectionner un type de congé.');
-                return;
-            }
-            
-            // Si tout est valide, ajouter une animation au bouton de soumission
-            const submitButton = this.querySelector('button[type="submit"]');
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Traitement...';
-            submitButton.disabled = true;
-        });
     });
+    
+    const endDatePicker = flatpickr("#end_date", {
+        dateFormat: "Y-m-d",
+        locale: "fr",
+        minDate: "today",
+        onChange: function() {
+            calculateDays();
+        }
+    });
+    
+    // Afficher/masquer les options de demi-journée
+    const halfDayCheckbox = document.getElementById('half_day');
+    const halfDayOptions = document.getElementById('half_day_options');
+    
+    halfDayCheckbox.addEventListener('change', function() {
+        halfDayOptions.style.display = this.checked ? 'block' : 'none';
+        calculateDays();
+    });
+    
+    // Recalculer quand la période change
+    document.querySelectorAll('input[name="half_day_period"]').forEach(radio => {
+        radio.addEventListener('change', calculateDays);
+    });
+    
+    // Fonction pour calculer les jours de congés
+    function calculateDays() {
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+        const isHalfDay = document.getElementById('half_day').checked;
+        
+        if (!startDate || !endDate) {
+            // Aucune date sélectionnée
+            document.getElementById('previewDateRange').textContent = '-';
+            document.getElementById('previewWorkDays').textContent = '-';
+            document.getElementById('previewTotalDays').textContent = '-';
+            document.getElementById('days_requested').value = '0';
+            return;
+        }
+        
+        // Formater les dates pour l'affichage
+        const formattedStartDate = new Date(startDate).toLocaleDateString('fr-FR');
+        const formattedEndDate = new Date(endDate).toLocaleDateString('fr-FR');
+        
+        // Afficher la période
+        document.getElementById('previewDateRange').textContent = 
+            `${formattedStartDate} au ${formattedEndDate}`;
+        
+        // Calculer le nombre total de jours
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 pour inclure le jour de fin
+        
+        // Compter les jours ouvrables (lundi au vendredi)
+        let workDays = 0;
+        const current = new Date(start);
+        
+        while (current <= end) {
+            const dayOfWeek = current.getDay();
+            if (dayOfWeek > 0 && dayOfWeek < 6) { // 0 = dimanche, 6 = samedi
+                workDays++;
+            }
+            current.setDate(current.getDate() + 1);
+        }
+        
+        document.getElementById('previewWorkDays').textContent = `${workDays} jour(s)`;
+        
+        // Calculer la durée totale demandée
+        let totalDays = workDays;
+        if (isHalfDay && start.getTime() === end.getTime()) { // Uniquement pour les congés d'un jour
+            totalDays = 0.5;
+        }
+        
+        document.getElementById('previewTotalDays').textContent = `${totalDays} jour(s)`;
+        document.getElementById('days_requested').value = totalDays;
+        
+        // Mettre à jour la classe visuelle
+        const preview = document.getElementById('dateRangePreview');
+        
+        if (totalDays > 0) {
+            preview.classList.add('is-valid');
+            preview.classList.remove('is-invalid');
+        } else {
+            preview.classList.add('is-invalid');
+            preview.classList.remove('is-valid');
+        }
+    }
+    
+    // Gérer l'upload de fichiers
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('attachment');
+    const filePreview = document.getElementById('file-preview');
+    const fileNameText = document.getElementById('file-name-text');
+    
+    uploadArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('border-primary');
+    });
+    
+    uploadArea.addEventListener('dragleave', function() {
+        this.classList.remove('border-primary');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('border-primary');
+        
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            showFilePreview(e.dataTransfer.files[0]);
+        }
+    });
+    
+    fileInput.addEventListener('change', function() {
+        if (this.files.length) {
+            showFilePreview(this.files[0]);
+        }
+    });
+    
+    function showFilePreview(file) {
+        if (file) {
+            // Vérifier la taille du fichier (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Le fichier est trop volumineux. Veuillez choisir un fichier de moins de 5Mo.');
+                fileInput.value = '';
+                return;
+            }
+            
+            fileNameText.textContent = file.name;
+            filePreview.classList.remove('d-none');
+        }
+    }
+    
+    // Supprimer le fichier
+    document.querySelector('.remove-file').addEventListener('click', function() {
+        fileInput.value = '';
+        filePreview.classList.add('d-none');
+    });
+    
+    // Afficher les informations sur le type de congé sélectionné
+    const leaveTypeSelect = document.getElementById('leave_type');
+    const leaveTypeHelp = document.getElementById('leaveTypeHelp');
+    
+    leaveTypeSelect.addEventListener('change', function() {
+        const selectedType = this.value;
+        let helpText = '';
+        
+        switch(selectedType) {
+            case 'annual':
+                helpText = 'Congés payés classiques, déduits de votre solde annuel.';
+                break;
+            case 'sick':
+                helpText = 'Congé pour raison médicale. Un justificatif pourrait être demandé.';
+                break;
+            case 'parental':
+                helpText = 'Congé lié à la naissance ou à l\'adoption d\'un enfant.';
+                break;
+            case 'unpaid':
+                helpText = 'Absence non rémunérée, n\'affecte pas votre solde de congés.';
+                break;
+            case 'bereavement':
+                helpText = 'Congé accordé suite au décès d\'un proche.';
+                break;
+            case 'marriage':
+                helpText = 'Congé pour votre mariage ou PACS.';
+                break;
+            case 'moving':
+                helpText = 'Congé pour déménagement.';
+                break;
+            case 'other':
+                helpText = 'Autre type de congé. Veuillez préciser la raison dans le champ commentaire.';
+                break;
+        }
+        
+        leaveTypeHelp.textContent = helpText;
+    });
+    
+    // Validation finale du formulaire
+    document.getElementById('leaveRequestForm').addEventListener('submit', function(e) {
+        const daysRequested = parseFloat(document.getElementById('days_requested').value);
+        const leaveType = document.getElementById('leave_type').value;
+        
+        if (!leaveType) {
+            e.preventDefault();
+            alert('Veuillez sélectionner un type de congé.');
+            return;
+        }
+        
+        if (daysRequested <= 0) {
+            e.preventDefault();
+            alert('La période sélectionnée ne contient aucun jour ouvrable valide.');
+            return;
+        }
+        
+        // Pour les congés annuels, vérifier le solde disponible
+        {% if leave_balance %}
+        if (leaveType === 'annual' && daysRequested > {{ leave_balance.available|default:0 }}) {
+            if (!confirm('Attention : Cette demande dépasse votre solde de congés disponible. Voulez-vous continuer quand même ?')) {
+                e.preventDefault();
+                return;
+            }
+        }
+        {% endif %}
+    });
+});
 </script>
+{% endblock %}
 {% endblock %}

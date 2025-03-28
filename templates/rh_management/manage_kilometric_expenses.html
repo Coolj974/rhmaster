@@ -2,55 +2,99 @@
 
 {% block extra_css %}
 <style>
-    /* Styles simples pour la gestion des frais kilométriques */
-    .filter-card {
-        border-radius: 0.5rem;
-        margin-bottom: 1rem;
-        border: 1px solid #e3e6f0;
-        padding: 10px;
+    /* Styles pour la gestion des frais kilométriques */
+    .expense-header {
+        padding: 1rem 0;
+        margin-bottom: 1.5rem;
     }
     
-    .filter-header {
-        padding: 0.75rem 1rem;
-        background-color: #f8f9fc;
-        border-bottom: 1px solid #e3e6f0;
-        font-weight: 600;
-        color: #4e73df;
-    }
-    
-    .expense-table {
-        border-radius: 0.5rem;
+    .stats-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+        border: none;
         overflow: hidden;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .stats-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .stats-header {
+        margin-bottom: 1rem;
+        color: #5a5c69;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    
+    .stats-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+    
+    .stats-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .trip-table {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0.15rem 1.25rem rgba(0,0,0,0.075);
+    }
+    
+    .trip-table th {
+        background-color: #f8f9fc;
+        font-weight: 600;
+        padding: 1rem;
+        border-top: none;
     }
     
     .status-badge {
         font-size: 0.75rem;
-        padding: 0.25rem 0.75rem;
+        padding: 0.35rem 0.85rem;
         border-radius: 30px;
         font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     .status-pending {
-        background-color: #fff3cd;
-        color: #856404;
+        background-color: rgba(246, 194, 62, 0.15);
+        color: #f6c23e;
     }
     
     .status-approved {
-        background-color: #d4edda;
-        color: #155724;
+        background-color: rgba(28, 200, 138, 0.15);
+        color: #1cc88a;
     }
     
     .status-rejected {
-        background-color: #f8d7da;
-        color: #721c24;
+        background-color: rgba(231, 74, 59, 0.15);
+        color: #e74a3b;
     }
     
-    .expense-row {
-        transition: background-color 0.2s;
+    .trip-row {
+        transition: all 0.3s ease;
     }
     
-    .expense-row:hover {
-        background-color: #f8f9fc;
+    .trip-row:hover {
+        transform: translateX(5px);
+        background-color: rgba(78, 115, 223, 0.05);
     }
     
     .action-buttons {
@@ -58,476 +102,1101 @@
     }
     
     .action-btn {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        margin: 0 2px;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
     
-    .btn-view {
-        color: #4e73df;
-        background-color: #eaecf4;
-        border-color: #eaecf4;
+    .action-btn:hover {
+        transform: scale(1.1);
     }
     
-    .btn-approve {
+    .btn-group-actions {
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+    }
+    
+    .trip-row:hover .btn-group-actions {
+        opacity: 1;
+    }
+    
+    /* Améliorations pour le modal */
+    .modal-header {
+        background-color: #4e73df;
         color: #fff;
-        background-color: #1cc88a;
-        border-color: #1cc88a;
+        border-bottom: none;
     }
     
-    .btn-reject {
-        color: #fff;
-        background-color: #e74a3b;
-        border-color: #e74a3b;
+    .modal-header .btn-close {
+        color: white;
     }
     
-    .expense-details {
-        background-color: #f8f9fc;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin-top: 1rem;
+    .modal-footer {
+        border-top: none;
+        padding: 1rem 1.5rem 1.5rem;
     }
     
+    .modal-card {
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    /* État vide */
     .empty-state {
         text-align: center;
         padding: 3rem 1rem;
-        color: #6c757d;
     }
     
-    .empty-state i {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        color: #d1d3e2;
+    .empty-icon {
+        font-size: 4rem;
+        color: #dddfeb;
+        margin-bottom: 1.5rem;
     }
     
-    #map-view {
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
+    
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .slide-up {
+        animation: slideUp 0.5s ease forwards;
+    }
+    
+    /* Styles de la carte */
+    #trip-map {
         height: 300px;
-        width: 100%;
-        border-radius: 0.5rem;
-        margin-top: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.1);
     }
     
-    .vehicle-badge {
-        display: inline-block;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.75rem;
-        margin-right: 0.5rem;
+    .user-bubble {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
     }
     
-    .vehicle-car {
-        background-color: #e8f0fe;
-        color: #4285f4;
-    }
-    
-    .vehicle-motorbike {
-        background-color: #fce8e6;
-        color: #ea4335;
-    }
-    
-    .vehicle-electric {
-        background-color: #e6f4ea;
-        color: #34a853;
-    }
-    
-    .vehicle-bicycle {
-        background-color: #fef6e0;
-        color: #fbbc04;
-    }
-    
-    .card-stat {
-        overflow: hidden;
-        position: relative;
-    }
-    
-    .card-stat .stat-icon {
-        position: absolute;
-        right: -10px;
-        top: 20px;
-        opacity: 0.1;
-        font-size: 6rem;
-        transform: rotate(15deg);
+    /* Filtres et recherche */
+    .filters-card {
+        border-radius: 10px;
+        box-shadow: 0 0.15rem 1.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1.5rem;
         transition: all 0.3s ease;
+        overflow: hidden;
     }
     
-    .kilometric-expense-table thead th {
-        font-weight: 500;
+    .filters-header {
+        padding: 1rem 1.25rem;
         background-color: #f8f9fc;
-        border-top: none;
-        position: sticky;
-        top: 0;
-        z-index: 10;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
     }
     
-    .expense-row {
-        transition: all 0.2s ease;
+    .filters-body {
+        padding: 1.25rem;
     }
     
-    .expense-row:hover {
-        background-color: #f0f4f8;
-        transform: translateX(3px);
+    /* Styles pour les points de route */
+    .route-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+    }
+    
+    .route-dot.start {
+        background-color: #1cc88a;
+    }
+    
+    .route-dot.end {
+        background-color: #e74a3b;
+    }
+    
+    .route-path {
+        position: relative;
+        padding-left: 20px;
+    }
+    
+    .route-path:before {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 18px;
+        bottom: 0;
+        width: 2px;
+        background-color: #e3e6f0;
+        height: calc(100% - 18px);
+    }
+    
+    .route-path:last-child:before {
+        display: none;
     }
 </style>
-
-<!-- Leaflet CSS pour la carte -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 {% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <!-- En-tête avec titre et actions -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <!-- En-tête de la page -->
+    <div class="d-sm-flex align-items-center justify-content-between expense-header">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-route me-2"></i>Gestion des frais kilométriques</h1>
         <div>
-            <h1 class="h3 mb-0 text-gray-800">
-                <i class="fas fa-route me-2 text-primary"></i>Frais kilométriques
-            </h1>
-            <p class="text-muted mb-0 d-none d-md-block">Gérez les demandes de frais kilométriques</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm">
+            <a href="{% url 'export_kilometric_expenses' %}" class="btn btn-success shadow-sm me-2">
+                <i class="fas fa-file-export me-1"></i> Exporter
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm">
                 <i class="fas fa-arrow-left me-1"></i> Tableau de bord
             </a>
-            <div class="dropdown">
-                <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-cog me-1"></i> Options
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow">
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-download me-2 text-primary"></i>Exporter</a></li>
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-chart-pie me-2 text-success"></i>Statistiques</a></li>
-                </ul>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-4 fade-in">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Statistiques des frais kilométriques -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-primary">TOTAL TRAJETS</div>
+                            <div class="stats-value">{{ stats.total_count|default:"0" }}</div>
+                            <div class="text-xs text-muted">trajets déclarés</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="fas fa-route"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-warning">EN ATTENTE</div>
+                            <div class="stats-value">{{ stats.pending_count|default:"0" }}</div>
+                            <div class="text-xs text-muted">trajets à valider</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-success">DISTANCE TOTALE</div>
+                            <div class="stats-value">{{ stats.total_distance|default:"0" }} <span class="small">km</span></div>
+                            <div class="text-xs text-muted">tous trajets confondus</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-success bg-opacity-10 text-success">
+                                <i class="fas fa-map-marked-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-info">MONTANT TOTAL</div>
+                            <div class="stats-value">{{ stats.total_amount|default:"0.00"|floatformat:2 }}€</div>
+                            <div class="text-xs text-muted">à rembourser</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-info bg-opacity-10 text-info">
+                                <i class="fas fa-euro-sign"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Cartes de statistiques -->
-    <div class="row g-4 mb-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="dashboard-card card-stat border-start border-4 border-warning">
-                <div class="card-body p-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs text-uppercase fw-bold text-warning mb-1">En attente</div>
-                            <div class="stat-value text-gray-800 mb-0">{{ pending_count }}</div>
-                            <div class="mt-2 text-muted small">
-                                <i class="fas fa-tasks me-1"></i> À traiter
-                            </div>
-                        </div>
-                        <div class="rounded-circle p-3 bg-warning bg-opacity-10">
-                            <i class="fas fa-hourglass-half fa-2x text-warning"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- Filtres -->
+    <div class="filters-card">
+        <div class="filters-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-primary"><i class="fas fa-filter me-2"></i>Filtres</h5>
+            <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse" aria-expanded="false" aria-controls="filtersCollapse">
+                <i class="fas fa-chevron-down filter-toggle-icon"></i>
+                <span class="filter-toggle-text ms-1">Afficher</span>
+            </button>
         </div>
-
-        <!-- Autres cartes statistiques similaires -->
-        <div class="col-xl-3 col-md-6">
-            <div class="dashboard-card card-stat border-start border-4 border-success">
-                <div class="card-body p-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs text-uppercase fw-bold text-success mb-1">Distance totale</div>
-                            <div class="stat-value text-gray-800 mb-0">{{ total_distance|floatformat:0 }} <span class="fs-6">km</span></div>
-                            <div class="mt-2 text-muted small">
-                                <i class="fas fa-road me-1"></i> Mois en cours
-                            </div>
-                        </div>
-                        <div class="rounded-circle p-3 bg-success bg-opacity-10">
-                            <i class="fas fa-map-marked-alt fa-2x text-success"></i>
+        <div class="collapse" id="filtersCollapse">
+            <div class="filters-body">
+                <form method="get" action="{% url 'manage_kilometric_expenses' %}" id="filters-form" class="row g-3">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <select name="status" id="statusFilter" class="form-select rounded-3">
+                                <option value="">Tous les statuts</option>
+                                <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>En attente</option>
+                                <option value="approved" {% if filters.status == 'approved' %}selected{% endif %}>Approuvés</option>
+                                <option value="rejected" {% if filters.status == 'rejected' %}selected{% endif %}>Rejetés</option>
+                            </select>
+                            <label for="statusFilter">Statut</label>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
-            <div class="dashboard-card card-stat border-start border-4 border-danger">
-                <div class="card-body p-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs text-uppercase fw-bold text-danger mb-1">Remboursement</div>
-                            <div class="stat-value text-gray-800 mb-0">{{ total_amount|floatformat:2 }} <span class="fs-6">€</span></div>
-                            <div class="mt-2 text-muted small">
-                                <i class="fas fa-euro-sign me-1"></i> Total à payer
-                            </div>
-                        </div>
-                        <div class="rounded-circle p-3 bg-danger bg-opacity-10">
-                            <i class="fas fa-receipt fa-2x text-danger"></i>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <select name="user" id="userFilter" class="form-select rounded-3">
+                                <option value="">Tous les employés</option>
+                                {% for user in all_users %}
+                                    <option value="{{ user.id }}" {% if filters.user_id == user.id %}selected{% endif %}>
+                                        {{ user.get_full_name|default:user.username }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <label for="userFilter">Employé</label>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
-            <div class="dashboard-card card-stat border-start border-4 border-info">
-                <div class="card-body p-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs text-uppercase fw-bold text-info mb-1">Moyenne</div>
-                            <div class="stat-value text-gray-800 mb-0">{{ average_distance|floatformat:0 }} <span class="fs-6">km</span></div>
-                            <div class="mt-2 text-muted small">
-                                <i class="fas fa-tachometer-alt me-1"></i> Par demande
-                            </div>
-                        </div>
-                        <div class="rounded-circle p-3 bg-info bg-opacity-10">
-                            <i class="fas fa-chart-line fa-2x text-info"></i>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <select name="vehicle_type" id="vehicleFilter" class="form-select rounded-3">
+                                <option value="">Tous les véhicules</option>
+                                <option value="car" {% if filters.vehicle_type == 'car' %}selected{% endif %}>Voiture</option>
+                                <option value="electric_car" {% if filters.vehicle_type == 'electric_car' %}selected{% endif %}>Voiture électrique</option>
+                                <option value="motorbike" {% if filters.vehicle_type == 'motorbike' %}selected{% endif %}>Moto</option>
+                            </select>
+                            <label for="vehicleFilter">Type de véhicule</label>
                         </div>
                     </div>
-                </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control rounded-3" id="projectFilter" name="project" value="{{ filters.project|default:'' }}">
+                            <label for="projectFilter">Projet</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <input type="date" class="form-control rounded-3" id="startDateFilter" name="start_date" value="{{ filters.start_date|date:'Y-m-d'|default:'' }}">
+                            <label for="startDateFilter">Date début</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <input type="date" class="form-control rounded-3" id="endDateFilter" name="end_date" value="{{ filters.end_date|date:'Y-m-d'|default:'' }}">
+                            <label for="endDateFilter">Date fin</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control rounded-3" id="locationFilter" name="location" value="{{ filters.location|default:'' }}">
+                            <label for="locationFilter">Lieu (départ/arrivée)</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-floating">
+                            <select name="sort_by" id="sortByFilter" class="form-select rounded-3">
+                                <option value="date" {% if filters.sort_by == 'date' %}selected{% endif %}>Date du trajet</option>
+                                <option value="created_at" {% if filters.sort_by == 'created_at' %}selected{% endif %}>Date de création</option>
+                                <option value="distance" {% if filters.sort_by == 'distance' %}selected{% endif %}>Distance</option>
+                                <option value="amount" {% if filters.sort_by == 'amount' %}selected{% endif %}>Montant</option>
+                            </select>
+                            <label for="sortByFilter">Trier par</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 text-end">
+                        <button type="reset" class="btn btn-outline-secondary">
+                            <i class="fas fa-undo-alt me-1"></i> Réinitialiser
+                        </button>
+                        <button type="submit" class="btn btn-primary ms-2">
+                            <i class="fas fa-filter me-1"></i> Appliquer
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Tableau des frais kilométriques -->
-    <div class="card shadow mb-4 rounded-4 border-0">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-white rounded-top">
+    <!-- Frais kilométriques en attente -->
+    <div class="card shadow-sm mb-4 rounded-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center bg-white rounded-top">
             <div class="d-flex align-items-center">
-                <span class="position-relative me-3">
-                    <i class="fas fa-route fa-2x text-primary"></i>
-                    {% if pending_count %}
+                <span class="position-relative me-2">
+                    <i class="fas fa-clock fa-lg text-warning"></i>
+                    {% if pending_expenses %}
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        {{ pending_count }}
+                        {{ pending_expenses|length }}
                     </span>
                     {% endif %}
                 </span>
-                <div>
-                    <h5 class="m-0 font-weight-bold text-primary">Frais kilométriques en attente</h5>
-                    <p class="text-muted small mb-0">Demandes qui nécessitent votre approbation</p>
-                </div>
+                <h5 class="m-0 font-weight-bold text-primary">Frais kilométriques en attente</h5>
+            </div>
+            <div>
+                {% if pending_expenses %}
+                <a href="{% url 'approve_all_kilometric_expenses' %}" class="btn btn-sm btn-success me-2" onclick="return confirm('Êtes-vous sûr de vouloir approuver tous les frais kilométriques en attente ?')">
+                    <i class="fas fa-check-double me-1"></i> Tout approuver
+                </a>
+                {% endif %}
+                <button type="button" class="btn btn-sm btn-outline-primary" id="refreshTable">
+                    <i class="fas fa-sync-alt me-1"></i> Actualiser
+                </button>
             </div>
         </div>
-
         <div class="card-body p-0">
-            {% if expenses %}
+            {% if pending_expenses %}
                 <div class="table-responsive">
-                    <table class="table table-hover kilometric-expense-table align-middle mb-0">
+                    <table class="table table-hover trip-table align-middle mb-0" id="pendingTripsTable">
                         <thead>
                             <tr>
+                                <th class="ps-3">Date</th>
                                 <th>Employé</th>
-                                <th>Date</th>
                                 <th>Trajet</th>
                                 <th>Distance</th>
                                 <th>Véhicule</th>
-                                <th>Montant</th>
+                                <th>Projet</th>
+                                <th class="text-end">Montant</th>
                                 <th class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for expense in expenses %}
-                                <tr class="expense-row">
+                            {% for expense in pending_expenses %}
+                                <tr class="trip-row">
+                                    <td class="ps-3">{{ expense.date|date:"d/m/Y" }}</td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="user-avatar me-2">
-                                                <div class="user-bubble bg-primary text-white">
-                                                    {{ expense.user.username|first|upper }}
-                                                </div>
+                                            <div class="user-bubble bg-primary text-white me-2">
+                                                {{ expense.user.get_full_name|default:expense.user.username|slice:":1"|upper }}
                                             </div>
-                                            <div>
-                                                <div class="fw-medium">{{ expense.user.get_full_name|default:expense.user.username }}</div>
-                                                <div class="text-muted small">{{ expense.user.email }}</div>
-                                            </div>
+                                            <div>{{ expense.user.get_full_name|default:expense.user.username }}</div>
                                         </div>
                                     </td>
-                                    <td>{{ expense.date|date:"d/m/Y" }}</td>
                                     <td>
-                                        <div class="small">
-                                            <i class="fas fa-map-marker-alt text-danger me-1"></i>
-                                            {{ expense.departure|default:"Non spécifié"|truncatechars:20 }}
-                                            <i class="fas fa-arrow-right mx-1 text-muted"></i>
-                                            <i class="fas fa-flag-checkered text-success me-1"></i>
-                                            {{ expense.arrival|default:"Non spécifié"|truncatechars:20 }}
+                                        <div class="small route-path">
+                                            <span class="route-dot start"></span>{{ expense.departure|truncatechars:20 }}
+                                        </div>
+                                        <div class="small route-path">
+                                            <span class="route-dot end"></span>{{ expense.arrival|truncatechars:20 }}
                                         </div>
                                     </td>
-                                    <td>{{ expense.distance|default:0|floatformat:2 }} km</td>
+                                    <td>{{ expense.distance }} km</td>
+                                    <td><span class="badge bg-light text-dark">{{ expense.get_vehicle_type_display }}</span></td>
+                                    <td>{{ expense.project|default:"-" }}</td>
+                                    <td class="text-end fw-bold">{{ expense.amount|floatformat:2 }} €</td>
                                     <td>
-                                        <span class="badge bg-light text-dark">
-                                            <i class="fas fa-car me-1"></i>
-                                            {{ expense.get_vehicle_type_display }}
-                                        </span>
-                                    </td>
-                                    <td>{{ expense.amount|default:0|floatformat:2 }} €</td>
-                                    <td class="text-center">
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-outline-primary view-expense" 
-                                                    data-bs-toggle="modal" data-bs-target="#viewModal{{ expense.id }}">
+                                        <div class="btn-group-actions d-flex justify-content-center">
+                                            <button type="button" class="btn btn-sm btn-outline-info me-1 view-trip" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#detailsModal{{ expense.id }}">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-                                            {% if expense.status == 'pending' %}
-                                                <a href="{% url 'approve_kilometric_expense' expense.id %}" 
-                                                   class="btn btn-sm btn-outline-success"
-                                                   onclick="return confirm('Voulez-vous approuver cette demande ?')">
-                                                    <i class="fas fa-check"></i>
-                                                </a>
-                                                <a href="{% url 'reject_kilometric_expense' expense.id %}"
-                                                   class="btn btn-sm btn-outline-danger"
-                                                   onclick="return confirm('Voulez-vous rejeter cette demande ?')">
-                                                    <i class="fas fa-times"></i>
-                                                </a>
-                                            {% endif %}
+                                            <button type="button" class="btn btn-sm btn-outline-success me-1 approve-trip" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#approveModal{{ expense.id }}">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger reject-trip" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#rejectModal{{ expense.id }}">
+                                                <i class="fas fa-times"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
+                                
+                                <!-- Modal pour voir les détails -->
+                                <div class="modal fade" id="detailsModal{{ expense.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Détails du trajet</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row mb-4">
+                                                    <div class="col-md-6">
+                                                        <div class="card shadow-sm mb-3">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="mb-0">Informations générales</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <p><strong>Employé:</strong> {{ expense.user.get_full_name|default:expense.user.username }}</p>
+                                                                <p><strong>Date du trajet:</strong> {{ expense.date|date:"d/m/Y" }}</p>
+                                                                <p><strong>Description:</strong> {{ expense.description }}</p>
+                                                                {% if expense.project %}
+                                                                    <p><strong>Projet:</strong> {{ expense.project }}</p>
+                                                                {% endif %}
+                                                                {% if expense.comment %}
+                                                                    <p><strong>Commentaire:</strong> {{ expense.comment }}</p>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="card shadow-sm mb-3">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="mb-0">Détails du véhicule et coût</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <p><strong>Type de véhicule:</strong> {{ expense.get_vehicle_type_display }}</p>
+                                                                <p><strong>Puissance fiscale:</strong> {{ expense.get_fiscal_power_display }}</p>
+                                                                <p><strong>Distance:</strong> {{ expense.distance }} km</p>
+                                                                <p><strong>Taux appliqué:</strong> 
+                                                                    {% if expense.fiscal_power == 'normal' %}0.32
+                                                                    {% elif expense.fiscal_power == 'high' %}0.41
+                                                                    {% elif expense.fiscal_power == 'electric' %}0.45
+                                                                    {% elif expense.fiscal_power == 'motorbike' %}0.21
+                                                                    {% endif %} € / km
+                                                                </p>
+                                                                <p><strong>Montant total:</strong> <span class="text-success fw-bold">{{ expense.amount|floatformat:2 }} €</span></p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Carte du trajet -->
+                                                <div class="card shadow-sm mb-3">
+                                                    <div class="card-header bg-light">
+                                                        <h6 class="mb-0">Carte du trajet</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div id="trip-map-{{ expense.id }}" class="trip-map" style="height: 300px;"></div>
+                                                        <script>
+                                                            document.addEventListener('DOMContentLoaded', function() {
+                                                                const mapId = 'trip-map-{{ expense.id }}';
+                                                                const mapElement = document.getElementById(mapId);
+                                                                
+                                                                // Initialiser la carte quand le modal est affiché
+                                                                $('#detailsModal{{ expense.id }}').on('shown.bs.modal', function() {
+                                                                    initTripMap(
+                                                                        mapElement, 
+                                                                        {{ expense.departure_lat|default:"null" }}, 
+                                                                        {{ expense.departure_lng|default:"null" }}, 
+                                                                        {{ expense.arrival_lat|default:"null" }}, 
+                                                                        {{ expense.arrival_lng|default:"null" }},
+                                                                        "{{ expense.departure }}", 
+                                                                        "{{ expense.arrival }}"
+                                                                    );
+                                                                });
+                                                            });
+                                                        </script>
+                                                        <div class="mt-3">
+                                                            <div class="d-flex align-items-center mb-2">
+                                                                <div class="route-dot start me-2"></div>
+                                                                <div><strong>Départ:</strong> {{ expense.departure }}</div>
+                                                            </div>
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="route-dot end me-2"></div>
+                                                                <div><strong>Arrivée:</strong> {{ expense.arrival }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                                <div>
+                                                    <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" 
+                                                            data-bs-target="#approveModal{{ expense.id }}" data-bs-dismiss="modal">
+                                                        <i class="fas fa-check me-1"></i> Approuver
+                                                    </button>
+                                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal"
+                                                            data-bs-target="#rejectModal{{ expense.id }}" data-bs-dismiss="modal">
+                                                        <i class="fas fa-times me-1"></i> Rejeter
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Modal pour approuver -->
+                                <div class="modal fade" id="approveModal{{ expense.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-success text-white">
+                                                <h5 class="modal-title">Approuver le frais kilométrique</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form action="{% url 'kilometric_expense_action' expense.id %}" method="post">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="approve">
+                                                <div class="modal-body">
+                                                    <div class="text-center mb-4">
+                                                        <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                                                        <h5>Confirmer l'approbation</h5>
+                                                        <p>Vous êtes sur le point d'approuver le trajet de <strong>{{ expense.distance }} km</strong> pour un montant de <strong>{{ expense.amount|floatformat:2 }} €</strong>.</p>
+                                                        <div class="d-flex justify-content-center small text-muted">
+                                                            <span>{{ expense.departure }} → {{ expense.arrival }}</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="form-floating mb-3">
+                                                        <textarea class="form-control" id="approveComment{{ expense.id }}" name="comment" style="height: 100px" placeholder="Commentaire (optionnel)"></textarea>
+                                                        <label for="approveComment{{ expense.id }}">Commentaire (optionnel)</label>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <button type="submit" class="btn btn-success">
+                                                        <i class="fas fa-check-circle me-1"></i> Confirmer l'approbation
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Modal pour rejeter -->
+                                <div class="modal fade" id="rejectModal{{ expense.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white">
+                                                <h5 class="modal-title">Rejeter le frais kilométrique</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form action="{% url 'kilometric_expense_action' expense.id %}" method="post">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="reject">
+                                                <div class="modal-body">
+                                                    <div class="text-center mb-4">
+                                                        <i class="fas fa-times-circle text-danger fa-4x mb-3"></i>
+                                                        <h5>Confirmer le rejet</h5>
+                                                        <p>Vous êtes sur le point de rejeter le trajet de <strong>{{ expense.distance }} km</strong> pour un montant de <strong>{{ expense.amount|floatformat:2 }} €</strong>.</p>
+                                                        <div class="d-flex justify-content-center small text-muted">
+                                                            <span>{{ expense.departure }} → {{ expense.arrival }}</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="form-floating mb-3">
+                                                        <textarea class="form-control" id="rejectComment{{ expense.id }}" name="comment" style="height: 100px" placeholder="Motif du rejet" required></textarea>
+                                                        <label for="rejectComment{{ expense.id }}">Motif du rejet (requis)</label>
+                                                        <div class="form-text text-danger">Veuillez expliquer pourquoi ce frais kilométrique est rejeté.</div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <i class="fas fa-times-circle me-1"></i> Confirmer le rejet
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             {% else %}
                 <div class="empty-state">
-                    <i class="fas fa-check-circle text-success"></i>
-                    <h4>Aucune demande à traiter</h4>
-                    <p class="text-muted">Il n'y a actuellement aucun frais kilométrique à valider.</p>
+                    <div class="empty-icon">
+                        <i class="fas fa-check-circle text-success"></i>
+                    </div>
+                    <h4 class="mb-3">Tout est à jour !</h4>
+                    <p class="text-muted mb-4">Il n'y a actuellement aucun frais kilométrique en attente de validation.</p>
+                    <button id="refreshEmpty" class="btn btn-outline-primary">
+                        <i class="fas fa-sync-alt me-1"></i> Actualiser
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Historique des frais kilométriques -->
+    <div class="card shadow-sm mb-4 rounded-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center bg-white rounded-top">
+            <div>
+                <h5 class="m-0 font-weight-bold text-primary">Historique des frais kilométriques</h5>
+            </div>
+            <div>
+                <select id="statusFilterHistoric" class="form-select form-select-sm d-inline-block w-auto me-2">
+                    <option value="">Tous</option>
+                    <option value="approved">Approuvés</option>
+                    <option value="rejected">Rejetés</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="refreshHistory">
+                    <i class="fas fa-sync-alt me-1"></i> Actualiser
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if all_expenses %}
+                <div class="table-responsive">
+                    <table class="table table-hover trip-table align-middle mb-0" id="allTripsTable">
+                        <thead>
+                            <tr>
+                                <th class="ps-3">Date</th>
+                                <th>Employé</th>
+                                <th>Trajet</th>
+                                <th>Distance</th>
+                                <th>Véhicule</th>
+                                <th>Montant</th>
+                                <th>Statut</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in all_expenses %}
+                                <tr class="trip-row {% if expense.status == 'pending' %}table-warning{% elif expense.status == 'rejected' %}table-danger{% endif %}">
+                                    <td class="ps-3">{{ expense.date|date:"d/m/Y" }}</td>
+                                    <td>{{ expense.user.get_full_name|default:expense.user.username }}</td>
+                                    <td>
+                                        <div class="small route-path">
+                                            <span class="route-dot start"></span>{{ expense.departure|truncatechars:20 }}
+                                        </div>
+                                        <div class="small route-path">
+                                            <span class="route-dot end"></span>{{ expense.arrival|truncatechars:20 }}
+                                        </div>
+                                    </td>
+                                    <td>{{ expense.distance }} km</td>
+                                    <td>{{ expense.get_vehicle_type_display }}</td>
+                                    <td>{{ expense.amount|floatformat:2 }} €</td>
+                                    <td>
+                                        <span class="badge status-{{ expense.status }}">{{ expense.get_status_display }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-info view-trip" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#detailsHistoryModal{{ expense.id }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Modal pour voir les détails (historique) -->
+                                <div class="modal fade" id="detailsHistoryModal{{ expense.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Détails du trajet</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <!-- Contenu similaire au modal de détails précédent -->
+                                                <div class="row mb-4">
+                                                    <div class="col-md-6">
+                                                        <div class="card shadow-sm mb-3">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="mb-0">Informations générales</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <p><strong>Employé:</strong> {{ expense.user.get_full_name|default:expense.user.username }}</p>
+                                                                <p><strong>Date du trajet:</strong> {{ expense.date|date:"d/m/Y" }}</p>
+                                                                <p><strong>Date de soumission:</strong> {{ expense.created_at|date:"d/m/Y H:i" }}</p>
+                                                                <p><strong>Description:</strong> {{ expense.description }}</p>
+                                                                <p><strong>Statut:</strong> 
+                                                                    <span class="badge status-{{ expense.status }}">{{ expense.get_status_display }}</span>
+                                                                </p>
+                                                                {% if expense.status == 'rejected' and expense.comment %}
+                                                                    <div class="alert alert-danger mt-2">
+                                                                        <strong>Motif du rejet:</strong><br>
+                                                                        {{ expense.comment }}
+                                                                    </div>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="card shadow-sm mb-3">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="mb-0">Détails du trajet</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <p><strong>Véhicule:</strong> {{ expense.get_vehicle_type_display }}</p>
+                                                                <p><strong>Distance:</strong> {{ expense.distance }} km</p>
+                                                                <p><strong>Montant:</strong> {{ expense.amount|floatformat:2 }} €</p>
+                                                                {% if expense.project %}
+                                                                    <p><strong>Projet:</strong> {{ expense.project }}</p>
+                                                                {% endif %}
+                                                                {% if expense.comment and expense.status != 'rejected' %}
+                                                                    <p><strong>Commentaire:</strong> {{ expense.comment }}</p>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Carte du trajet -->
+                                                <div class="card shadow-sm mb-3">
+                                                    <div class="card-header bg-light">
+                                                        <h6 class="mb-0">Carte du trajet</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div id="history-map-{{ expense.id }}" class="trip-map" style="height: 300px;"></div>
+                                                        <script>
+                                                            document.addEventListener('DOMContentLoaded', function() {
+                                                                const mapId = 'history-map-{{ expense.id }}';
+                                                                const mapElement = document.getElementById(mapId);
+                                                                
+                                                                $('#detailsHistoryModal{{ expense.id }}').on('shown.bs.modal', function() {
+                                                                    initTripMap(
+                                                                        mapElement, 
+                                                                        {{ expense.departure_lat|default:"null" }}, 
+                                                                        {{ expense.departure_lng|default:"null" }}, 
+                                                                        {{ expense.arrival_lat|default:"null" }}, 
+                                                                        {{ expense.arrival_lng|default:"null" }},
+                                                                        "{{ expense.departure }}", 
+                                                                        "{{ expense.arrival }}"
+                                                                    );
+                                                                });
+                                                            });
+                                                        </script>
+                                                        <div class="mt-3">
+                                                            <div class="d-flex align-items-center mb-2">
+                                                                <div class="route-dot start me-2"></div>
+                                                                <div><strong>Départ:</strong> {{ expense.departure }}</div>
+                                                            </div>
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="route-dot end me-2"></div>
+                                                                <div><strong>Arrivée:</strong> {{ expense.arrival }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if all_expenses.has_other_pages %}
+                <div class="p-3">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if all_expenses.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ all_expenses.previous_page_number }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {% for i in all_expenses.paginator.page_range %}
+                                {% if all_expenses.number == i %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ i }}</span>
+                                    </li>
+                                {% elif i > all_expenses.number|add:'-3' and i < all_expenses.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">{{ i }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if all_expenses.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ all_expenses.next_page_number }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ all_expenses.paginator.num_pages }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+                
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <h4 class="mb-3">Aucun frais kilométrique</h4>
+                    <p class="text-muted mb-4">Il n'y a actuellement aucun frais kilométrique dans le système.</p>
                 </div>
             {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Modals pour les actions -->
-<!-- ... Les modals pour voir les détails, approuver et rejeter ... -->
-
-{% endblock %}
-
 {% block extra_scripts %}
-<!-- Leaflet JS pour la carte -->
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMaps" async defer></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Afficher/masquer les détails des frais kilométriques
-    const viewButtons = document.querySelectorAll('.view-details');
-    const maps = {};
+function initMaps() {
+    // Cette fonction sera appelée quand l'API Google Maps sera chargée
+    console.log('Google Maps API chargée');
+}
+
+function initTripMap(mapElement, departureLat, departureLng, arrivalLat, arrivalLng, departureAddress, arrivalAddress) {
+    if (!mapElement) return;
     
-    viewButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const expenseId = this.getAttribute('data-expense-id');
-            const detailsRow = document.getElementById(`details-${expenseId}`);
+    // Créer la carte
+    const map = new google.maps.Map(mapElement, {
+        center: { lat: 46.227638, lng: 2.213749 }, // Centre de la France
+        zoom: 6,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        mapTypeControl: false,
+        fullscreenControl: false
+    });
+    
+    // Si on n'a pas les coordonnées, on ne peut pas afficher l'itinéraire
+    if (!departureLat || !departureLng || !arrivalLat || !arrivalLng) {
+        const infoWindow = new google.maps.InfoWindow({
+            content: "<div class='p-2'>Coordonnées GPS non disponibles pour ce trajet</div>",
+            position: map.getCenter()
+        });
+        infoWindow.open(map);
+        return;
+    }
+    
+    const departurePoint = { lat: departureLat, lng: departureLng };
+    const arrivalPoint = { lat: arrivalLat, lng: arrivalLng };
+    
+    // Créer les marqueurs de départ et d'arrivée
+    const departureMarker = new google.maps.Marker({
+        position: departurePoint,
+        map: map,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 10,
+            fillColor: '#1cc88a',
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: '#FFFFFF'
+        },
+        title: "Départ: " + departureAddress
+    });
+    
+    const arrivalMarker = new google.maps.Marker({
+        position: arrivalPoint,
+        map: map,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 10,
+            fillColor: '#e74a3b',
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: '#FFFFFF'
+        },
+        title: "Arrivée: " + arrivalAddress
+    });
+    
+    // Calculer l'itinéraire
+    const directionsService = new google.maps.DirectionsService();
+    const directionsRenderer = new google.maps.DirectionsRenderer({
+        map: map,
+        suppressMarkers: true,  // On utilise nos propres marqueurs
+        polylineOptions: {
+            strokeColor: '#36b9cc',
+            strokeWeight: 5
+        }
+    });
+    
+    directionsService.route({
+        origin: departurePoint,
+        destination: arrivalPoint,
+        travelMode: google.maps.TravelMode.DRIVING
+    }, function(response, status) {
+        if (status === 'OK') {
+            directionsRenderer.setDirections(response);
             
-            if (detailsRow.style.display === 'none') {
-                detailsRow.style.display = 'table-row';
-                this.innerHTML = '<i class="fas fa-chevron-up"></i>';
-                
-                // Initialiser la carte quand on ouvre les détails
-                setTimeout(() => {
-                    initMap(expenseId);
-                }, 100); // Petit délai pour s'assurer que le conteneur est affiché
+            // Ajuster la carte pour montrer tout l'itinéraire
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(departurePoint);
+            bounds.extend(arrivalPoint);
+            map.fitBounds(bounds);
+        } else {
+            // Si l'itinéraire ne peut pas être calculé, simplement zoomer sur les marqueurs
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(departurePoint);
+            bounds.extend(arrivalPoint);
+            map.fitBounds(bounds);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle pour le panneau de filtres
+    const filterToggle = document.querySelector('[data-bs-toggle="collapse"]');
+    const filterIcon = document.querySelector('.filter-toggle-icon');
+    const filterText = document.querySelector('.filter-toggle-text');
+    
+    if (filterToggle) {
+        filterToggle.addEventListener('click', function() {
+            const isCollapsed = this.getAttribute('aria-expanded') === 'false';
+            
+            // Changer l'icône et le texte
+            if (isCollapsed) {
+                filterIcon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                filterText.textContent = 'Masquer';
             } else {
-                detailsRow.style.display = 'none';
-                this.innerHTML = '<i class="fas fa-eye"></i>';
+                filterIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                filterText.textContent = 'Afficher';
             }
         });
-    });
-    
-    // Initialiser une carte pour un trajet spécifique
-    function initMap(expenseId) {
-        const mapContainer = document.getElementById(`map-${expenseId}`);
-        if (!mapContainer) return;
-        
-        // Si la carte existe déjà, pas besoin de la réinitialiser
-        if (maps[expenseId]) return;
-        
-        // Créer la carte
-        const map = L.map(`map-${expenseId}`).setView([-21.1151, 55.5364], 10); // Centré sur La Réunion par défaut
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-        
-        // Récupérer les coordonnées de départ et d'arrivée depuis les attributs data
-        const departLat = parseFloat(mapContainer.getAttribute('data-depart-lat')) || -21.1151;
-        const departLng = parseFloat(mapContainer.getAttribute('data-depart-lng')) || 55.5364;
-        const arrivalLat = parseFloat(mapContainer.getAttribute('data-arrival-lat')) || -21.1310;
-        const arrivalLng = parseFloat(mapContainer.getAttribute('data-arrival-lng')) || 55.4733;
-        
-        // Ajouter les marqueurs
-        const departMarker = L.marker([departLat, departLng]).addTo(map);
-        departMarker.bindPopup('<b>Départ</b>').openPopup();
-        
-        const arrivalMarker = L.marker([arrivalLat, arrivalLng]).addTo(map);
-        arrivalMarker.bindPopup('<b>Arrivée</b>');
-        
-        // Tracer une ligne simple entre les deux points
-        const routeLine = L.polyline([[departLat, departLng], [arrivalLat, arrivalLng]], {
-            color: 'blue',
-            weight: 3,
-            opacity: 0.7
-        }).addTo(map);
-        
-        // Ajuster la vue pour montrer tout l'itinéraire
-        map.fitBounds(routeLine.getBounds(), { padding: [30, 30] });
-        
-        // Stocker la référence à la carte
-        maps[expenseId] = map;
     }
     
-    // Validation des dates
-    const dateFromInput = document.getElementById('date_from');
-    const dateToInput = document.getElementById('date_to');
-    
-    function validateDateRange() {
-        const dateFrom = dateFromInput.value ? new Date(dateFromInput.value) : null;
-        const dateTo = dateToInput.value ? new Date(dateToInput.value) : null;
+    // Initialisation de DataTable
+    if (typeof $.fn.DataTable !== 'undefined') {
+        // Table des notes en attente
+        if (document.getElementById('pendingTripsTable')) {
+            $('#pendingTripsTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
+                },
+                paging: false,
+                searching: true,
+                info: false
+            });
+        }
         
-        if (dateFrom && dateTo && dateFrom > dateTo) {
-            dateToInput.setCustomValidity('La date de fin doit être postérieure à la date de début');
-        } else {
-            dateToInput.setCustomValidity('');
+        // Table de toutes les notes
+        if (document.getElementById('allTripsTable')) {
+            const allTripsTable = $('#allTripsTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
+                },
+                paging: false,
+                searching: true,
+                info: false
+            });
+            
+            // Filtre de statut pour l'historique
+            $('#statusFilterHistoric').on('change', function() {
+                const status = this.value;
+                allTripsTable.column(6).search(status).draw();
+            });
         }
     }
     
-    if (dateFromInput && dateToInput) {
-        dateFromInput.addEventListener('change', validateDateRange);
-        dateToInput.addEventListener('change', validateDateRange);
-    }
+    // Animation des cartes statistiques
+    const statsCards = document.querySelectorAll('.stats-card');
+    statsCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.classList.add('slide-up');
+        }, index * 100);
+    });
     
-    // Validation des distances
-    const minDistanceInput = document.getElementById('min_distance');
-    const maxDistanceInput = document.getElementById('max_distance');
-    
-    function validateDistanceRange() {
-        const minDistance = minDistanceInput.value ? parseFloat(minDistanceInput.value) : null;
-        const maxDistance = maxDistanceInput.value ? parseFloat(maxDistanceInput.value) : null;
+    // Gestion des boutons d'actualisation
+    document.getElementById('refreshTable')?.addEventListener('click', function() {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Actualisation...';
+        this.disabled = true;
         
-        if (minDistance !== null && maxDistance !== null && minDistance > maxDistance) {
-            maxDistanceInput.setCustomValidity('La distance maximum doit être supérieure à la distance minimum');
-        } else {
-            maxDistanceInput.setCustomValidity('');
+        // Simuler une actualisation
+        setTimeout(() => {
+            window.location.reload();
+        }, 800);
+    });
+    
+    document.getElementById('refreshEmpty')?.addEventListener('click', function() {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Actualisation...';
+        this.disabled = true;
+        
+        // Simuler une actualisation
+        setTimeout(() => {
+            window.location.reload();
+        }, 800);
+    });
+    
+    document.getElementById('refreshHistory')?.addEventListener('click', function() {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Actualisation...';
+        this.disabled = true;
+        
+        // Simuler une actualisation
+        setTimeout(() => {
+            window.location.reload();
+        }, 800);
+    });
+    
+    // Vérifier que les formulaires de rejet ont un commentaire
+    document.querySelectorAll('[id^="rejectModal"]').forEach(modal => {
+        const form = modal.querySelector('form');
+        const textarea = modal.querySelector('textarea[required]');
+        const submitBtn = modal.querySelector('button[type="submit"]');
+        
+        if (form && textarea && submitBtn) {
+            form.addEventListener('submit', function(e) {
+                if (!textarea.value.trim()) {
+                    e.preventDefault();
+                    textarea.classList.add('is-invalid');
+                    alert('Veuillez indiquer un motif de rejet');
+                    return false;
+                }
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Traitement...';
+                return true;
+            });
+            
+            textarea.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                } else {
+                    this.classList.add('is-invalid');
+                }
+            });
         }
-    }
-    
-    if (minDistanceInput && maxDistanceInput) {
-        minDistanceInput.addEventListener('change', validateDistanceRange);
-        maxDistanceInput.addEventListener('change', validateDistanceRange);
-    }
-    
-    // Fonction pour visualiser les détails
-    const viewButtons = document.querySelectorAll('.view-expense');
-    viewButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const expenseId = this.getAttribute('data-expense-id');
-            // Afficher le modal avec les détails
-        });
     });
-
-    // Fonction pour approuver
-    const approveButtons = document.querySelectorAll('.approve-expense');
-    approveButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const expenseId = this.getAttribute('data-expense-id');
-            if (confirm('Voulez-vous approuver cette demande ?')) {
-                window.location.href = `/kilometric/approve/${expenseId}/`;
-            }
-        });
-    });
-
-    // Fonction pour rejeter
-    const rejectButtons = document.querySelectorAll('.reject-expense');
-    rejectButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const expenseId = this.getAttribute('data-expense-id');
-            if (confirm('Voulez-vous rejeter cette demande ?')) {
-                window.location.href = `/kilometric/reject/${expenseId}/`;
-            }
-        });
+    
+    // Réinitialiser les filtres
+    document.querySelector('button[type="reset"]')?.addEventListener('click', function() {
+        setTimeout(() => {
+            window.location.href = '{% url "manage_kilometric_expenses" %}';
+        }, 100);
     });
 });
 </script>
+{% endblock %}
 {% endblock %}

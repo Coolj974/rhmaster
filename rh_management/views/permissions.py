@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User, Group
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.http import HttpResponseForbidden
+from functools import wraps
 from ..models import CustomPermission, PermissionGroup
 
 # Fonctions de vérification des permissions
@@ -97,3 +99,22 @@ def get_user_permissions(user):
     return CustomPermission.objects.filter(
         permissiongroup__users=user
     ).distinct()
+
+def user_is_hr_or_admin(view_func):
+    """
+    Décorateur pour restreindre l'accès aux utilisateurs RH ou administrateurs.
+    Redirige vers la page d'accueil si l'utilisateur n'a pas les droits.
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        # Vérifier si l'utilisateur est admin ou appartient au groupe RH
+        is_admin = request.user.is_staff or request.user.is_superuser
+        is_hr = request.user.groups.filter(name='RH').exists()
+        
+        if is_admin or is_hr:
+            return view_func(request, *args, **kwargs)
+        else:
+            messages.error(request, "Vous n'avez pas les permissions nécessaires pour accéder à cette page.")
+            return redirect('dashboard')
+    
+    return _wrapped_view

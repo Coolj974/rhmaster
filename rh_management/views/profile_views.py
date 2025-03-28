@@ -5,6 +5,29 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
 from ..models import UserProfile, LeaveRequest, ExpenseReport, KilometricExpense
 from .permissions import is_admin, is_rh, is_encadrant
+from rh_management.models import Profile, LeaveBalance, Department
+
+@login_required
+def profile(request):
+    """
+    Affiche le profil de l'utilisateur connecté
+    """
+    # Récupérer ou créer le profil de l'utilisateur
+    user_profile, created = Profile.objects.get_or_create(user=request.user)
+    
+    # Récupérer le solde de congés
+    leave_balance = LeaveBalance.objects.filter(user=request.user).first()
+    
+    # Récupérer les départements pour le formulaire de mise à jour
+    departments = Department.objects.filter(is_active=True).order_by('name')
+    
+    context = {
+        'user_profile': user_profile,
+        'leave_balance': leave_balance,
+        'departments': departments
+    }
+    
+    return render(request, 'rh_management/profile.html', context)
 
 @login_required
 def profile_view(request):
@@ -72,90 +95,49 @@ def profile_view(request):
 
 @login_required
 def update_profile(request):
-    """Met à jour les informations de profil de l'utilisateur."""
-    if request.method == "POST":
-        # Vérifier si c'est un formulaire de préférences
-        if request.POST.get('form_type') == 'preferences':
-            # Récupérer les préférences
-            theme = request.POST.get('theme', 'light')
-            notifications_enabled = request.POST.get('notifications_enabled') == 'on'
-            email_notifications = request.POST.get('email_notifications') == 'on'
-            language = request.POST.get('language', 'fr')
-            
-            # Récupérer ou créer le profil utilisateur - Correction ici
-            profile, created = UserProfile.objects.get_or_create(user=request.user)
-            
-            # Mettre à jour les préférences
-            profile.theme_preference = theme
-            profile.notifications_enabled = notifications_enabled
-            profile.email_notifications = email_notifications
-            profile.language_preference = language
-            profile.save()
-            
-            messages.success(request, "Vos préférences ont été mises à jour avec succès.")
-            return redirect('profile')
+    """
+    Mise à jour du profil utilisateur
+    """
+    if request.method == 'POST':
+        # Mettre à jour les informations de l'utilisateur
+        request.user.first_name = request.POST.get('first_name', '')
+        request.user.last_name = request.POST.get('last_name', '')
+        request.user.email = request.POST.get('email', '')
+        request.user.save()
         
-        # Sinon, c'est un formulaire de profil standard
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        phone = request.POST.get('phone')
-        address = request.POST.get('address')
-        position = request.POST.get('position')
-        department = request.POST.get('department')
+        # Récupérer ou créer le profil
+        profile, created = Profile.objects.get_or_create(user=request.user)
         
-        user = request.user
+        # Mettre à jour les informations du profil
+        profile.phone_number = request.POST.get('phone_number', '')
+        profile.address = request.POST.get('address', '')
+        profile.position = request.POST.get('position', '')
         
-        # Vérifier si des restrictions s'appliquent pour la modification des champs sensibles
-        can_edit_username_email = user.is_superuser or user.is_staff
+        # Gérer le département s'il est spécifié
+        department_id = request.POST.get('department')
+        if department_id and department_id.isdigit():
+            try:
+                department = Department.objects.get(id=department_id)
+                profile.department = department
+            except Department.DoesNotExist:
+                pass
         
-        if can_edit_username_email:
-            # Vérifier si le nom d'utilisateur existe déjà pour un autre utilisateur
-            if User.objects.exclude(id=user.id).filter(username=username).exists():
-                messages.error(request, "Ce nom d'utilisateur est déjà pris.")
-                return redirect('profile')
-                
-            # Vérifier si l'email existe déjà pour un autre utilisateur
-            if User.objects.exclude(id=user.id).filter(email=email).exists():
-                messages.error(request, "Cette adresse email est déjà utilisée.")
-                return redirect('profile')
-            
-            user.username = username
-            user.email = email
-        
-        # Ces champs peuvent être modifiés par tous les utilisateurs
-        user.first_name = first_name
-        user.last_name = last_name
-        user.save()
-        
-        # Mettre à jour ou créer le profil utilisateur - Correction ici
-        profile, created = UserProfile.objects.get_or_create(user=user)
-        
-        profile.phone = phone
-        profile.address = address
-        profile.position = position
-        profile.department = department
-        
-        # Gérer l'upload de photo de profil si fourni
+        # Gérer l'upload de photo de profil
         if 'profile_picture' in request.FILES:
             profile_picture = request.FILES['profile_picture']
-            # Vérifier la taille et le type de fichier
-            if profile_picture.size > 5 * 1024 * 1024:  # Limite à 5Mo
-                messages.error(request, "La photo de profil ne doit pas dépasser 5Mo.")
-                return redirect('profile')
-            
-            # Vérifier le type de fichier
-            allowed_types = ['image/jpeg', 'image/png', 'image/gif']
-            if profile_picture.content_type not in allowed_types:
-                messages.error(request, "Seuls les formats JPEG, PNG et GIF sont acceptés.")
-                return redirect('profile')
-                
-            profile.profile_picture = profile_picture
+            # Vérifier la taille et le type du fichier
+            if profile_picture.size > 5 * 1024 * 1024:  # 5MB
+                messages.error(request, "L'image est trop volumineuse. La limite est de 5Mo.")
+            else:
+                allowed_types = ['image/jpeg', 'image/png']
+                if profile_picture.content_type in allowed_types:
+                    profile.profile_picture = profile_picture
+                else:
+                    messages.error(request, "Format d'image non accepté. Veuillez utiliser JPEG ou PNG.")
         
         profile.save()
+        messages.success(request, "Votre profil a été mis à jour avec succès.")
         
-        messages.success(request, "Votre profil a été mis à jour avec succès!")
         return redirect('profile')
     
     return redirect('profile')
