@@ -575,7 +575,7 @@
     </div>
 </div>
 
-<!-- Modal de détail des trajets -->
+<!-- Modal pour voir le trajet sur la carte -->
 <div class="modal fade" id="viewTripModal" tabindex="-1" aria-labelledby="viewTripModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -584,303 +584,198 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- Titre et description -->
-                <div class="mb-3 border-bottom pb-3">
-                    <h5 id="modal-description" class="text-primary mb-2"></h5>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="text-muted"><i class="far fa-calendar-alt me-1"></i> <span id="modal-date"></span></span>
-                        </div>
-                        <div>
-                            <span class="badge px-3 py-2" id="modal-status-badge"></span>
-                        </div>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div id="trip-map" style="height: 400px; border-radius: 8px;"></div>
                     </div>
                 </div>
-                
-                <div class="row mb-4">
-                    <!-- Informations du trajet -->
-                    <div class="col-md-6">
-                        <div class="card shadow-sm mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title text-primary"><i class="fas fa-info-circle me-2"></i>Itinéraire</h6>
-                                
-                                <div class="trip-route-info mb-3">
-                                    <div class="trip-route">
-                                        <div class="route-icon route-start"></div>
-                                        <div class="detail-label">Départ</div>
-                                        <div class="detail-value" id="modal-departure"></div>
-                                    </div>
-                                    <div class="trip-route">
-                                        <div class="route-icon route-end"></div>
-                                        <div class="detail-label">Arrivée</div>
-                                        <div class="detail-value" id="modal-arrival"></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <div class="detail-label">Distance</div>
-                                        <div class="detail-value" id="modal-distance"></div>
-                                    </div>
-                                    <div>
-                                        <div class="detail-label">Montant</div>
-                                        <div class="detail-value text-success" id="modal-amount"></div>
-                                    </div>
-                                </div>
-                            </div>
+                <div class="trip-details">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><i class="fas fa-route me-2 text-primary"></i> <strong>Distance:</strong> <span id="trip-distance"></span> km</p>
+                            <p><i class="fas fa-calendar-day me-2 text-primary"></i> <strong>Date:</strong> <span id="trip-date"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><i class="fas fa-euro-sign me-2 text-primary"></i> <strong>Montant:</strong> <span id="trip-amount"></span> €</p>
+                            <p><i class="fas fa-car me-2 text-primary"></i> <strong>Véhicule:</strong> <span id="trip-vehicle"></span></p>
                         </div>
                     </div>
-                    
-                    <!-- Informations du véhicule et projet -->
-                    <div class="col-md-6">
-                        <div class="card shadow-sm mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title text-primary"><i class="fas fa-car me-2"></i>Détails</h6>
-                                
-                                <div class="mb-3">
-                                    <div class="detail-label">Véhicule utilisé</div>
-                                    <div class="detail-value" id="modal-vehicle"></div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <div class="detail-label">Projet associé</div>
-                                    <div class="detail-value" id="modal-project"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Carte du trajet -->
-                <div class="card shadow-sm mb-3">
-                    <div class="card-body">
-                        <h6 class="card-title text-primary"><i class="fas fa-map-marked-alt me-2"></i>Carte du trajet</h6>
-                        <div id="trip-map"></div>
-                    </div>
-                </div>
-                
-                <!-- Commentaire -->
-                <div class="card shadow-sm" id="comment-section" style="display: none;">
-                    <div class="card-body">
-                        <h6 class="card-title text-primary"><i class="fas fa-comment-alt me-2"></i>Commentaire</h6>
-                        <p id="modal-comment" class="mb-0"></p>
+                    <div id="trip-description-container">
+                        <p><i class="fas fa-align-left me-2 text-primary"></i> <strong>Description:</strong></p>
+                        <div class="trip-description p-3 bg-light rounded" id="trip-description"></div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                <a href="#" id="modal-cancel-btn" class="btn btn-danger d-none">
-                    <i class="fas fa-times me-1"></i> Annuler ce trajet
-                </a>
             </div>
         </div>
     </div>
 </div>
 
-{% block extra_scripts %}
-<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap" async defer></script>
-
+<!-- Scripts pour la carte OpenStreetMap -->
 <script>
-let map;
-let directionsService;
-let directionsRenderer;
+let map, routingControl;
 
-function initMap() {
-    // Initialiser les services Google Maps
-    directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({
-        suppressMarkers: true,
-        polylineOptions: {
-            strokeColor: '#36b9cc',
-            strokeWeight: 5
-        }
+// Fonction pour afficher un trajet sur la carte
+function viewTripOnMap(tripId) {
+    // Récupérer les données du trajet
+    const tripData = trips.find(trip => trip.id === tripId);
+    if (!tripData) return;
+    
+    // Mettre à jour les informations du modal
+    document.getElementById('viewTripModalLabel').textContent = 'Trajet du ' + tripData.date;
+    document.getElementById('trip-date').textContent = tripData.date;
+    document.getElementById('trip-distance').textContent = tripData.distance;
+    document.getElementById('trip-amount').textContent = tripData.amount;
+    document.getElementById('trip-vehicle').textContent = getVehicleTypeName(tripData.vehicle_type, tripData.fiscal_power);
+    
+    // Ajouter la description si disponible
+    const descriptionContainer = document.getElementById('trip-description-container');
+    const descriptionElement = document.getElementById('trip-description');
+    
+    if (tripData.description && tripData.description.trim() !== '') {
+        descriptionElement.textContent = tripData.description;
+        descriptionContainer.style.display = 'block';
+    } else {
+        descriptionContainer.style.display = 'none';
+    }
+    
+    // Initialiser la carte lors de l'ouverture du modal
+    $('#viewTripModal').on('shown.bs.modal', function () {
+        initMap(tripData);
     });
     
-    // Créer la carte (elle sera configurée lors de l'ouverture du modal)
-    map = new google.maps.Map(document.getElementById('trip-map'), {
-        center: { lat: 46.227638, lng: 2.213749 }, // Centre de la France
-        zoom: 6,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        mapTypeControl: false
-    });
-    
-    directionsRenderer.setMap(map);
+    // Afficher le modal
+    $('#viewTripModal').modal('show');
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialiser DataTable si disponible
-    if (typeof $.fn.DataTable !== 'undefined' && document.getElementById('kilometricExpensesTable')) {
-        $('#kilometricExpensesTable').DataTable({
-            language: {
-                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
-            },
-            order: [[0, 'desc']], // Trier par date décroissante
-            pageLength: 10
-        });
+function initMap(tripData) {
+    // Initialiser la carte ou la réinitialiser si elle existe déjà
+    if (map) {
+        map.remove();
     }
     
-    // Conservation de l'onglet actif après rafraîchissement
-    const activeTab = localStorage.getItem('activeKmExpenseTab');
-    if (activeTab) {
-        const tab = document.querySelector(activeTab);
-        if (tab) {
-            const tabInstance = new bootstrap.Tab(tab);
-            tabInstance.show();
-        }
+    // Créer une nouvelle carte
+    map = L.map('trip-map').setView([46.603354, 1.888334], 5); // Vue centrée sur la France
+    
+    // Ajouter le layer OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(map);
+    
+    // S'assurer que les coordonnées sont des nombres
+    const departureLat = parseFloat(tripData.departure_lat);
+    const departureLng = parseFloat(tripData.departure_lng);
+    const arrivalLat = parseFloat(tripData.arrival_lat);
+    const arrivalLng = parseFloat(tripData.arrival_lng);
+    
+    // Vérifier si les coordonnées sont valides
+    const validDepartureCoords = !isNaN(departureLat) && !isNaN(departureLng);
+    const validArrivalCoords = !isNaN(arrivalLat) && !isNaN(arrivalLng);
+    
+    // Utiliser des coordonnées par défaut si nécessaire
+    const departurePoint = validDepartureCoords 
+        ? L.latLng(departureLat, departureLng) 
+        : L.latLng(48.864716, 2.349014); // Paris par défaut
+    
+    const arrivalPoint = validArrivalCoords 
+        ? L.latLng(arrivalLat, arrivalLng) 
+        : L.latLng(45.764043, 4.835659); // Lyon par défaut
+    
+    console.log("Departure coordinates:", departurePoint);
+    console.log("Arrival coordinates:", arrivalPoint);
+    
+    // Créer une icône personnalisée pour le point de départ
+    const departureIcon = L.divIcon({
+        html: '<i class="fas fa-circle text-success" style="font-size: 14px;"></i>',
+        className: 'map-custom-icon',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+    
+    // Créer une icône personnalisée pour le point d'arrivée
+    const arrivalIcon = L.divIcon({
+        html: '<i class="fas fa-circle text-danger" style="font-size: 14px;"></i>',
+        className: 'map-custom-icon',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+    
+    // Ajouter les marqueurs
+    const departureMarker = L.marker(departurePoint, {
+        icon: departureIcon
+    }).addTo(map);
+    
+    const arrivalMarker = L.marker(arrivalPoint, {
+        icon: arrivalIcon
+    }).addTo(map);
+    
+    // Ajouter des popups pour les marqueurs
+    departureMarker.bindPopup('<strong>Départ</strong><br>' + tripData.departure);
+    arrivalMarker.bindPopup('<strong>Arrivée</strong><br>' + tripData.arrival);
+    
+    // Calculer et afficher l'itinéraire
+    routingControl = L.Routing.control({
+        waypoints: [
+            departurePoint,
+            arrivalPoint
+        ],
+        routeWhileDragging: false,
+        lineOptions: {
+            styles: [{ color: '#3388ff', weight: 6 }]
+        },
+        createMarker: function() { return null; }, // Pas de marqueurs par défaut, on utilise les nôtres
+        router: L.Routing.osrmv1({
+            serviceUrl: 'https://router.project-osrm.org/route/v1',
+            profile: 'driving',
+            language: 'fr'
+        }),
+        showAlternatives: false,
+        fitSelectedRoutes: true
+    }).addTo(map);
+    
+    // Masquer le panneau d'instructions de l'itinéraire
+    routingControl.hide();
+    
+    // Ajuster la vue pour inclure tout l'itinéraire
+    const bounds = L.latLngBounds([departurePoint, arrivalPoint]);
+    map.fitBounds(bounds, { padding: [50, 50] });
+}
+
+// Fonction pour obtenir le nom du type de véhicule
+function getVehicleTypeName(vehicleType, fiscalPower) {
+    if (vehicleType === 'car') {
+        return fiscalPower === 'high' ? 'Voiture 6CV et plus' : 'Voiture 5CV et moins';
+    } else if (vehicleType === 'electric_car') {
+        return 'Voiture électrique';
+    } else if (vehicleType === 'motorbike') {
+        return 'Moto/Scooter';
     }
-    
-    // Enregistrer l'onglet actif lors du changement
-    document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
-        tab.addEventListener('shown.bs.tab', function(e) {
-            localStorage.setItem('activeKmExpenseTab', '#' + e.target.id);
-        });
-    });
-    
-    // Gestion du modal de détail des trajets
-    const viewTripButtons = document.querySelectorAll('.view-trip');
-    
-    viewTripButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Récupérer les données du trajet
-            const id = this.getAttribute('data-id');
-            const description = this.getAttribute('data-description');
-            const departure = this.getAttribute('data-departure');
-            const arrival = this.getAttribute('data-arrival');
-            const distance = this.getAttribute('data-distance');
-            const amount = this.getAttribute('data-amount');
-            const date = this.getAttribute('data-date');
-            const vehicle = this.getAttribute('data-vehicle');
-            const status = this.getAttribute('data-status');
-            const statusCode = this.getAttribute('data-status-code');
-            const project = this.getAttribute('data-project');
-            const comment = this.getAttribute('data-comment');
-            const lat1 = parseFloat(this.getAttribute('data-lat1'));
-            const lng1 = parseFloat(this.getAttribute('data-lng1'));
-            const lat2 = parseFloat(this.getAttribute('data-lat2'));
-            const lng2 = parseFloat(this.getAttribute('data-lng2'));
-            
-            // Mettre à jour les éléments du modal
-            document.getElementById('modal-description').textContent = description;
-            document.getElementById('modal-date').textContent = date;
-            document.getElementById('modal-departure').textContent = departure;
-            document.getElementById('modal-arrival').textContent = arrival;
-            document.getElementById('modal-distance').textContent = distance + ' km';
-            document.getElementById('modal-amount').textContent = amount + ' €';
-            document.getElementById('modal-vehicle').textContent = vehicle;
-            document.getElementById('modal-project').textContent = project;
-            
-            // Configurer le badge de statut
-            const statusBadge = document.getElementById('modal-status-badge');
-            statusBadge.textContent = status;
-            statusBadge.className = 'badge status-' + statusCode;
-            
-            // Afficher/masquer la section de commentaire
-            const commentSection = document.getElementById('comment-section');
-            if (comment && comment.trim() !== '') {
-                document.getElementById('modal-comment').textContent = comment;
-                commentSection.style.display = 'block';
-            } else {
-                commentSection.style.display = 'none';
-            }
-            
-            // Configurer le bouton d'annulation
-            const cancelBtn = document.getElementById('modal-cancel-btn');
-            if (statusCode === 'pending') {
-                cancelBtn.href = `{% url 'cancel_kilometric_expense' 999 %}`.replace('999', id);
-                cancelBtn.classList.remove('d-none');
-            } else {
-                cancelBtn.classList.add('d-none');
-            }
-            
-            // Afficher le trajet sur la carte si les coordonnées sont disponibles
-            if (lat1 && lng1 && lat2 && lng2 && map && directionsService) {
-                const origin = { lat: lat1, lng: lng1 };
-                const destination = { lat: lat2, lng: lng2 };
-                
-                directionsService.route({
-                    origin: origin,
-                    destination: destination,
-                    travelMode: google.maps.TravelMode.DRIVING
-                }, function(response, status) {
-                    if (status === "OK") {
-                        directionsRenderer.setDirections(response);
-                        
-                        // Ajouter les marqueurs personnalisés
-                        const leg = response.routes[0].legs[0];
-                        
-                        // Marqueur de départ (vert)
-                        new google.maps.Marker({
-                            position: leg.start_location,
-                            map: map,
-                            icon: {
-                                path: google.maps.SymbolPath.CIRCLE,
-                                scale: 10,
-                                fillColor: '#1cc88a',
-                                fillOpacity: 1,
-                                strokeWeight: 2,
-                                strokeColor: '#FFFFFF'
-                            },
-                            title: "Départ: " + departure
-                        });
-                        
-                        // Marqueur d'arrivée (rouge)
-                        new google.maps.Marker({
-                            position: leg.end_location,
-                            map: map,
-                            icon: {
-                                path: google.maps.SymbolPath.CIRCLE,
-                                scale: 10,
-                                fillColor: '#e74a3b',
-                                fillOpacity: 1,
-                                strokeWeight: 2,
-                                strokeColor: '#FFFFFF'
-                            },
-                            title: "Arrivée: " + arrival
-                        });
-                        
-                    } else {
-                        // Si l'itinéraire échoue, centrer la carte sur le point de départ
-                        map.setCenter(origin);
-                        
-                        // Ajouter des marqueurs simples
-                        new google.maps.Marker({
-                            position: origin,
-                            map: map,
-                            title: "Départ: " + departure
-                        });
-                        
-                        new google.maps.Marker({
-                            position: destination,
-                            map: map,
-                            title: "Arrivée: " + arrival
-                        });
-                    }
-                });
-            }
-        });
-    });
-    
-    // Rafraîchir la carte quand le modal s'ouvre
-    document.getElementById('viewTripModal').addEventListener('shown.bs.modal', function() {
-        if (map) {
-            google.maps.event.trigger(map, 'resize');
-        }
-    });
-    
-    // Animation au défilement pour les cartes
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.1 });
-    
-    document.querySelectorAll('.trip-card').forEach(card => {
-        observer.observe(card);
-    });
-});
+    return 'Véhicule inconnu';
+}
+
+// Liste des trajets (à remplir dynamiquement avec les données réelles)
+const trips = [
+{% for expense in kilometric_expenses %}
+    {
+        id: {{ expense.id }},
+        date: '{{ expense.date|date:"d/m/Y" }}',
+        description: '{{ expense.description|escapejs }}',
+        departure: '{{ expense.departure|escapejs }}',
+        arrival: '{{ expense.arrival|escapejs }}',
+        departure_lat: {{ expense.departure_lat|default:"48.864716" }},
+        departure_lng: {{ expense.departure_lng|default:"2.349014" }},
+        arrival_lat: {{ expense.arrival_lat|default:"45.764043" }},
+        arrival_lng: {{ expense.arrival_lng|default:"4.835659" }},
+        distance: {{ expense.distance }},
+        amount: {{ expense.amount }},
+        vehicle_type: '{{ expense.vehicle_type }}',
+        fiscal_power: '{{ expense.fiscal_power }}',
+        status: '{{ expense.status }}'
+    }{% if not forloop.last %},{% endif %}
+{% endfor %}
+];
 </script>
-{% endblock %}
 {% endblock %}

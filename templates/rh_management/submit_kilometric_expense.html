@@ -280,76 +280,24 @@
                     <div class="step-number">2</div>
                     <h5 class="mb-3">Itinéraire</h5>
                     
-                    <div class="position-relative mb-3">
-                        <div class="map-container" id="map-canvas"></div>
-                        <div class="loading-overlay" id="map-loader">
-                            <div class="loading-spinner"></div>
+                    <!-- Code HTML pour la carte -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-map-marked-alt me-2"></i>Carte de trajet</h6>
                         </div>
-                    </div>
-                    
-                    <div class="row mb-4">
-                        <div class="col-md-6 mb-3">
-                            <label for="departure" class="form-label">Point de départ <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-success text-white">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                </span>
-                                <input type="text" class="form-control" id="departure" name="departure" placeholder="Adresse de départ" required>
-                                <button type="button" class="btn btn-outline-secondary" id="locate-departure">
-                                    <i class="fas fa-location-arrow"></i>
-                                </button>
-                            </div>
-                            <input type="hidden" id="departure_lat" name="departure_lat">
-                            <input type="hidden" id="departure_lng" name="departure_lng">
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="arrival" class="form-label">Point d'arrivée <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-danger text-white">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                </span>
-                                <input type="text" class="form-control" id="arrival" name="arrival" placeholder="Adresse d'arrivée" required>
-                                <button type="button" class="btn btn-outline-secondary" id="locate-arrival">
-                                    <i class="fas fa-location-arrow"></i>
-                                </button>
-                            </div>
-                            <input type="hidden" id="arrival_lat" name="arrival_lat">
-                            <input type="hidden" id="arrival_lng" name="arrival_lng">
-                        </div>
-                    </div>
-                    
-                    <div class="d-grid">
-                        <button type="button" class="btn btn-info" id="calculate-route">
-                            <i class="fas fa-calculator me-1"></i> Calculer l'itinéraire
-                        </button>
-                    </div>
-                    
-                    <div class="trip-summary mt-4" id="trip-summary" style="display: none;">
-                        <h6><i class="fas fa-info-circle me-2"></i>Récapitulatif du trajet</h6>
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <div class="route-details">
-                                    <div class="route-dot start"></div>
-                                    <div class="route-info">
-                                        <small class="text-muted d-block">Départ</small>
-                                        <div class="route-address" id="summary-departure">-</div>
+                        <div class="card-body">
+                            <div id="map-canvas" style="width: 100%; height: 400px; border-radius: 8px;"></div>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="alert alert-info">
+                                        <strong>Distance calculée:</strong> <span id="distance-display">0</span> km
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="route-details">
-                                    <div class="route-dot end"></div>
-                                    <div class="route-info">
-                                        <small class="text-muted d-block">Arrivée</small>
-                                        <div class="route-address" id="summary-arrival">-</div>
-                                    </div>
+                                <div class="col-md-6">
+                                    <button type="button" class="btn btn-outline-primary w-100" id="recalculate-route">
+                                        <i class="fas fa-calculator me-1"></i> Recalculer l'itinéraire
+                                    </button>
                                 </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <small class="text-muted d-block">Distance calculée</small>
-                                <div class="summary-value" id="summary-distance">-</div>
-                                <input type="hidden" id="distance" name="distance" value="0">
                             </div>
                         </div>
                     </div>
@@ -441,389 +389,484 @@
 </div>
 
 {% block extra_scripts %}
-<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&callback=initMap" async defer></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
 
 <script>
-// Variables globales
-let map;
-let directionsService;
-let directionsRenderer;
-let departureMarker;
-let arrivalMarker;
-let departureAutocomplete;
-let arrivalAutocomplete;
-
-// Taux kilométriques (en € par km)
-const rates = {
-    'normal': 0.32,   // 5CV et moins
-    'high': 0.41,     // 6CV et plus
-    'electric': 0.45, // Voiture électrique
-    'motorbike': 0.21 // Moto
-};
-
-// Initialisation de la carte
-function initMap() {
-    // Cacher le loader une fois la carte chargée
-    const mapLoader = document.getElementById('map-loader');
-    mapLoader.style.display = 'none';
+    // Variables globales
+    let map, departureMarker, arrivalMarker, routingControl;
+    let departureGeocoder, arrivalGeocoder;
+    let markerMode = ''; // Mode de placement des marqueurs ('departure' ou 'arrival')
     
-    // Créer la carte centrée sur la France
-    map = new google.maps.Map(document.getElementById('map-canvas'), {
-        center: { lat: 46.227638, lng: 2.213749 },
-        zoom: 6,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        mapTypeControl: false,
-        fullscreenControl: false
+    // Initialisation de la carte lorsque le DOM est chargé
+    document.addEventListener('DOMContentLoaded', function() {
+        initMap();
+        setupFormListeners();
     });
     
-    // Initialiser les services de direction
-    directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({
-        map: map,
-        suppressMarkers: true,
-        polylineOptions: {
-            strokeColor: '#36b9cc',
-            strokeWeight: 5
-        }
-    });
-    
-    // Initialiser les marqueurs (invisibles au départ)
-    departureMarker = new google.maps.Marker({
-        map: map,
-        icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 10,
-            fillColor: '#1cc88a',
-            fillOpacity: 1,
-            strokeWeight: 2,
-            strokeColor: '#FFFFFF'
-        },
-        visible: false
-    });
-    
-    arrivalMarker = new google.maps.Marker({
-        map: map,
-        icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 10,
-            fillColor: '#e74a3b',
-            fillOpacity: 1,
-            strokeWeight: 2,
-            strokeColor: '#FFFFFF'
-        },
-        visible: false
-    });
-    
-    // Initialiser les autocompletions
-    const departureInput = document.getElementById('departure');
-    const arrivalInput = document.getElementById('arrival');
-    
-    departureAutocomplete = new google.maps.places.Autocomplete(departureInput, {
-        types: ['address'],
-        componentRestrictions: { country: 'fr' }
-    });
-    
-    arrivalAutocomplete = new google.maps.places.Autocomplete(arrivalInput, {
-        types: ['address'],
-        componentRestrictions: { country: 'fr' }
-    });
-    
-    // Écouter les changements d'adresse via l'autocomplétion
-    departureAutocomplete.addListener('place_changed', function() {
-        const place = departureAutocomplete.getPlace();
+    function initMap() {
+        // Initialiser la carte OpenStreetMap
+        map = L.map('map-canvas').setView([46.603354, 1.888334], 5); // Vue centrée sur la France
         
-        if (place && place.geometry) {
-            const location = place.geometry.location;
-            document.getElementById('departure_lat').value = location.lat();
-            document.getElementById('departure_lng').value = location.lng();
-            
-            departureMarker.setPosition(location);
-            departureMarker.setVisible(true);
-            
-            // Zoom sur le marqueur
-            map.setCenter(location);
-            map.setZoom(14);
-        }
-    });
-    
-    arrivalAutocomplete.addListener('place_changed', function() {
-        const place = arrivalAutocomplete.getPlace();
+        // Ajouter le layer de carte OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(map);
         
-        if (place && place.geometry) {
-            const location = place.geometry.location;
-            document.getElementById('arrival_lat').value = location.lat();
-            document.getElementById('arrival_lng').value = location.lng();
-            
-            arrivalMarker.setPosition(location);
-            arrivalMarker.setVisible(true);
-            
-            // Zoom sur le marqueur
-            map.setCenter(location);
-            map.setZoom(14);
-        }
-    });
-    
-    // Initialiser les boutons de géolocalisation
-    document.getElementById('locate-departure').addEventListener('click', function() {
-        getCurrentLocation(function(position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            
-            // Faire une géocodage inverse pour obtenir l'adresse
-            const geocoder = new google.maps.Geocoder();
-            geocoder.geocode({ location: { lat, lng } }, function(results, status) {
-                if (status === 'OK' && results[0]) {
-                    departureInput.value = results[0].formatted_address;
-                    document.getElementById('departure_lat').value = lat;
-                    document.getElementById('departure_lng').value = lng;
-                    
-                    departureMarker.setPosition({ lat, lng });
-                    departureMarker.setVisible(true);
-                    
-                    map.setCenter({ lat, lng });
-                    map.setZoom(14);
+        // Créer les marqueurs (invisibles au départ)
+        departureMarker = L.marker([0, 0], {
+            icon: L.divIcon({
+                html: '<i class="fas fa-circle text-success" style="font-size: 14px;"></i>',
+                className: 'map-custom-icon',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            }),
+            draggable: true // Rendre le marqueur déplaçable
+        });
+        
+        arrivalMarker = L.marker([0, 0], {
+            icon: L.divIcon({
+                html: '<i class="fas fa-circle text-danger" style="font-size: 14px;"></i>',
+                className: 'map-custom-icon',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            }),
+            draggable: true // Rendre le marqueur déplaçable
+        });
+        
+        // Ajouter des popups pour les marqueurs
+        departureMarker.bindPopup('<strong>Point de départ</strong><br>Déplacez-moi pour ajuster la position');
+        arrivalMarker.bindPopup('<strong>Point d\'arrivée</strong><br>Déplacez-moi pour ajuster la position');
+        
+        // Gérer le déplacement des marqueurs
+        departureMarker.on('dragend', function(event) {
+            const marker = event.target;
+            const position = marker.getLatLng();
+            updateMarkerPosition('departure', position.lat, position.lng);
+            calculateRoute();
+        });
+        
+        arrivalMarker.on('dragend', function(event) {
+            const marker = event.target;
+            const position = marker.getLatLng();
+            updateMarkerPosition('arrival', position.lat, position.lng);
+            calculateRoute();
+        });
+        
+        // Initialiser le service de géocodage
+        departureGeocoder = L.Control.Geocoder.nominatim();
+        arrivalGeocoder = L.Control.Geocoder.nominatim();
+        
+        // Initialiser le contrôle d'itinéraire (invisible pour l'instant)
+        routingControl = L.Routing.control({
+            waypoints: [],
+            routeWhileDragging: true,
+            lineOptions: {
+                styles: [{ color: '#3388ff', weight: 6 }]
+            },
+            createMarker: function() { return null; }, // Pas de marqueurs par défaut
+            router: L.Routing.osrmv1({
+                serviceUrl: 'https://router.project-osrm.org/route/v1',
+                profile: 'driving',
+                language: 'fr'
+            })
+        }).addTo(map);
+        
+        // Masquer les instructions d'itinéraire
+        routingControl.hide();
+        
+        // Création d'un contrôle de géocodage pour la recherche
+        const searchControl = L.Control.geocoder({
+            defaultMarkGeocode: false,
+            placeholder: 'Rechercher une adresse...',
+            errorMessage: 'Adresse non trouvée.',
+            geocoder: L.Control.Geocoder.nominatim()
+        })
+        .on('markgeocode', function(e) {
+            map.setView(e.geocode.center, 13);
+        })
+        .addTo(map);
+        
+        // Ajouter un gestionnaire de clic sur la carte pour placer les marqueurs
+        map.on('click', function(e) {
+            // Placer directement le marqueur au clic
+            // Le premier clic place le point de départ, le second le point d'arrivée
+            if (!departureMarker._map) {
+                placeMarker('departure', e.latlng.lat, e.latlng.lng);
+                
+                // Ajouter des champs cachés pour stocker les coordonnées s'ils n'existent pas
+                if (!document.getElementById('departure_lat')) {
+                    addHiddenField('departure_lat', e.latlng.lat);
+                    addHiddenField('departure_lng', e.latlng.lng);
                 } else {
-                    alert("Impossible de déterminer votre adresse actuelle.");
+                    document.getElementById('departure_lat').value = e.latlng.lat;
+                    document.getElementById('departure_lng').value = e.latlng.lng;
                 }
-            });
-        }, function(error) {
-            alert("Erreur de géolocalisation: " + error.message);
-        });
-    });
-    
-    document.getElementById('locate-arrival').addEventListener('click', function() {
-        getCurrentLocation(function(position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            
-            // Faire une géocodage inverse pour obtenir l'adresse
-            const geocoder = new google.maps.Geocoder();
-            geocoder.geocode({ location: { lat, lng } }, function(results, status) {
-                if (status === 'OK' && results[0]) {
-                    arrivalInput.value = results[0].formatted_address;
-                    document.getElementById('arrival_lat').value = lat;
-                    document.getElementById('arrival_lng').value = lng;
-                    
-                    arrivalMarker.setPosition({ lat, lng });
-                    arrivalMarker.setVisible(true);
-                    
-                    map.setCenter({ lat, lng });
-                    map.setZoom(14);
+            } 
+            else if (!arrivalMarker._map) {
+                placeMarker('arrival', e.latlng.lat, e.latlng.lng);
+                
+                // Ajouter des champs cachés pour stocker les coordonnées s'ils n'existent pas
+                if (!document.getElementById('arrival_lat')) {
+                    addHiddenField('arrival_lat', e.latlng.lat);
+                    addHiddenField('arrival_lng', e.latlng.lng);
                 } else {
-                    alert("Impossible de déterminer votre adresse actuelle.");
+                    document.getElementById('arrival_lat').value = e.latlng.lat;
+                    document.getElementById('arrival_lng').value = e.latlng.lng;
                 }
-            });
-        }, function(error) {
-            alert("Erreur de géolocalisation: " + error.message);
+                
+                // Calculer l'itinéraire automatiquement quand les deux points sont placés
+                calculateRoute();
+            }
+            else {
+                // Si les deux marqueurs sont déjà placés, on peut soit déplacer celui qui est le plus proche du clic
+                // soit réinitialiser et recommencer. Ici, on réinitialise.
+                resetMarkers();
+                placeMarker('departure', e.latlng.lat, e.latlng.lng);
+                
+                if (!document.getElementById('departure_lat')) {
+                    addHiddenField('departure_lat', e.latlng.lat);
+                    addHiddenField('departure_lng', e.latlng.lng);
+                } else {
+                    document.getElementById('departure_lat').value = e.latlng.lat;
+                    document.getElementById('departure_lng').value = e.latlng.lng;
+                }
+            }
         });
-    });
-    
-    // Initialiser le bouton de calcul d'itinéraire
-    document.getElementById('calculate-route').addEventListener('click', calculateRoute);
-}
-
-// Fonction pour obtenir la géolocalisation actuelle
-function getCurrentLocation(successCallback, errorCallback) {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(successCallback, errorCallback, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-        });
-    } else {
-        alert("La géolocalisation n'est pas supportée par ce navigateur.");
-    }
-}
-
-// Fonction pour calculer l'itinéraire
-function calculateRoute() {
-    const departure = document.getElementById('departure').value;
-    const arrival = document.getElementById('arrival').value;
-    
-    if (!departure || !arrival) {
-        alert("Veuillez indiquer les adresses de départ et d'arrivée.");
-        return;
-    }
-    
-    const departureLatInput = document.getElementById('departure_lat');
-    const departureLngInput = document.getElementById('departure_lng');
-    const arrivalLatInput = document.getElementById('arrival_lat');
-    const arrivalLngInput = document.getElementById('arrival_lng');
-    
-    let origin, destination;
-    
-    if (departureLatInput.value && departureLngInput.value) {
-        origin = {
-            lat: parseFloat(departureLatInput.value),
-            lng: parseFloat(departureLngInput.value)
-        };
-    } else {
-        origin = departure;
-    }
-    
-    if (arrivalLatInput.value && arrivalLngInput.value) {
-        destination = {
-            lat: parseFloat(arrivalLatInput.value),
-            lng: parseFloat(arrivalLngInput.value)
-        };
-    } else {
-        destination = arrival;
-    }
-    
-    // Montrer le loader
-    const mapLoader = document.getElementById('map-loader');
-    mapLoader.style.display = 'flex';
-    
-    // Lancer le calcul de l'itinéraire
-    directionsService.route({
-        origin: origin,
-        destination: destination,
-        travelMode: google.maps.TravelMode.DRIVING,
-        unitSystem: google.maps.UnitSystem.METRIC
-    }, function(response, status) {
-        // Cacher le loader
-        mapLoader.style.display = 'none';
         
-        if (status === "OK") {
-            // Afficher l'itinéraire sur la carte
-            directionsRenderer.setDirections(response);
-            
-            // Récupérer les détails de l'itinéraire
-            const route = response.routes[0];
-            const leg = route.legs[0];
-            
-            // Placer les marqueurs aux bonnes positions
-            departureMarker.setPosition(leg.start_location);
-            arrivalMarker.setPosition(leg.end_location);
-            departureMarker.setVisible(true);
-            arrivalMarker.setVisible(true);
-            
-            // Mettre à jour les coordonnées
-            document.getElementById('departure_lat').value = leg.start_location.lat();
-            document.getElementById('departure_lng').value = leg.start_location.lng();
-            document.getElementById('arrival_lat').value = leg.end_location.lat();
-            document.getElementById('arrival_lng').value = leg.end_location.lng();
-            
-            // Arrondir la distance au km supérieur
-            const distance = Math.ceil(leg.distance.value / 1000);
-            
-            // Mettre à jour le récapitulatif
-            document.getElementById('summary-departure').textContent = leg.start_address;
-            document.getElementById('summary-arrival').textContent = leg.end_address;
-            document.getElementById('summary-distance').textContent = distance + ' km';
-            document.getElementById('distance').value = distance;
-            
-            // Afficher le récapitulatif
-            document.getElementById('trip-summary').style.display = 'block';
-            
-            // Ajuster la carte pour montrer tout l'itinéraire
-            const bounds = new google.maps.LatLngBounds();
-            bounds.extend(leg.start_location);
-            bounds.extend(leg.end_location);
-            map.fitBounds(bounds);
-            
-            // Mettre à jour le montant si un véhicule est sélectionné
-            updateAmount();
-            
-            // Vérifier si on peut activer le bouton de soumission
-            checkFormValidity();
+        // Ajouter un message d'aide sur la carte
+        const helpPanel = L.control({position: 'bottomleft'});
+        helpPanel.onAdd = function(map) {
+            const div = L.DomUtil.create('div', 'help-panel');
+            div.style.padding = '8px 12px';
+            div.style.background = 'rgba(255, 255, 255, 0.8)';
+            div.style.border = '1px solid #ccc';
+            div.style.borderRadius = '4px';
+            div.style.margin = '10px';
+            div.innerHTML = '<strong>Utilisation :</strong><br>1. Cliquez sur la carte pour placer le point de départ<br>2. Cliquez à nouveau pour placer le point d\'arrivée';
+            return div;
+        };
+        helpPanel.addTo(map);
+    }
+    
+    function addHiddenField(name, value) {
+        const form = document.getElementById('kilometricForm');
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.id = name;
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+    }
+    
+    function resetMarkers() {
+        // Supprimer les marqueurs de la carte
+        if (departureMarker._map) {
+            departureMarker.remove();
+        }
+        if (arrivalMarker._map) {
+            arrivalMarker.remove();
+        }
+        
+        // Réinitialiser également l'itinéraire
+        routingControl.setWaypoints([]);
+        
+        // Réinitialiser les champs cachés
+        if (document.getElementById('departure_lat')) {
+            document.getElementById('departure_lat').value = '';
+            document.getElementById('departure_lng').value = '';
+        }
+        if (document.getElementById('arrival_lat')) {
+            document.getElementById('arrival_lat').value = '';
+            document.getElementById('arrival_lng').value = '';
+        }
+        
+        // Réinitialiser l'affichage de la distance
+        document.getElementById('distance-display').textContent = '0';
+        
+        // Ajouter un champ caché pour la distance s'il n'existe pas
+        if (!document.getElementById('distance')) {
+            addHiddenField('distance', '0');
         } else {
-            alert("Impossible de calculer l'itinéraire. Veuillez vérifier vos adresses.");
+            document.getElementById('distance').value = '0';
         }
-    });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Gérer la sélection des véhicules
-    const vehicleCards = document.querySelectorAll('.vehicle-card');
-    const vehicleTypeInput = document.getElementById('vehicle_type');
-    const fiscalPowerInput = document.getElementById('fiscal_power');
-    const rateInfo = document.getElementById('rate-info');
+    }
     
-    vehicleCards.forEach(card => {
-        card.addEventListener('click', function() {
-            // Désélectionner toutes les cartes
-            vehicleCards.forEach(c => c.classList.remove('selected'));
-            
-            // Sélectionner cette carte
-            this.classList.add('selected');
-            
-            // Récupérer les informations du véhicule
-            const vehicleType = this.getAttribute('data-vehicle-type');
-            const fiscalPower = this.getAttribute('data-fiscal-power');
-            
-            // Mettre à jour les champs cachés
-            vehicleTypeInput.value = vehicleType;
-            fiscalPowerInput.value = fiscalPower;
-            
-            // Mettre à jour l'info sur le taux
-            const rate = rates[fiscalPower];
-            rateInfo.textContent = `Taux appliqué: ${rate} € par km`;
-            
-            // Mettre à jour le montant
-            updateAmount();
-            
-            // Vérifier si on peut activer le bouton de soumission
-            checkFormValidity();
+    function setupFormListeners() {
+        // Écouteur pour le bouton de recalcul d'itinéraire
+        document.getElementById('recalculate-route').addEventListener('click', function() {
+            if (departureMarker._map && arrivalMarker._map) {
+                calculateRoute();
+            } else {
+                alert("Veuillez d'abord placer les points de départ et d'arrivée sur la carte.");
+            }
         });
-    });
+        
+        // Ajout du bouton aller-retour
+        const roundTripButton = document.createElement('button');
+        roundTripButton.type = 'button';
+        roundTripButton.className = 'btn btn-outline-secondary mt-2 w-100';
+        roundTripButton.innerHTML = '<i class="fas fa-exchange-alt me-1"></i> Aller-retour';
+        roundTripButton.title = 'Calculer un trajet aller-retour';
+        
+        // Ajouter le bouton après le bouton de recalcul
+        const recalculateButton = document.getElementById('recalculate-route');
+        const parentDiv = recalculateButton.parentElement;
+        parentDiv.appendChild(roundTripButton);
+        
+        // Écouteur pour le bouton aller-retour
+        roundTripButton.addEventListener('click', function() {
+            if (departureMarker._map && arrivalMarker._map) {
+                // Vérifier si l'aller-retour a déjà été calculé
+                if (this.getAttribute('data-round-trip') === 'true') {
+                    alert("Le trajet a déjà été calculé en aller-retour.");
+                    return;
+                }
+
+                // Doubler la distance pour un aller-retour
+                if (document.getElementById('distance')) {
+                    const currentDistance = parseFloat(document.getElementById('distance').value);
+                    if (!isNaN(currentDistance) && currentDistance > 0) {
+                        const newDistance = currentDistance * 2;
+                        document.getElementById('distance').value = newDistance;
+                        document.getElementById('distance-display').textContent = newDistance;
+                        
+                        // Recalculer le montant avec la nouvelle distance
+                        calculateAmount();
+                        
+                        // Marquer le bouton comme utilisé
+                        this.setAttribute('data-round-trip', 'true');
+                        this.classList.remove('btn-outline-secondary');
+                        this.classList.add('btn-success');
+                        
+                        // Afficher un message de confirmation
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-info alert-dismissible fade show mt-2';
+                        alertDiv.role = 'alert';
+                        alertDiv.innerHTML = `
+                            <i class="fas fa-info-circle me-2"></i>
+                            Distance doublée pour l'aller-retour : ${newDistance} km
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        `;
+                        parentDiv.parentElement.appendChild(alertDiv);
+                    } else {
+                        alert("Veuillez d'abord calculer l'itinéraire aller simple.");
+                    }
+                }
+            } else {
+                alert("Veuillez d'abord placer les points de départ et d'arrivée sur la carte.");
+            }
+        });
+        
+        // Écouteurs pour les cartes de véhicules
+        document.querySelectorAll('.vehicle-card').forEach(card => {
+            card.addEventListener('click', function() {
+                // Retirer la classe 'selected' de toutes les cartes
+                document.querySelectorAll('.vehicle-card').forEach(c => c.classList.remove('selected'));
+                
+                // Ajouter la classe 'selected' à la carte cliquée
+                this.classList.add('selected');
+                
+                // Mettre à jour les champs cachés
+                document.getElementById('vehicle_type').value = this.getAttribute('data-vehicle-type');
+                document.getElementById('fiscal_power').value = this.getAttribute('data-fiscal-power');
+                
+                // Recalculer le montant si une distance est déjà définie
+                calculateAmount();
+                
+                // Mettre à jour le texte d'information sur le taux
+                updateRateInfo();
+                
+                // Vérifier si le formulaire peut être soumis
+                validateForm();
+            });
+        });
+        
+        // Écouteur pour la description
+        document.getElementById('description').addEventListener('input', validateForm);
+        
+        // Écouteur pour la date
+        document.getElementById('date').addEventListener('change', validateForm);
+        
+        // Ajoutez un bouton pour réinitialiser les marqueurs
+        const mapContainer = document.getElementById('map-canvas');
+        const resetButton = document.createElement('button');
+        resetButton.type = 'button';
+        resetButton.className = 'btn btn-sm btn-outline-danger position-absolute start-0 top-0 m-2';
+        resetButton.innerHTML = '<i class="fas fa-redo-alt"></i> Réinitialiser';
+        resetButton.style.zIndex = '1000';
+        resetButton.onclick = resetMarkers;
+        
+        // Obtenez le conteneur parent du mapContainer
+        const parentContainer = mapContainer.parentElement;
+        parentContainer.style.position = 'relative';
+        parentContainer.appendChild(resetButton);
+    }
     
-    // Initialiser la date à aujourd'hui
-    document.getElementById('date').valueAsDate = new Date();
-    
-    // Validation du formulaire
-    document.getElementById('kilometricForm').addEventListener('submit', function(e) {
-        if (!validateForm()) {
-            e.preventDefault();
+    function placeMarker(type, lat, lng) {
+        if (type === 'departure') {
+            departureMarker.setLatLng([lat, lng]).addTo(map);
+        } else {
+            arrivalMarker.setLatLng([lat, lng]).addTo(map);
         }
-    });
-});
-
-// Fonction pour mettre à jour le montant
-function updateAmount() {
-    const distanceInput = document.getElementById('distance');
-    const fiscalPowerInput = document.getElementById('fiscal_power');
-    const amountInput = document.getElementById('amount');
-    
-    const distance = parseInt(distanceInput.value) || 0;
-    const fiscalPower = fiscalPowerInput.value;
-    
-    if (distance > 0 && fiscalPower && rates[fiscalPower]) {
-        const rate = rates[fiscalPower];
-        const amount = (distance * rate).toFixed(2);
-        amountInput.value = amount;
-    } else {
-        amountInput.value = '';
-    }
-}
-
-// Vérifier si le formulaire est valide
-function checkFormValidity() {
-    const departureInput = document.getElementById('departure').value.trim();
-    const arrivalInput = document.getElementById('arrival').value.trim();
-    const distanceInput = document.getElementById('distance').value;
-    const vehicleTypeInput = document.getElementById('vehicle_type').value;
-    const descriptionInput = document.getElementById('description').value.trim();
-    
-    const isValid = departureInput !== '' && 
-                   arrivalInput !== '' && 
-                   distanceInput !== '0' && 
-                   vehicleTypeInput !== '' && 
-                   descriptionInput !== '';
-    
-    document.getElementById('submitButton').disabled = !isValid;
-    return isValid;
-}
-
-// Validation finale avant l'envoi
-function validateForm() {
-    if (!checkFormValidity()) {
-        alert("Veuillez remplir tous les champs obligatoires et calculer l'itinéraire.");
-        return false;
     }
     
-    return true;
-}
+    function updateMarkerPosition(type, lat, lng) {
+        if (type === 'departure') {
+            if (document.getElementById('departure_lat')) {
+                document.getElementById('departure_lat').value = lat;
+                document.getElementById('departure_lng').value = lng;
+            } else {
+                addHiddenField('departure_lat', lat);
+                addHiddenField('departure_lng', lng);
+            }
+        } else {
+            if (document.getElementById('arrival_lat')) {
+                document.getElementById('arrival_lat').value = lat;
+                document.getElementById('arrival_lng').value = lng;
+            } else {
+                addHiddenField('arrival_lat', lat);
+                addHiddenField('arrival_lng', lng);
+            }
+        }
+    }
+    
+    function calculateRoute() {
+        // Vérifier que les deux marqueurs sont sur la carte
+        if (!departureMarker._map || !arrivalMarker._map) {
+            alert("Veuillez placer les points de départ et d'arrivée sur la carte.");
+            return;
+        }
+        
+        // Récupérer les positions
+        const departureLatLng = departureMarker.getLatLng();
+        const arrivalLatLng = arrivalMarker.getLatLng();
+        
+        // Mettre à jour l'itinéraire
+        routingControl.setWaypoints([
+            L.latLng(departureLatLng.lat, departureLatLng.lng),
+            L.latLng(arrivalLatLng.lat, arrivalLatLng.lng)
+        ]);
+        
+        // Ajuster la vue pour afficher tout l'itinéraire
+        const bounds = L.latLngBounds([departureLatLng, arrivalLatLng]);
+        map.fitBounds(bounds, { padding: [50, 50] });
+        
+        // Écouter l'événement de calcul d'itinéraire pour mettre à jour la distance
+        routingControl.on('routesfound', function(e) {
+            const routes = e.routes;
+            if (routes && routes.length > 0) {
+                // Récupérer la distance en mètres et la convertir en kilomètres
+                const distanceInMeters = routes[0].summary.totalDistance;
+                const distanceInKm = Math.round(distanceInMeters / 1000);
+                
+                // Mettre à jour l'affichage et le champ de distance
+                document.getElementById('distance-display').textContent = distanceInKm;
+                
+                // Ajouter un champ caché pour la distance s'il n'existe pas
+                if (!document.getElementById('distance')) {
+                    addHiddenField('distance', distanceInKm);
+                } else {
+                    document.getElementById('distance').value = distanceInKm;
+                }
+                
+                // Calculer automatiquement le montant
+                calculateAmount();
+                
+                // Vérifier si le formulaire peut être soumis
+                validateForm();
+            }
+        });
+    }
+    
+    function calculateAmount() {
+        const distance = parseFloat(document.getElementById('distance').value);
+        const vehicleType = document.getElementById('vehicle_type').value;
+        const fiscalPower = document.getElementById('fiscal_power').value;
+        
+        if (!distance || isNaN(distance)) return;
+        
+        // Tableau des taux kilométriques (à adapter selon vos barèmes)
+        const rates = {
+            'car': {
+                'normal': 0.502, // 5CV et moins
+                'high': 0.603    // 6CV et plus
+            },
+            'electric_car': {
+                'electric': 0.567 // Véhicule électrique
+            },
+            'motorbike': {
+                'motorbike': 0.375 // Moto/Scooter
+            }
+        };
+        
+        // Déterminer le taux applicable
+        let rate = 0;
+        if (vehicleType === 'car') {
+            rate = rates.car[fiscalPower] || rates.car.normal;
+        } else if (vehicleType === 'electric_car') {
+            rate = rates.electric_car.electric;
+        } else if (vehicleType === 'motorbike') {
+            rate = rates.motorbike.motorbike;
+        }
+        
+        // Calculer le montant
+        const amount = distance * rate;
+        document.getElementById('amount').value = amount.toFixed(2);
+        
+        // Mettre à jour le texte d'information sur le taux
+        updateRateInfo();
+    }
+    
+    function updateRateInfo() {
+        const vehicleType = document.getElementById('vehicle_type').value;
+        const fiscalPower = document.getElementById('fiscal_power').value;
+        const rateInfoEl = document.getElementById('rate-info');
+        
+        if (!vehicleType || !fiscalPower) {
+            rateInfoEl.textContent = 'Sélectionnez un type de véhicule pour voir le taux appliqué.';
+            return;
+        }
+        
+        // Taux kilométriques
+        let rate = 0;
+        let vehicleTypeText = '';
+        
+        if (vehicleType === 'car') {
+            if (fiscalPower === 'normal') {
+                rate = 0.502;
+                vehicleTypeText = 'Voiture 5CV et moins';
+            } else {
+                rate = 0.603;
+                vehicleTypeText = 'Voiture 6CV et plus';
+            }
+        } else if (vehicleType === 'electric_car') {
+            rate = 0.567;
+            vehicleTypeText = 'Voiture électrique';
+        } else if (vehicleType === 'motorbike') {
+            rate = 0.375;
+            vehicleTypeText = 'Moto/Scooter';
+        }
+        
+        rateInfoEl.innerHTML = `<strong>${vehicleTypeText}</strong> : ${rate.toFixed(3)} € par kilomètre parcouru`;
+    }
+    
+    function validateForm() {
+        const submitButton = document.getElementById('submitButton');
+        const description = document.getElementById('description').value.trim();
+        const date = document.getElementById('date').value;
+        const vehicleType = document.getElementById('vehicle_type').value;
+        const distance = parseFloat(document.getElementById('distance').value);
+        
+        // Vérifier que tous les champs obligatoires sont remplis
+        if (description && date && vehicleType && !isNaN(distance) && distance > 0) {
+            submitButton.disabled = false;
+        } else {
+            submitButton.disabled = true;
+        }
+    }
 </script>
-{% endblock %}
+{% endblock extra_scripts %}
 {% endblock %}

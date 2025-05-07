@@ -65,7 +65,7 @@ def submit_kilometric_expense(request):
                 user=request.user,
                 date=request.POST.get('date'),
                 vehicle_type=request.POST.get('vehicle_type'),
-                fiscal_power=int(request.POST.get('fiscal_power', 0)),
+                fiscal_power=request.POST.get('fiscal_power'),
                 departure=request.POST.get('departure', ''),
                 departure_lat=post_data['departure_lat'],
                 departure_lng=post_data['departure_lng'],
@@ -75,8 +75,8 @@ def submit_kilometric_expense(request):
                 distance=post_data['distance'],
                 amount=post_data['amount'],
                 project=request.POST.get('project', ''),
-                status='pending',
-                notification_emails=request.POST.get('notification_emails', '')
+                description=request.POST.get('description', ''),
+                status='pending'
             )
 
             # Debug - afficher les valeurs avant sauvegarde

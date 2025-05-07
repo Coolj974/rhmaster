@@ -53,6 +53,9 @@ from rh_management.views.user_management_views import (
     assign_permissions, assign_users, delete_role
 )
 
+# Import pour les vues de frais kilométriques
+from rh_management.views.kilometric_expense_views import export_kilometric_expenses
+
 # Error handlers
 def error_404(request, exception):
     return render(request, 'errors/404.html', status=404)
@@ -170,6 +173,7 @@ urlpatterns = [
     path("cancel-kilometric-expense/<int:expense_id>/", cancel_kilometric_expense, name="cancel_kilometric_expense"),  # Ajout de cette ligne
     path('delete_kilometric_expense/<int:id>/', delete_kilometric_expense, name='delete_kilometric_expense'),
     path('kilometric-expense-action/<int:expense_id>/', kilometric_expense_action, name='kilometric_expense_action'),
+    path('export-kilometric-expenses/', export_kilometric_expenses, name='export_kilometric_expenses'),  # Nouvelle URL pour exporter les frais kilométriques
     
     # Password Manager
     path("password-manager/", password_manager_list, name="password_manager_list"),

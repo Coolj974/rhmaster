@@ -544,6 +544,12 @@
                                                     data-bs-target="#rejectModal{{ expense.id }}">
                                                 <i class="fas fa-times"></i>
                                             </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-1 view-map-btn" 
+                                                    data-id="{{ expense.id }}" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#viewMapModal">
+                                                <i class="fas fa-map"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -970,233 +976,203 @@
     </div>
 </div>
 
+<!-- Modal pour visualiser un trajet sur la carte -->
+<div class="modal fade" id="viewMapModal" tabindex="-1" aria-labelledby="viewMapModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewMapModalLabel">Visualisation du trajet</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <!-- Conteneur de la carte -->
+                        <div id="map-container" style="height: 400px; border-radius: 8px;"></div>
+                    </div>
+                </div>
+                <div class="trip-info mt-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-2"><strong>Départ:</strong> <span id="map-departure"></span></div>
+                            <div class="mb-2"><strong>Arrivée:</strong> <span id="map-arrival"></span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-2"><strong>Distance:</strong> <span id="map-distance"></span> km</div>
+                            <div class="mb-2"><strong>Montant:</strong> <span id="map-amount"></span> €</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% block extra_scripts %}
-<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMaps" async defer></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
 <script>
-function initMaps() {
-    // Cette fonction sera appelée quand l'API Google Maps sera chargée
-    console.log('Google Maps API chargée');
+// Fonction pour initialiser la carte
+function initializeMap(departure, arrival, departureLat, departureLng, arrivalLat, arrivalLng) {
+    // Nettoyer la carte existante
+    const mapContainer = document.getElementById('map-container');
+    if (mapContainer._leaflet_id) {
+        mapContainer._leaflet_id = null;
+    }
+    
+    // Initialiser la carte
+    const map = L.map('map-container').setView([46.603354, 1.888334], 5); // Vue centrée sur la France
+    
+    // Ajouter le layer de carte OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(map);
+    
+    // S'assurer que les coordonnées sont des nombres
+    departureLat = parseFloat(departureLat);
+    departureLng = parseFloat(departureLng);
+    arrivalLat = parseFloat(arrivalLat);
+    arrivalLng = parseFloat(arrivalLng);
+    
+    // Vérifier si les coordonnées sont valides
+    const validDepartureCoords = !isNaN(departureLat) && !isNaN(departureLng);
+    const validArrivalCoords = !isNaN(arrivalLat) && !isNaN(arrivalLng);
+    
+    // Utiliser des coordonnées par défaut si nécessaire
+    const departurePoint = validDepartureCoords 
+        ? L.latLng(departureLat, departureLng) 
+        : L.latLng(48.864716, 2.349014); // Paris par défaut
+    
+    const arrivalPoint = validArrivalCoords 
+        ? L.latLng(arrivalLat, arrivalLng) 
+        : L.latLng(45.764043, 4.835659); // Lyon par défaut
+    
+    console.log("Departure coordinates:", departurePoint);
+    console.log("Arrival coordinates:", arrivalPoint);
+    
+    // Créer une icône personnalisée pour le point de départ
+    const departureIcon = L.divIcon({
+        html: '<i class="fas fa-circle text-success" style="font-size: 14px;"></i>',
+        className: 'map-custom-icon',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+    
+    // Créer une icône personnalisée pour le point d'arrivée
+    const arrivalIcon = L.divIcon({
+        html: '<i class="fas fa-circle text-danger" style="font-size: 14px;"></i>',
+        className: 'map-custom-icon',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+    
+    // Ajouter le marqueur de départ
+    const departureMarker = L.marker(departurePoint, {
+        icon: departureIcon
+    }).addTo(map);
+    
+    // Ajouter le marqueur d'arrivée
+    const arrivalMarker = L.marker(arrivalPoint, {
+        icon: arrivalIcon
+    }).addTo(map);
+    
+    // Ajouter des popups pour les marqueurs
+    departureMarker.bindPopup('<strong>Départ</strong><br>' + departure);
+    arrivalMarker.bindPopup('<strong>Arrivée</strong><br>' + arrival);
+    
+    // Calculer et afficher l'itinéraire
+    const routingControl = L.Routing.control({
+        waypoints: [
+            departurePoint,
+            arrivalPoint
+        ],
+        routeWhileDragging: false,
+        lineOptions: {
+            styles: [{ color: '#3388ff', weight: 6 }]
+        },
+        createMarker: function() { return null; }, // Pas de marqueurs par défaut
+        router: L.Routing.osrmv1({
+            serviceUrl: 'https://router.project-osrm.org/route/v1',
+            profile: 'driving',
+            language: 'fr'
+        }),
+        showAlternatives: false,
+        fitSelectedRoutes: true
+    }).addTo(map);
+    
+    // Masquer le panneau d'instructions d'itinéraire
+    routingControl.hide();
+    
+    // Ajuster la vue pour inclure tout l'itinéraire
+    const bounds = L.latLngBounds([departurePoint, arrivalPoint]);
+    map.fitBounds(bounds, { padding: [50, 50] });
+    
+    return map;
 }
 
-function initTripMap(mapElement, departureLat, departureLng, arrivalLat, arrivalLng, departureAddress, arrivalAddress) {
-    if (!mapElement) return;
+// Fonction pour afficher la carte dans le modal
+function showMapModal(id) {
+    // Récupérer les données du trajet
+    const expense = expenses.find(exp => exp.id === parseInt(id));
+    if (!expense) return;
     
-    // Créer la carte
-    const map = new google.maps.Map(mapElement, {
-        center: { lat: 46.227638, lng: 2.213749 }, // Centre de la France
-        zoom: 6,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        mapTypeControl: false,
-        fullscreenControl: false
-    });
+    // Mettre à jour les informations du modal
+    document.getElementById('viewMapModalLabel').textContent = 'Trajet du ' + expense.date;
+    document.getElementById('map-departure').textContent = expense.departure;
+    document.getElementById('map-arrival').textContent = expense.arrival;
+    document.getElementById('map-distance').textContent = expense.distance;
+    document.getElementById('map-amount').textContent = expense.amount.toFixed(2);
     
-    // Si on n'a pas les coordonnées, on ne peut pas afficher l'itinéraire
-    if (!departureLat || !departureLng || !arrivalLat || !arrivalLng) {
-        const infoWindow = new google.maps.InfoWindow({
-            content: "<div class='p-2'>Coordonnées GPS non disponibles pour ce trajet</div>",
-            position: map.getCenter()
-        });
-        infoWindow.open(map);
-        return;
-    }
+    // Afficher le modal
+    const mapModal = new bootstrap.Modal(document.getElementById('viewMapModal'));
+    mapModal.show();
     
-    const departurePoint = { lat: departureLat, lng: departureLng };
-    const arrivalPoint = { lat: arrivalLat, lng: arrivalLng };
-    
-    // Créer les marqueurs de départ et d'arrivée
-    const departureMarker = new google.maps.Marker({
-        position: departurePoint,
-        map: map,
-        icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 10,
-            fillColor: '#1cc88a',
-            fillOpacity: 1,
-            strokeWeight: 2,
-            strokeColor: '#FFFFFF'
-        },
-        title: "Départ: " + departureAddress
-    });
-    
-    const arrivalMarker = new google.maps.Marker({
-        position: arrivalPoint,
-        map: map,
-        icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 10,
-            fillColor: '#e74a3b',
-            fillOpacity: 1,
-            strokeWeight: 2,
-            strokeColor: '#FFFFFF'
-        },
-        title: "Arrivée: " + arrivalAddress
-    });
-    
-    // Calculer l'itinéraire
-    const directionsService = new google.maps.DirectionsService();
-    const directionsRenderer = new google.maps.DirectionsRenderer({
-        map: map,
-        suppressMarkers: true,  // On utilise nos propres marqueurs
-        polylineOptions: {
-            strokeColor: '#36b9cc',
-            strokeWeight: 5
-        }
-    });
-    
-    directionsService.route({
-        origin: departurePoint,
-        destination: arrivalPoint,
-        travelMode: google.maps.TravelMode.DRIVING
-    }, function(response, status) {
-        if (status === 'OK') {
-            directionsRenderer.setDirections(response);
-            
-            // Ajuster la carte pour montrer tout l'itinéraire
-            const bounds = new google.maps.LatLngBounds();
-            bounds.extend(departurePoint);
-            bounds.extend(arrivalPoint);
-            map.fitBounds(bounds);
-        } else {
-            // Si l'itinéraire ne peut pas être calculé, simplement zoomer sur les marqueurs
-            const bounds = new google.maps.LatLngBounds();
-            bounds.extend(departurePoint);
-            bounds.extend(arrivalPoint);
-            map.fitBounds(bounds);
-        }
+    // Initialiser la carte après l'affichage du modal
+    document.getElementById('viewMapModal').addEventListener('shown.bs.modal', function () {
+        initializeMap(
+            expense.departure,
+            expense.arrival,
+            expense.departure_lat,
+            expense.departure_lng,
+            expense.arrival_lat,
+            expense.arrival_lng
+        );
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Toggle pour le panneau de filtres
-    const filterToggle = document.querySelector('[data-bs-toggle="collapse"]');
-    const filterIcon = document.querySelector('.filter-toggle-icon');
-    const filterText = document.querySelector('.filter-toggle-text');
-    
-    if (filterToggle) {
-        filterToggle.addEventListener('click', function() {
-            const isCollapsed = this.getAttribute('aria-expanded') === 'false';
-            
-            // Changer l'icône et le texte
-            if (isCollapsed) {
-                filterIcon.classList.replace('fa-chevron-down', 'fa-chevron-up');
-                filterText.textContent = 'Masquer';
-            } else {
-                filterIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
-                filterText.textContent = 'Afficher';
-            }
-        });
-    }
-    
-    // Initialisation de DataTable
-    if (typeof $.fn.DataTable !== 'undefined') {
-        // Table des notes en attente
-        if (document.getElementById('pendingTripsTable')) {
-            $('#pendingTripsTable').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
-                },
-                paging: false,
-                searching: true,
-                info: false
-            });
-        }
-        
-        // Table de toutes les notes
-        if (document.getElementById('allTripsTable')) {
-            const allTripsTable = $('#allTripsTable').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
-                },
-                paging: false,
-                searching: true,
-                info: false
-            });
-            
-            // Filtre de statut pour l'historique
-            $('#statusFilterHistoric').on('change', function() {
-                const status = this.value;
-                allTripsTable.column(6).search(status).draw();
-            });
-        }
-    }
-    
-    // Animation des cartes statistiques
-    const statsCards = document.querySelectorAll('.stats-card');
-    statsCards.forEach((card, index) => {
-        setTimeout(() => {
-            card.classList.add('slide-up');
-        }, index * 100);
-    });
-    
-    // Gestion des boutons d'actualisation
-    document.getElementById('refreshTable')?.addEventListener('click', function() {
-        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Actualisation...';
-        this.disabled = true;
-        
-        // Simuler une actualisation
-        setTimeout(() => {
-            window.location.reload();
-        }, 800);
-    });
-    
-    document.getElementById('refreshEmpty')?.addEventListener('click', function() {
-        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Actualisation...';
-        this.disabled = true;
-        
-        // Simuler une actualisation
-        setTimeout(() => {
-            window.location.reload();
-        }, 800);
-    });
-    
-    document.getElementById('refreshHistory')?.addEventListener('click', function() {
-        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Actualisation...';
-        this.disabled = true;
-        
-        // Simuler une actualisation
-        setTimeout(() => {
-            window.location.reload();
-        }, 800);
-    });
-    
-    // Vérifier que les formulaires de rejet ont un commentaire
-    document.querySelectorAll('[id^="rejectModal"]').forEach(modal => {
-        const form = modal.querySelector('form');
-        const textarea = modal.querySelector('textarea[required]');
-        const submitBtn = modal.querySelector('button[type="submit"]');
-        
-        if (form && textarea && submitBtn) {
-            form.addEventListener('submit', function(e) {
-                if (!textarea.value.trim()) {
-                    e.preventDefault();
-                    textarea.classList.add('is-invalid');
-                    alert('Veuillez indiquer un motif de rejet');
-                    return false;
-                }
-                
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Traitement...';
-                return true;
-            });
-            
-            textarea.addEventListener('input', function() {
-                if (this.value.trim()) {
-                    this.classList.remove('is-invalid');
-                } else {
-                    this.classList.add('is-invalid');
-                }
-            });
-        }
-    });
-    
-    // Réinitialiser les filtres
-    document.querySelector('button[type="reset"]')?.addEventListener('click', function() {
-        setTimeout(() => {
-            window.location.href = '{% url "manage_kilometric_expenses" %}';
-        }, 100);
+// Liste des dépenses pour la carte (remplie dynamiquement)
+const expenses = [
+    {% for expense in expenses %}
+    {
+        id: {{ expense.id }},
+        user: "{{ expense.user.get_full_name|default:expense.user.username|escapejs }}",
+        date: "{{ expense.date|date:'d/m/Y' }}",
+        departure: "{{ expense.departure|escapejs }}",
+        arrival: "{{ expense.arrival|escapejs }}",
+        departure_lat: {{ expense.departure_lat|default:"48.864716" }},
+        departure_lng: {{ expense.departure_lng|default:"2.349014" }},
+        arrival_lat: {{ expense.arrival_lat|default:"45.764043" }},
+        arrival_lng: {{ expense.arrival_lng|default:"4.835659" }},
+        distance: {{ expense.distance }},
+        amount: {{ expense.amount }},
+        vehicle_type: "{{ expense.vehicle_type }}",
+        fiscal_power: "{{ expense.fiscal_power }}",
+        status: "{{ expense.status }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %};
+
+// Attacher l'événement aux boutons de visualisation
+document.querySelectorAll('.view-map-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const expenseId = this.getAttribute('data-id');
+        showMapModal(expenseId);
     });
 });
 </script>
 {% endblock %}
-{% endblock %}
+{% endblock %

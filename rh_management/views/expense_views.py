@@ -23,32 +23,42 @@ def submit_expense(request):
     
     if request.method == "POST":
         try:
-            # Récupérer les données du formulaire
-            expense_date = request.POST.get('expense_date')
+            # Récupérer les données du formulaire avec les noms corrects
+            date = request.POST.get('date')
             amount = request.POST.get('amount')
-            category = request.POST.get('category')
+            expense_type = request.POST.get('expense_type')
             description = request.POST.get('description')
+            vat = request.POST.get('vat', 0)
+            project = request.POST.get('project', '')
+            location = request.POST.get('location', '')
+            comment = request.POST.get('comment', '')
+            refacturable = request.POST.get('refacturable') == 'on'
             
             # Validation des données
-            if not all([expense_date, amount, category]):
+            if not all([date, amount, expense_type, description]):
                 messages.error(request, "Veuillez remplir tous les champs obligatoires.")
                 return redirect('submit_expense')
                 
             # Convertir la date et le montant
-            expense_date = datetime.strptime(expense_date, '%Y-%m-%d').date()
-            amount = Decimal(str(amount).replace(',', '.'))
+            date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+            amount_decimal = Decimal(str(amount).replace(',', '.'))
             
-            if amount <= 0:
+            if amount_decimal <= 0:
                 messages.error(request, "Le montant doit être supérieur à zéro.")
                 return redirect('submit_expense')
             
-            # Créer la note de frais avec les noms de champs corrects du modèle
+            # Créer la note de frais
             expense = ExpenseReport(
                 user=request.user,
-                date=expense_date,  # Champ corrigé de 'expense_date' à 'date'
-                amount=amount,
-                expense_type=category,  # Champ corrigé de 'category' à 'expense_type'
+                date=date_obj,
+                amount=amount_decimal,
+                expense_type=expense_type,
                 description=description,
+                vat=Decimal(str(vat).replace(',', '.')),
+                project=project,
+                location=location,
+                comment=comment,
+                refacturable=refacturable,
                 status='pending'
             )
             
@@ -69,15 +79,41 @@ def submit_expense(request):
                 
                 expense.receipt = receipt
             
+            # Gérer le document complémentaire
+            if 'attachment' in request.FILES:
+                attachment = request.FILES['attachment']
+                
+                # Vérifier la taille du fichier
+                if attachment.size > 5 * 1024 * 1024:  # 5 Mo
+                    messages.error(request, "Le document complémentaire ne doit pas dépasser 5 Mo.")
+                    return redirect('submit_expense')
+                
+                expense.attachment = attachment
+            
             # Enregistrer la note de frais
             expense.save()
             
+            # Créer une notification pour les RH
+            for hr_user in User.objects.filter(is_staff=True):
+                Notification.objects.create(
+                    user=hr_user,
+                    title="Nouvelle note de frais",
+                    message=f"{request.user.get_full_name() or request.user.username} a soumis une note de frais de {amount_decimal} €.",
+                    notification_type='expense',
+                    object_id=expense.id,
+                    icon="fa-file-invoice-dollar",
+                    color="warning",
+                    url="/manage-expenses/"
+                )
+            
             messages.success(request, "Votre note de frais a été soumise avec succès.")
-            return redirect('my_expenses')  # Changé de 'my_expenses_view' à 'my_expenses'
+            return redirect('my_expenses')
         
-        except ValueError:
+        except ValueError as e:
+            print(f"Erreur de format: {str(e)}")
             messages.error(request, "Format de montant ou de date invalide.")
         except Exception as e:
+            print(f"Erreur lors de la soumission: {str(e)}")
             messages.error(request, f"Une erreur s'est produite: {str(e)}")
     
     # Pas besoin de "else:" ici puisque nous avons déjà initialisé form au début

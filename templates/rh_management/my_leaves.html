@@ -256,6 +256,8 @@
         }
     }
 </style>
+<!-- Assurez-vous que DataTables CSS est chargé -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
 {% endblock %}
 
 {% block content %}
@@ -682,12 +684,23 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
 {% block extra_scripts %}
+<!-- Charger jQuery et DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialiser DataTable si présent
+    // Initialiser DataTable si présent et pas déjà initialisé
     if (typeof $.fn.DataTable !== 'undefined' && document.getElementById('leavesTable')) {
+        // Détruire l'instance existante si elle existe
+        if ($.fn.dataTable.isDataTable('#leavesTable')) {
+            $('#leavesTable').DataTable().destroy();
+        }
+        
+        // Initialiser la nouvelle instance
         $('#leavesTable').DataTable({
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
@@ -808,5 +821,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-{% endblock %}
 {% endblock %}
