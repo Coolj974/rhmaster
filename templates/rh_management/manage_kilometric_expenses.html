@@ -590,12 +590,15 @@
                                                             <div class="card-body">
                                                                 <p><strong>Type de véhicule:</strong> {{ expense.get_vehicle_type_display }}</p>
                                                                 <p><strong>Puissance fiscale:</strong> {{ expense.get_fiscal_power_display }}</p>
-                                                                <p><strong>Distance:</strong> {{ expense.distance }} km</p>
-                                                                <p><strong>Taux appliqué:</strong> 
-                                                                    {% if expense.fiscal_power == 'normal' %}0.32
-                                                                    {% elif expense.fiscal_power == 'high' %}0.41
-                                                                    {% elif expense.fiscal_power == 'electric' %}0.45
-                                                                    {% elif expense.fiscal_power == 'motorbike' %}0.21
+                                                                <p><strong>Distance:</strong> {{ expense.distance }} km</p>                                                                <p><strong>Taux appliqué:</strong> 
+                                                                    {% if expense.fiscal_power == 'small' %}0.456
+                                                                    {% elif expense.fiscal_power == 'medium' %}0.502
+                                                                    {% elif expense.fiscal_power == 'large' %}0.603
+                                                                    {% elif expense.fiscal_power == 'xlarge' %}0.653
+                                                                    {% elif expense.fiscal_power == 'normal' %}0.502
+                                                                    {% elif expense.fiscal_power == 'high' %}0.603
+                                                                    {% elif expense.fiscal_power == 'electric' %}0.567
+                                                                    {% elif expense.fiscal_power == 'motorbike' %}0.375
                                                                     {% endif %} € / km
                                                                 </p>
                                                                 <p><strong>Montant total:</strong> <span class="text-success fw-bold">{{ expense.amount|floatformat:2 }} €</span></p>

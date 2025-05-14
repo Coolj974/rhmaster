@@ -192,6 +192,11 @@ class ExpenseReport(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.description} ({self.date})"
     
+    @property
+    def montant_ttc(self):
+        """Calcule le montant total TTC incluant la TVA."""
+        return self.amount * (1 + (self.vat / 100))
+    
     class Meta:
         ordering = ['-created_at']
 
@@ -202,8 +207,7 @@ class Expense(models.Model):
         ('accommodation', 'Hébergement'),
         ('food', 'Repas'),
         ('supplies', 'Fournitures'),
-        ('other', 'Autre'),
-    )
+        ('other', 'Autre'),    )
     STATUS_CHOICES = (
         ('pending', 'En attente'),
         ('approved', 'Approuvé'),
@@ -224,13 +228,13 @@ class Expense(models.Model):
     comment = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     def __str__(self):
         return f"{self.description} ({self.amount} €) - {self.user.username}"
         
     @property
     def amount_with_vat(self):
-        """Calcule le montant TTC"""
+        """Calcule le montant total TTC"""
         if self.vat:
             return self.amount * (1 + self.vat / 100)
         return self.amount
@@ -240,14 +244,18 @@ class Expense(models.Model):
 
 class KilometricExpense(models.Model):
     """Modèle pour les frais kilométriques"""
+    
     VEHICLE_TYPE_CHOICES = (
         ('car', 'Voiture'),
         ('electric_car', 'Voiture électrique'),
         ('motorbike', 'Moto'),
     )
+    
     FISCAL_POWER_CHOICES = (
-        ('normal', '5 CV et moins'),
-        ('high', '6 CV et plus'),
+        ('small', '3 CV et moins'),
+        ('medium', '4 à 5 CV'),
+        ('large', '6 à 7 CV'),
+        ('xlarge', '8 CV et plus'),
         ('electric', 'Électrique'),
         ('motorbike', 'Moto/Scooter'),
     )

@@ -253,16 +253,11 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="leave_type" class="form-label">Sélectionnez un type de congé <span class="text-danger">*</span></label>
-                                <select class="form-select form-control-lg" id="leave_type" name="leave_type" required>
+                                <label for="leave_type" class="form-label">Sélectionnez un type de congé <span class="text-danger">*</span></label>                                <select class="form-select form-control-lg" id="leave_type" name="leave_type" required>
                                     <option value="">Choisir un type...</option>
-                                    <option value="annual">Congé annuel</option>
-                                    <option value="sick">Congé maladie</option>
-                                    <option value="parental">Congé parental</option>
+                                    <option value="annual">Congés payés</option>
                                     <option value="unpaid">Congé sans solde</option>
-                                    <option value="bereavement">Congé pour décès</option>
-                                    <option value="marriage">Congé pour mariage</option>
-                                    <option value="moving">Congé pour déménagement</option>
+                                    <option value="sick">Arrêt maladie</option>
                                     <option value="other">Autre</option>
                                 </select>
                                 <div class="form-text" id="leaveTypeHelp"></div>
@@ -555,31 +550,18 @@ document.addEventListener('DOMContentLoaded', function() {
     leaveTypeSelect.addEventListener('change', function() {
         const selectedType = this.value;
         let helpText = '';
-        
-        switch(selectedType) {
+          switch(selectedType) {
             case 'annual':
                 helpText = 'Congés payés classiques, déduits de votre solde annuel.';
                 break;
             case 'sick':
-                helpText = 'Congé pour raison médicale. Un justificatif pourrait être demandé.';
-                break;
-            case 'parental':
-                helpText = 'Congé lié à la naissance ou à l\'adoption d\'un enfant.';
+                helpText = 'Arrêt de travail pour raison médicale. Un justificatif médical est obligatoire.';
                 break;
             case 'unpaid':
                 helpText = 'Absence non rémunérée, n\'affecte pas votre solde de congés.';
                 break;
-            case 'bereavement':
-                helpText = 'Congé accordé suite au décès d\'un proche.';
-                break;
-            case 'marriage':
-                helpText = 'Congé pour votre mariage ou PACS.';
-                break;
-            case 'moving':
-                helpText = 'Congé pour déménagement.';
-                break;
             case 'other':
-                helpText = 'Autre type de congé. Veuillez préciser la raison dans le champ commentaire.';
+                helpText = 'Autre type de congé (congé parental, congé pour décès, congé pour mariage, congé pour déménagement, etc.). Veuillez préciser la raison dans le champ commentaire.';
                 break;
         }
         

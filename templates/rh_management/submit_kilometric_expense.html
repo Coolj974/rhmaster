@@ -307,29 +307,48 @@
                 <div class="form-step animated" style="animation-delay: 200ms;">
                     <div class="step-number">3</div>
                     <h5 class="mb-3">Véhicule et montant</h5>
-                    
-                    <div class="row mb-4">
-                        <div class="col-md-3 col-6 mb-3">
-                            <div class="vehicle-card" data-vehicle-type="car" data-fiscal-power="normal">
+                      <div class="row mb-4">
+                        <div class="col-md-4 col-6 mb-3">
+                            <div class="vehicle-card" data-vehicle-type="car" data-fiscal-power="small">
                                 <div class="vehicle-icon">
                                     <i class="fas fa-car"></i>
                                 </div>
                                 <h6 class="mb-1">Voiture</h6>
-                                <p class="small mb-0 text-muted">5 CV et moins</p>
+                                <p class="small mb-0 text-muted">3 CV et moins</p>
                             </div>
                         </div>
                         
-                        <div class="col-md-3 col-6 mb-3">
-                            <div class="vehicle-card" data-vehicle-type="car" data-fiscal-power="high">
+                        <div class="col-md-4 col-6 mb-3">
+                            <div class="vehicle-card" data-vehicle-type="car" data-fiscal-power="medium">
+                                <div class="vehicle-icon">
+                                    <i class="fas fa-car"></i>
+                                </div>
+                                <h6 class="mb-1">Voiture</h6>
+                                <p class="small mb-0 text-muted">4 à 5 CV</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 col-6 mb-3">
+                            <div class="vehicle-card" data-vehicle-type="car" data-fiscal-power="large">
                                 <div class="vehicle-icon">
                                     <i class="fas fa-car-side"></i>
                                 </div>
                                 <h6 class="mb-1">Voiture</h6>
-                                <p class="small mb-0 text-muted">6 CV et plus</p>
+                                <p class="small mb-0 text-muted">6 à 7 CV</p>
                             </div>
                         </div>
                         
-                        <div class="col-md-3 col-6 mb-3">
+                        <div class="col-md-4 col-6 mb-3">
+                            <div class="vehicle-card" data-vehicle-type="car" data-fiscal-power="xlarge">
+                                <div class="vehicle-icon">
+                                    <i class="fas fa-car-side"></i>
+                                </div>
+                                <h6 class="mb-1">Voiture</h6>
+                                <p class="small mb-0 text-muted">8 CV et plus</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 col-6 mb-3">
                             <div class="vehicle-card" data-vehicle-type="electric_car" data-fiscal-power="electric">
                                 <div class="vehicle-icon">
                                     <i class="fas fa-charging-station"></i>
@@ -339,7 +358,7 @@
                             </div>
                         </div>
                         
-                        <div class="col-md-3 col-6 mb-3">
+                        <div class="col-md-4 col-6 mb-3">
                             <div class="vehicle-card" data-vehicle-type="motorbike" data-fiscal-power="motorbike">
                                 <div class="vehicle-icon">
                                     <i class="fas fa-motorcycle"></i>
@@ -787,12 +806,13 @@
         const fiscalPower = document.getElementById('fiscal_power').value;
         
         if (!distance || isNaN(distance)) return;
-        
-        // Tableau des taux kilométriques (à adapter selon vos barèmes)
+          // Tableau des taux kilométriques (à adapter selon vos barèmes)
         const rates = {
             'car': {
-                'normal': 0.502, // 5CV et moins
-                'high': 0.603    // 6CV et plus
+                'small': 0.456,  // 3CV et moins
+                'medium': 0.502, // 4 à 5CV
+                'large': 0.603,  // 6 à 7CV
+                'xlarge': 0.653  // 8CV et plus
             },
             'electric_car': {
                 'electric': 0.567 // Véhicule électrique
@@ -801,11 +821,10 @@
                 'motorbike': 0.375 // Moto/Scooter
             }
         };
-        
-        // Déterminer le taux applicable
+          // Déterminer le taux applicable
         let rate = 0;
         if (vehicleType === 'car') {
-            rate = rates.car[fiscalPower] || rates.car.normal;
+            rate = rates.car[fiscalPower] || rates.car.medium;
         } else if (vehicleType === 'electric_car') {
             rate = rates.electric_car.electric;
         } else if (vehicleType === 'motorbike') {
@@ -819,8 +838,7 @@
         // Mettre à jour le texte d'information sur le taux
         updateRateInfo();
     }
-    
-    function updateRateInfo() {
+      function updateRateInfo() {
         const vehicleType = document.getElementById('vehicle_type').value;
         const fiscalPower = document.getElementById('fiscal_power').value;
         const rateInfoEl = document.getElementById('rate-info');
@@ -835,12 +853,18 @@
         let vehicleTypeText = '';
         
         if (vehicleType === 'car') {
-            if (fiscalPower === 'normal') {
+            if (fiscalPower === 'small') {
+                rate = 0.456;
+                vehicleTypeText = 'Voiture 3CV et moins';
+            } else if (fiscalPower === 'medium') {
                 rate = 0.502;
-                vehicleTypeText = 'Voiture 5CV et moins';
-            } else {
+                vehicleTypeText = 'Voiture 4 à 5CV';
+            } else if (fiscalPower === 'large') {
                 rate = 0.603;
-                vehicleTypeText = 'Voiture 6CV et plus';
+                vehicleTypeText = 'Voiture 6 à 7CV';
+            } else if (fiscalPower === 'xlarge') {
+                rate = 0.653;
+                vehicleTypeText = 'Voiture 8CV et plus';
             }
         } else if (vehicleType === 'electric_car') {
             rate = 0.567;

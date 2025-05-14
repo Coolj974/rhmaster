@@ -747,7 +747,19 @@ function initMap(tripData) {
 // Fonction pour obtenir le nom du type de véhicule
 function getVehicleTypeName(vehicleType, fiscalPower) {
     if (vehicleType === 'car') {
-        return fiscalPower === 'high' ? 'Voiture 6CV et plus' : 'Voiture 5CV et moins';
+        if (fiscalPower === 'small') {
+            return 'Voiture 3CV et moins';
+        } else if (fiscalPower === 'medium') {
+            return 'Voiture 4 à 5CV';
+        } else if (fiscalPower === 'large') {
+            return 'Voiture 6 à 7CV';
+        } else if (fiscalPower === 'xlarge') {
+            return 'Voiture 8CV et plus';
+        } else if (fiscalPower === 'normal') { // Pour la compatibilité avec les anciennes données
+            return 'Voiture 5CV et moins';
+        } else if (fiscalPower === 'high') { // Pour la compatibilité avec les anciennes données
+            return 'Voiture 6CV et plus';
+        }
     } else if (vehicleType === 'electric_car') {
         return 'Voiture électrique';
     } else if (vehicleType === 'motorbike') {
