@@ -349,17 +349,15 @@
                     <div class="mb-3">
                         <label for="reason" class="form-label">Motif (facultatif)</label>
                         <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="Précisez le motif de votre demande de congé..."></textarea>
-                    </div>
-                    
-                    <div class="mb-4">
+                    </div>                    <div class="mb-4">
                         <label for="attachment" class="form-label">Pièce justificative (facultatif)</label>
-                        <div class="upload-area" id="upload-area">
+                        <input type="file" name="attachment" id="attachment" accept=".pdf,.png,.jpg,.jpeg" style="display: none;">
+                        <div class="upload-area" id="upload-area" role="button" tabindex="0">
                             <div class="upload-icon">
                                 <i class="fas fa-file-upload"></i>
                             </div>
                             <p class="mb-0">Glissez et déposez un fichier ici ou cliquez pour parcourir</p>
                             <p class="text-muted small">Formats acceptés : PDF, PNG, JPG, JPEG (max. 5 Mo)</p>
-                            <input type="file" name="attachment" id="attachment" accept=".pdf,.png,.jpg,.jpeg" style="display: none;">
                         </div>
                         <div id="file-preview" class="d-none">
                             <div class="file-name">
@@ -486,17 +484,17 @@ document.addEventListener('DOMContentLoaded', function() {
             preview.classList.add('is-invalid');
             preview.classList.remove('is-valid');
         }
-    }
-    
-    // Gérer l'upload de fichiers
+    }      
+      // Gérer l'upload de fichiers
     const uploadArea = document.getElementById('upload-area');
     const fileInput = document.getElementById('attachment');
     const filePreview = document.getElementById('file-preview');
     const fileNameText = document.getElementById('file-name-text');
     
-    uploadArea.addEventListener('click', function() {
+    // Utiliser un gestionnaire direct et simple
+    uploadArea.onclick = function() {
         fileInput.click();
-    });
+    };
     
     uploadArea.addEventListener('dragover', function(e) {
         e.preventDefault();
@@ -522,8 +520,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showFilePreview(this.files[0]);
         }
     });
-    
-    function showFilePreview(file) {
+      function showFilePreview(file) {
         if (file) {
             // Vérifier la taille du fichier (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
@@ -538,7 +535,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Supprimer le fichier
-    document.querySelector('.remove-file').addEventListener('click', function() {
+    document.querySelector('.remove-file').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation(); // Empêche la propagation du clic vers l'élément parent
         fileInput.value = '';
         filePreview.classList.add('d-none');
     });

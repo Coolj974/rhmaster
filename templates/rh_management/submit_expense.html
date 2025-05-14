@@ -390,16 +390,15 @@
                 <div class="form-step animated">
                     <div class="step-number">3</div>
                     <h5 class="mb-3">Justificatifs et options</h5>
-                    
-                    <div class="mb-4">
+                      <div class="mb-4">
                         <label class="form-label fw-bold">Reçu principal <span class="text-danger">*</span></label>
-                        <div class="upload-area" id="receipt-upload-area">
+                        <input type="file" name="receipt" id="receipt" accept=".pdf,.png,.jpg,.jpeg" style="display: none;" required>
+                        <div class="upload-area" id="receipt-upload-area" role="button" tabindex="0">
                             <div class="upload-icon">
                                 <i class="fas fa-receipt"></i>
                             </div>
                             <p class="mb-0">Glissez et déposez votre reçu ici ou cliquez pour parcourir</p>
                             <p class="text-muted small">Formats acceptés : PDF, PNG, JPG, JPEG (max. 5 Mo)</p>
-                            <input type="file" name="receipt" id="receipt" accept=".pdf,.png,.jpg,.jpeg" style="display: none;" required>
                         </div>
                         <div id="receipt-preview" class="d-none file-preview">
                             <div class="file-name">
@@ -409,16 +408,15 @@
                             <img id="receipt-image-preview" class="receipt-preview d-none" alt="Aperçu du reçu">
                         </div>
                     </div>
-                    
-                    <div class="mb-4">
+                      <div class="mb-4">
                         <label class="form-label fw-bold">Document complémentaire (facultatif)</label>
-                        <div class="upload-area" id="attachment-upload-area">
+                        <input type="file" name="attachment" id="attachment" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" style="display: none;">
+                        <div class="upload-area" id="attachment-upload-area" role="button" tabindex="0">
                             <div class="upload-icon">
                                 <i class="fas fa-paperclip"></i>
                             </div>
                             <p class="mb-0">Glissez et déposez un document complémentaire ici</p>
                             <p class="text-muted small">Formats acceptés : PDF, PNG, JPG, JPEG, DOC, DOCX, XLS, XLSX (max. 5 Mo)</p>
-                            <input type="file" name="attachment" id="attachment" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" style="display: none;">
                         </div>
                         <div id="attachment-preview" class="d-none file-preview">
                             <div class="file-name">
@@ -504,8 +502,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     amountInput.addEventListener('input', calculateTotal);
     vatSelect.addEventListener('change', calculateTotal);
-    
-    // Gestion de l'upload des fichiers
+      // Gestion de l'upload des fichiers
     function setupFileUpload(uploadAreaId, fileInputId, previewId, nameTextId, imagePreviewId = null) {
         const uploadArea = document.getElementById(uploadAreaId);
         const fileInput = document.getElementById(fileInputId);
@@ -513,9 +510,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const nameText = document.getElementById(nameTextId);
         const imagePreview = imagePreviewId ? document.getElementById(imagePreviewId) : null;
         
-        uploadArea.addEventListener('click', function() {
+        // Utiliser onclick au lieu de addEventListener pour éviter les problèmes de propagation
+        uploadArea.onclick = function() {
             fileInput.click();
-        });
+        };
         
         uploadArea.addEventListener('dragover', function(e) {
             e.preventDefault();
@@ -576,10 +574,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     setupFileUpload('receipt-upload-area', 'receipt', 'receipt-preview', 'receipt-name-text', 'receipt-image-preview');
     setupFileUpload('attachment-upload-area', 'attachment', 'attachment-preview', 'attachment-name-text');
-    
-    // Gestion de la suppression de fichiers
+      // Gestion de la suppression de fichiers
     document.querySelectorAll('.remove-file').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation(); // Empêcher la propagation pour éviter les problèmes
+            
             const target = this.getAttribute('data-target');
             const fileInput = document.getElementById(target);
             const preview = document.getElementById(target + '-preview');
