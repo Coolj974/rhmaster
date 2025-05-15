@@ -1,0 +1,246 @@
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="notifications-container">
+        <!-- Titre et actions principales -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800 d-flex align-items-center">
+                <i class="fas fa-bell me-3 text-primary"></i>Mes notifications
+            </h1>
+            <div class="d-flex gap-2 flex-wrap">
+                <button id="markAllAsReadBtn" class="btn btn-action btn-primary">
+                    <i class="fas fa-check-double"></i> Tout marquer comme lu
+                </button>
+                <button id="deleteAllReadBtn" class="btn btn-action btn-danger">
+                    <i class="fas fa-trash"></i> Supprimer les lues
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistiques avec design moderne -->
+        <div class="row mb-4">
+            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                <div class="stats-card">
+                    <div class="card-body text-center">
+                        <div class="stats-icon bg-primary-soft text-primary mx-auto">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="stats-value">{{ stats.total }}</div>
+                        <div class="stats-label">Notifications totales</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                <div class="stats-card">
+                    <div class="card-body text-center">
+                        <div class="stats-icon bg-warning-soft text-warning mx-auto">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="stats-value" id="unreadCount">{{ stats.unread }}</div>
+                        <div class="stats-label">Non lues</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                <div class="stats-card">
+                    <div class="card-body text-center">
+                        <div class="stats-icon bg-success-soft text-success mx-auto">
+                            <i class="fas fa-envelope-open"></i>
+                        </div>
+                        <div class="stats-value" id="readCount">{{ stats.read }}</div>
+                        <div class="stats-label">Lues</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barre de filtres et recherche -->
+        <div class="filter-bar">
+            <div class="filter-input">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchNotifications" class="form-control" placeholder="Rechercher dans les notifications...">
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'notifications_page' %}" class="btn btn-filter {% if current_filter == 'all' %}btn-primary active{% else %}btn-outline-primary{% endif %}">
+                    <i class="fas fa-list-ul me-1"></i> Toutes
+                </a>
+                <a href="{% url 'notifications_page' %}?filter=unread" class="btn btn-filter {% if current_filter == 'unread' %}btn-warning active{% else %}btn-outline-warning{% endif %}">
+                    <i class="fas fa-envelope me-1"></i> Non lues
+                </a>
+                <button type="button" class="btn btn-filter btn-outline-info" id="filterByCategory">
+                    <i class="fas fa-tags me-1"></i> Catégories <i class="fas fa-caret-down ms-1"></i>
+                </button>
+                <button type="button" class="btn btn-filter btn-outline-secondary" id="filterByDate">
+                    <i class="fas fa-calendar-alt me-1"></i> Date <i class="fas fa-caret-down ms-1"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Bannière d'information -->
+        <div class="info-banner mb-4">
+            <i class="fas fa-info-circle"></i>
+            <p>Les notifications vous informent des activités importantes et des mises à jour. Cliquez sur "Voir" pour accéder directement au contenu lié.</p>
+        </div>
+
+        {% if notifications %}
+            <div class="notifications-list">
+                <!-- Groupe par date (Aujourd'hui) -->
+                <div class="notification-group-date">Aujourd'hui</div>
+                
+                {% for notification in notifications %}
+                    {% if forloop.counter == 4 %}
+                        <!-- Groupe par date (Cette semaine) -->
+                        <div class="notification-group-date">Cette semaine</div>
+                    {% endif %}
+                    
+                    <div class="notification-card fade-in {% if notification.read %}notification-read{% else %}notification-unread{% endif %} shadow-sm" id="notification-{{ notification.id }}">
+                        <div class="notification-header">
+                            <div class="d-flex align-items-center">
+                                <div class="notification-icon 
+                                    {% if 'congé' in notification.title|lower or 'absence' in notification.title|lower %}
+                                        bg-success text-white
+                                    {% elif 'frais' in notification.title|lower or 'dépense' in notification.title|lower %}
+                                        bg-warning text-white
+                                    {% elif 'kilométrique' in notification.title|lower or 'trajet' in notification.title|lower %}
+                                        bg-info text-white
+                                    {% elif 'système' in notification.title|lower or 'compte' in notification.title|lower %}
+                                        bg-primary text-white
+                                    {% else %}
+                                        bg-secondary text-white
+                                    {% endif %}">
+                                    <i class="fas {{ notification.icon|default:'fa-bell' }}"></i>
+                                </div>
+                                <div>
+                                    <h5 class="notification-title">{{ notification.title }}</h5>
+                                    <div class="notification-time">
+                                        <i class="far fa-clock"></i> {{ notification.created_at|timesince }}
+                                        
+                                        <!-- Badge de catégorie -->
+                                        <span class="category-badge
+                                            {% if 'congé' in notification.title|lower or 'absence' in notification.title|lower %}
+                                                category-congé
+                                            {% elif 'frais' in notification.title|lower or 'dépense' in notification.title|lower %}
+                                                category-frais
+                                            {% elif 'kilométrique' in notification.title|lower or 'trajet' in notification.title|lower %}
+                                                category-kilométrique
+                                            {% elif 'système' in notification.title|lower or 'compte' in notification.title|lower %}
+                                                category-système
+                                            {% else %}
+                                                category-autre
+                                            {% endif %}">
+                                            <i class="fas
+                                            {% if 'congé' in notification.title|lower or 'absence' in notification.title|lower %}
+                                                fa-calendar-check
+                                            {% elif 'frais' in notification.title|lower or 'dépense' in notification.title|lower %}
+                                                fa-receipt
+                                            {% elif 'kilométrique' in notification.title|lower or 'trajet' in notification.title|lower %}
+                                                fa-route
+                                            {% elif 'système' in notification.title|lower or 'compte' in notification.title|lower %}
+                                                fa-cog
+                                            {% else %}
+                                                fa-tag
+                                            {% endif %} me-1"></i>
+                                            {% if 'congé' in notification.title|lower or 'absence' in notification.title|lower %}
+                                                Congé
+                                            {% elif 'frais' in notification.title|lower or 'dépense' in notification.title|lower %}
+                                                Frais
+                                            {% elif 'kilométrique' in notification.title|lower or 'trajet' in notification.title|lower %}
+                                                Kilomètres
+                                            {% elif 'système' in notification.title|lower or 'compte' in notification.title|lower %}
+                                                Système
+                                            {% else %}
+                                                Autre
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="status-badge {% if notification.read %}status-read{% else %}status-unread{% endif %}">
+                                    <i class="fas {% if notification.read %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                                    {% if notification.read %}Lu{% else %}Non lu{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="notification-body">
+                            <p class="notification-message">{{ notification.message }}</p>
+                            <div class="notification-actions">
+                                {% if notification.url %}
+                                    <a href="{{ notification.url }}" class="btn btn-sm btn-primary btn-action">
+                                        <i class="fas fa-external-link-alt"></i> Voir
+                                    </a>
+                                {% endif %}
+                                
+                                {% if not notification.read %}
+                                    <button class="btn btn-sm btn-success btn-action mark-read" data-id="{{ notification.id }}">
+                                        <i class="fas fa-check"></i> Marquer comme lu
+                                    </button>
+                                {% endif %}
+                                
+                                <button class="btn btn-sm btn-danger btn-action delete-notification" data-id="{{ notification.id }}">
+                                    <i class="fas fa-trash"></i> Supprimer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <!-- Pagination -->
+                <div class="pagination-container">
+                    <nav aria-label="Navigation des notifications">
+                        <ul class="pagination">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Précédent">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#" aria-label="Suivant">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Boutons d'action flottants -->
+            <div class="floating-actions d-lg-none">
+                <button id="floatMarkAllRead" class="btn-float btn-float-primary">
+                    <i class="fas fa-check-double"></i>
+                    <span class="tooltip-float">Tout marquer comme lu</span>
+                </button>
+                <button id="floatDeleteRead" class="btn-float btn-float-danger">
+                    <i class="fas fa-trash"></i>
+                    <span class="tooltip-float">Supprimer les lues</span>
+                </button>
+            </div>
+        {% else %}
+            <!-- État vide -->
+            <div class="empty-state fade-in">
+                <div class="empty-icon">
+                    <i class="fas fa-bell-slash"></i>
+                </div>
+                <h4>Aucune notification</h4>
+                <p class="text-muted">
+                    {% if current_filter == 'unread' %}
+                        Vous n'avez pas de notifications non lues
+                    {% else %}
+                        Vous n'avez pas encore reçu de notifications
+                    {% endif %}
+                </p>
+                {% if current_filter == 'unread' %}
+                    <a href="{% url 'notifications_page' %}" class="btn btn-primary btn-action mt-3">
+                        <i class="fas fa-list-ul me-1"></i> Voir toutes les notifications
+                    </a>
+                {% else %}
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary btn-action mt-3">
+                        <i class="fas fa-home me-1"></i> Retour à l'accueil
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>

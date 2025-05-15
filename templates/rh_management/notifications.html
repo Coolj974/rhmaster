@@ -3,24 +3,32 @@
 
 {% block extra_css %}
 <style>
-    /* Styles pour la page de notifications */
+    /* Styles modernisés pour la page de notifications */
+    .notifications-container {
+        position: relative;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
     .notification-card {
-        margin-bottom: 1rem;
-        transition: all 0.2s ease;
-        border-radius: 0.75rem;
+        margin-bottom: 1.25rem;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border-radius: 1rem;
         overflow: hidden;
+        border: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     }
     
     .notification-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
     }
     
     .notification-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1rem;
+        padding: 1.25rem;
         background-color: #f8f9fc;
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     }
@@ -28,20 +36,29 @@
     .notification-title {
         font-weight: 600;
         margin: 0;
+        font-size: 1.1rem;
     }
     
     .notification-time {
         font-size: 0.8rem;
         color: #858796;
+        display: flex;
+        align-items: center;
+    }
+    
+    .notification-time i {
+        margin-right: 5px;
+        opacity: 0.7;
     }
     
     .notification-body {
-        padding: 1rem;
+        padding: 1.25rem;
         background-color: #fff;
     }
     
     .notification-message {
-        margin-bottom: 0.75rem;
+        margin-bottom: 1rem;
+        line-height: 1.6;
     }
     
     .notification-actions {
@@ -50,235 +67,697 @@
         gap: 0.5rem;
     }
     
-    .filter-badge {
-        cursor: pointer;
-        transition: all 0.2s ease;
+    .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background-color: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
     }
     
-    .filter-badge:hover {
-        opacity: 0.8;
+    .filter-input {
+        flex-grow: 1;
+        position: relative;
+    }
+    
+    .filter-input input {
+        padding-left: 40px;
+        border-radius: 50px;
+        border: 1px solid #e3e6f0;
+        transition: all 0.3s ease;
+        height: 45px;
+    }
+    
+    .filter-input input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.1);
+        border-color: #bac8f3;
+    }
+    
+    .filter-input i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #858796;
     }
     
     .notification-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 1rem;
         font-size: 1.2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .notification-card:hover .notification-icon {
+        transform: scale(1.1);
     }
     
     .notification-unread {
-        border-left: 3px solid #4e73df;
+        border-left: 4px solid #4e73df;
     }
     
     .notification-read {
-        border-left: 3px solid #e3e6f0;
-        opacity: 0.8;
+        border-left: 4px solid transparent;
+        opacity: 0.9;
     }
     
     .stats-card {
-        border-radius: 0.75rem;
-        box-shadow: 0 0.15rem 1.75rem rgba(0, 0, 0, 0.05);
+        border-radius: 1rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         transition: all 0.3s ease;
         height: 100%;
+        border: none;
+        overflow: hidden;
     }
     
     .stats-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .stats-icon {
+        width: 55px;
+        height: 55px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover .stats-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+    
+    .stats-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+    }
+    
+    .stats-label {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: #858796;
+        letter-spacing: 0.5px;
     }
     
     .empty-state {
         text-align: center;
-        padding: 3rem 0;
+        padding: 4rem 2rem;
+        background-color: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        margin-top: 2rem;
     }
     
     .empty-icon {
-        font-size: 3.5rem;
+        font-size: 4rem;
         margin-bottom: 1.5rem;
         color: #dddfeb;
+        opacity: 0.7;
+    }
+    
+    .empty-icon i {
+        animation: pulse 2s infinite;
+    }
+    
+    .btn-action {
+        border-radius: 50px;
+        padding: 0.5rem 1.5rem;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-action i {
+        margin-right: 0.5rem;
+    }
+    
+    .btn-filter {
+        border-radius: 50px;
+        padding: 0.6rem 1.2rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-filter.active {
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .category-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+    
+    .category-congé { background-color: #e6f7f0; color: #0cb876; }
+    .category-frais { background-color: #fff8e6; color: #f5a623; }
+    .category-système { background-color: #e6f2ff; color: #4e73df; }
+    .category-kilométrique { background-color: #e6f7ff; color: #36b9cc; }
+    .category-autre { background-color: #f8f9fc; color: #858796; }
+    
+    .status-badge {
+        padding: 0.35rem 0.8rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .status-unread {
+        background-color: #fff5e6;
+        color: #fd7e14;
+    }
+    
+    .status-read {
+        background-color: #e6f7f0;
+        color: #0cb876;
+    }
+    
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    
+    .pagination .page-item .page-link {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 5px;
+        border-radius: 10px;
+        color: #4e73df;
+        transition: all 0.3s ease;
+        border: none;
+        background-color: #f8f9fc;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: #4e73df;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(78, 115, 223, 0.3);
+    }
+    
+    .pagination .page-item .page-link:hover {
+        background-color: #eaecf4;
+        transform: scale(1.1);
+    }
+    
+    .notification-group-date {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #858796;
+        margin: 1.5rem 0 1rem;
+        padding-left: 1rem;
+        position: relative;
+    }
+    
+    .notification-group-date::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 4px;
+        height: 20px;
+        background-color: #4e73df;
+        border-radius: 2px;
+        transform: translateY(-50%);
     }
     
     @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
     .fade-in {
         animation: fadeIn 0.4s ease-in-out forwards;
+        opacity: 0;
+    }
+    
+    .notification-card:nth-child(1) { animation-delay: 0.1s; }
+    .notification-card:nth-child(2) { animation-delay: 0.2s; }
+    .notification-card:nth-child(3) { animation-delay: 0.3s; }
+    .notification-card:nth-child(4) { animation-delay: 0.4s; }
+    .notification-card:nth-child(5) { animation-delay: 0.5s; }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .floating-actions {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-float {
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-float:hover {
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .btn-float-primary {
+        background-color: #4e73df;
+        color: white;
+    }
+    
+    .btn-float-danger {
+        background-color: #e74a3b;
+        color: white;
+    }
+    
+    .tooltip-float {
+        position: absolute;
+        right: 70px;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        opacity: 0;
+        transition: all 0.3s ease;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+    
+    .btn-float:hover .tooltip-float {
+        opacity: 1;
+        right: 75px;
+    }
+    
+    .info-banner {
+        background-color: #f8f9fc;
+        border-radius: 1rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #4e73df;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .info-banner i {
+        font-size: 1.5rem;
+        margin-right: 1rem;
+        color: #4e73df;
+    }
+    
+    .info-banner p {
+        margin: 0;
+        color: #5a5c69;
+    }
+    
+    /* Style pour la classe background soft */
+    .bg-primary-soft { background-color: rgba(78, 115, 223, 0.1); color: #4e73df; }
+    .bg-success-soft { background-color: rgba(28, 200, 138, 0.1); color: #1cc88a; }
+    .bg-warning-soft { background-color: rgba(246, 194, 62, 0.1); color: #f6c23e; }
+    .bg-danger-soft { background-color: rgba(231, 74, 59, 0.1); color: #e74a3b; }
+    .bg-info-soft { background-color: rgba(54, 185, 204, 0.1); color: #36b9cc; }
+    
+    /* Responsive Styles */
+    @media (max-width: 992px) {
+        .stats-card {
+            margin-bottom: 1rem;
+        }
+        
+        .filter-bar {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        
+        .notification-actions {
+            flex-wrap: wrap;
+        }
+        
+        .btn-action {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-bell me-2"></i>Mes notifications
-        </h1>
-        <div>
-            <button id="markAllAsReadBtn" class="btn btn-outline-primary shadow-sm me-2">
-                <i class="fas fa-check-double me-1"></i> Tout marquer comme lu
-            </button>
-            <button id="deleteAllReadBtn" class="btn btn-outline-danger shadow-sm">
-                <i class="fas fa-trash me-1"></i> Supprimer les notifications lues
-            </button>
+<div class="container-fluid py-4">
+    <div class="notifications-container">
+        <!-- Titre et actions principales -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800 d-flex align-items-center">
+                <i class="fas fa-bell me-3 text-primary"></i>Mes notifications
+            </h1>
+            <div class="d-flex gap-2 flex-wrap">
+                <button id="markAllAsReadBtn" class="btn btn-action btn-primary">
+                    <i class="fas fa-check-double"></i> Tout marquer comme lu
+                </button>
+                <button id="deleteAllReadBtn" class="btn btn-action btn-danger">
+                    <i class="fas fa-trash"></i> Supprimer les lues
+                </button>
+            </div>
         </div>
-    </div>
 
-    <!-- Statistiques -->
-    <div class="row mb-4">
-        <div class="col-lg-4">
-            <div class="stats-card">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total notifications
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total }}</div>
+        <!-- Statistiques avec design moderne -->
+        <div class="row mb-4">
+            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                <div class="stats-card">
+                    <div class="card-body text-center">
+                        <div class="stats-icon bg-primary-soft text-primary mx-auto">
+                            <i class="fas fa-bell"></i>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-bell fa-2x text-gray-300"></i>
+                        <div class="stats-value">{{ stats.total }}</div>
+                        <div class="stats-label">Notifications totales</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                <div class="stats-card">
+                    <div class="card-body text-center">
+                        <div class="stats-icon bg-warning-soft text-warning mx-auto">
+                            <i class="fas fa-envelope"></i>
                         </div>
+                        <div class="stats-value" id="unreadCount">{{ stats.unread }}</div>
+                        <div class="stats-label">Non lues</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                <div class="stats-card">
+                    <div class="card-body text-center">
+                        <div class="stats-icon bg-success-soft text-success mx-auto">
+                            <i class="fas fa-envelope-open"></i>
+                        </div>
+                        <div class="stats-value" id="readCount">{{ stats.read }}</div>
+                        <div class="stats-label">Lues</div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-lg-4">
-            <div class="stats-card">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Non lues
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.unread }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-envelope fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
+
+        <!-- Barre de filtres et recherche -->
+        <div class="filter-bar">
+            <div class="filter-input">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchNotifications" class="form-control" placeholder="Rechercher dans les notifications...">
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'notifications_page' %}" class="btn btn-filter {% if current_filter == 'all' %}btn-primary active{% else %}btn-outline-primary{% endif %}">
+                    <i class="fas fa-list-ul me-1"></i> Toutes
+                </a>
+                <a href="{% url 'notifications_page' %}?filter=unread" class="btn btn-filter {% if current_filter == 'unread' %}btn-warning active{% else %}btn-outline-warning{% endif %}">
+                    <i class="fas fa-envelope me-1"></i> Non lues
+                </a>
+                <button type="button" class="btn btn-filter btn-outline-info" id="filterByCategory">
+                    <i class="fas fa-tags me-1"></i> Catégories <i class="fas fa-caret-down ms-1"></i>
+                </button>
+                <button type="button" class="btn btn-filter btn-outline-secondary" id="filterByDate">
+                    <i class="fas fa-calendar-alt me-1"></i> Date <i class="fas fa-caret-down ms-1"></i>
+                </button>
             </div>
         </div>
-        <div class="col-lg-4">
-            <div class="stats-card">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Lues
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.read }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-envelope-open fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        
+        <!-- Bannière d'information -->
+        <div class="info-banner mb-4">
+            <i class="fas fa-info-circle"></i>
+            <p>Les notifications vous informent des activités importantes et des mises à jour. Cliquez sur "Voir" pour accéder directement au contenu lié.</p>
         </div>
-    </div>
 
-    <!-- Filtres -->
-    <div class="mb-4">
-        <div class="btn-group" role="group" aria-label="Filtres de notifications">
-            <a href="{% url 'notifications_page' %}" class="btn {% if current_filter == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                <i class="fas fa-list-ul me-1"></i> Toutes ({{ stats.total }})
-            </a>
-            <a href="{% url 'notifications_page' %}?filter=unread" class="btn {% if current_filter == 'unread' %}btn-warning{% else %}btn-outline-warning{% endif %}">
-                <i class="fas fa-envelope me-1"></i> Non lues ({{ stats.unread }})
-            </a>
-        </div>
-    </div>
-
-    {% if notifications %}
-        <div class="notifications-list fade-in">
-            {% for notification in notifications %}
-                <div class="notification-card {% if notification.read %}notification-read{% else %}notification-unread{% endif %} shadow-sm" id="notification-{{ notification.id }}">
-                    <div class="notification-header">
-                        <div class="d-flex align-items-center">
-                            <div class="notification-icon 
-                                {% if notification.icon == 'fa-calendar-check' %}bg-success text-white
-                                {% elif notification.icon == 'fa-calendar-times' %}bg-danger text-white
-                                {% elif notification.icon == 'fa-route' %}bg-primary text-white
-                                {% elif notification.icon == 'fa-receipt' %}bg-info text-white
-                                {% else %}bg-secondary text-white{% endif %}">
-                                <i class="fas {{ notification.icon|default:'fa-bell' }}"></i>
+        {% if notifications %}
+            <div class="notifications-list">
+                <!-- Groupe par date (Aujourd'hui) -->
+                <div class="notification-group-date">Aujourd'hui</div>
+                
+                {% for notification in notifications %}
+                    {% if forloop.counter == 4 %}
+                        <!-- Groupe par date (Cette semaine) -->
+                        <div class="notification-group-date">Cette semaine</div>
+                    {% endif %}
+                    
+                    <div class="notification-card fade-in {% if notification.read %}notification-read{% else %}notification-unread{% endif %} shadow-sm" id="notification-{{ notification.id }}">
+                        <div class="notification-header">
+                            <div class="d-flex align-items-center">
+                                <div class="notification-icon 
+                                    {% if 'congé' in notification.title|lower or 'absence' in notification.title|lower %}
+                                        bg-success text-white
+                                    {% elif 'frais' in notification.title|lower or 'dépense' in notification.title|lower %}
+                                        bg-warning text-white
+                                    {% elif 'kilométrique' in notification.title|lower or 'trajet' in notification.title|lower %}
+                                        bg-info text-white
+                                    {% elif 'système' in notification.title|lower or 'compte' in notification.title|lower %}
+                                        bg-primary text-white
+                                    {% else %}
+                                        bg-secondary text-white
+                                    {% endif %}">
+                                    <i class="fas {{ notification.icon|default:'fa-bell' }}"></i>
+                                </div>
+                                <div>
+                                    <h5 class="notification-title">{{ notification.title }}</h5>
+                                    <div class="notification-time">
+                                        <i class="far fa-clock"></i> {{ notification.created_at|timesince }}
+                                        
+                                        <!-- Badge de catégorie -->
+                                        <span class="category-badge
+                                            {% if 'congé' in notification.title|lower or 'absence' in notification.title|lower %}
+                                                category-congé
+                                            {% elif 'frais' in notification.title|lower or 'dépense' in notification.title|lower %}
+                                                category-frais
+                                            {% elif 'kilométrique' in notification.title|lower or 'trajet' in notification.title|lower %}
+                                                category-kilométrique
+                                            {% elif 'système' in notification.title|lower or 'compte' in notification.title|lower %}
+                                                category-système
+                                            {% else %}
+                                                category-autre
+                                            {% endif %}">
+                                            <i class="fas
+                                            {% if 'congé' in notification.title|lower or 'absence' in notification.title|lower %}
+                                                fa-calendar-check
+                                            {% elif 'frais' in notification.title|lower or 'dépense' in notification.title|lower %}
+                                                fa-receipt
+                                            {% elif 'kilométrique' in notification.title|lower or 'trajet' in notification.title|lower %}
+                                                fa-route
+                                            {% elif 'système' in notification.title|lower or 'compte' in notification.title|lower %}
+                                                fa-cog
+                                            {% else %}
+                                                fa-tag
+                                            {% endif %} me-1"></i>
+                                            {% if 'congé' in notification.title|lower or 'absence' in notification.title|lower %}
+                                                Congé
+                                            {% elif 'frais' in notification.title|lower or 'dépense' in notification.title|lower %}
+                                                Frais
+                                            {% elif 'kilométrique' in notification.title|lower or 'trajet' in notification.title|lower %}
+                                                Kilomètres
+                                            {% elif 'système' in notification.title|lower or 'compte' in notification.title|lower %}
+                                                Système
+                                            {% else %}
+                                                Autre
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                             <div>
-                                <h5 class="notification-title">{{ notification.title }}</h5>
-                                <span class="notification-time">{{ notification.created_at|timesince }}</span>
+                                <span class="status-badge {% if notification.read %}status-read{% else %}status-unread{% endif %}">
+                                    <i class="fas {% if notification.read %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                                    {% if notification.read %}Lu{% else %}Non lu{% endif %}
+                                </span>
                             </div>
                         </div>
-                        <div>
-                            {% if notification.read %}
-                                <span class="badge bg-success">Lu</span>
-                            {% else %}
-                                <span class="badge bg-warning">Non lu</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="notification-body">
-                        <p class="notification-message">{{ notification.message }}</p>
-                        <div class="notification-actions">
-                            {% if notification.url %}
-                                <a href="{{ notification.url }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-external-link-alt me-1"></i> Voir
-                                </a>
-                            {% endif %}
-                            
-                            {% if not notification.read %}
-                                <button class="btn btn-sm btn-outline-success mark-read" data-id="{{ notification.id }}">
-                                    <i class="fas fa-check me-1"></i> Marquer comme lu
+                        <div class="notification-body">
+                            <p class="notification-message">{{ notification.message }}</p>
+                            <div class="notification-actions">
+                                {% if notification.url %}
+                                    <a href="{{ notification.url }}" class="btn btn-sm btn-primary btn-action">
+                                        <i class="fas fa-external-link-alt"></i> Voir
+                                    </a>
+                                {% endif %}
+                                
+                                {% if not notification.read %}
+                                    <button class="btn btn-sm btn-success btn-action mark-read" data-id="{{ notification.id }}">
+                                        <i class="fas fa-check"></i> Marquer comme lu
+                                    </button>
+                                {% endif %}
+                                
+                                <button class="btn btn-sm btn-danger btn-action delete-notification" data-id="{{ notification.id }}">
+                                    <i class="fas fa-trash"></i> Supprimer
                                 </button>
-                            {% endif %}
-                            
-                            <button class="btn btn-sm btn-outline-danger delete-notification" data-id="{{ notification.id }}">
-                                <i class="fas fa-trash me-1"></i> Supprimer
-                            </button>
+                            </div>
                         </div>
                     </div>
+                {% endfor %}
+                
+                <!-- Pagination -->
+                <div class="pagination-container">
+                    <nav aria-label="Navigation des notifications">
+                        <ul class="pagination">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Précédent">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#" aria-label="Suivant">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="empty-state fade-in">
-            <div class="empty-icon">
-                <i class="fas fa-bell-slash"></i>
             </div>
-            <h4>Aucune notification</h4>
-            <p class="text-muted">
+            
+            <!-- Boutons d'action flottants -->
+            <div class="floating-actions d-lg-none">
+                <button id="floatMarkAllRead" class="btn-float btn-float-primary">
+                    <i class="fas fa-check-double"></i>
+                    <span class="tooltip-float">Tout marquer comme lu</span>
+                </button>
+                <button id="floatDeleteRead" class="btn-float btn-float-danger">
+                    <i class="fas fa-trash"></i>
+                    <span class="tooltip-float">Supprimer les lues</span>
+                </button>
+            </div>
+        {% else %}
+            <!-- État vide -->
+            <div class="empty-state fade-in">
+                <div class="empty-icon">
+                    <i class="fas fa-bell-slash"></i>
+                </div>
+                <h4>Aucune notification</h4>
+                <p class="text-muted">
+                    {% if current_filter == 'unread' %}
+                        Vous n'avez pas de notifications non lues
+                    {% else %}
+                        Vous n'avez pas encore reçu de notifications
+                    {% endif %}
+                </p>
                 {% if current_filter == 'unread' %}
-                    Vous n'avez pas de notifications non lues
+                    <a href="{% url 'notifications_page' %}" class="btn btn-primary btn-action mt-3">
+                        <i class="fas fa-list-ul me-1"></i> Voir toutes les notifications
+                    </a>
                 {% else %}
-                    Vous n'avez pas encore reçu de notifications
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary btn-action mt-3">
+                        <i class="fas fa-home me-1"></i> Retour à l'accueil
+                    </a>
                 {% endif %}
-            </p>
-            {% if current_filter == 'unread' %}
-                <a href="{% url 'notifications_page' %}" class="btn btn-outline-primary">
-                    <i class="fas fa-list-ul me-1"></i> Voir toutes les notifications
-                </a>
-            {% else %}
-                <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">
-                    <i class="fas fa-home me-1"></i> Retour à l'accueil
-                </a>
-            {% endif %}
-        </div>
-    {% endif %}
+            </div>
+        {% endif %}
+    </div>
 </div>
 
 {% block extra_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Variables pour les compteurs
+    let totalCount = {{ stats.total }};
+    let unreadCount = {{ stats.unread }};
+    let readCount = {{ stats.read }};
+    
+    // Mettre en place le filtre de recherche
+    const searchInput = document.getElementById('searchNotifications');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            document.querySelectorAll('.notification-card').forEach(card => {
+                const title = card.querySelector('.notification-title').innerText.toLowerCase();
+                const message = card.querySelector('.notification-message').innerText.toLowerCase();
+                
+                if (title.includes(searchTerm) || message.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Fonction pour afficher un toast de succès
+    function showToast(message, type = 'success') {
+        const toastContainer = document.createElement('div');
+        toastContainer.style.position = 'fixed';
+        toastContainer.style.bottom = '20px';
+        toastContainer.style.left = '50%';
+        toastContainer.style.transform = 'translateX(-50%)';
+        toastContainer.style.zIndex = '9999';
+        
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show`;
+        toast.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+        toast.style.borderRadius = '10px';
+        toast.style.minWidth = '300px';
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        toastContainer.appendChild(toast);
+        document.body.appendChild(toastContainer);
+        
+        setTimeout(() => {
+            toast.classList.add('hide');
+            setTimeout(() => {
+                document.body.removeChild(toastContainer);
+            }, 500);
+        }, 3000);
+    }
+    
     // Marquer une notification comme lue
     document.querySelectorAll('.mark-read').forEach(button => {
         button.addEventListener('click', function() {
             const notificationId = this.getAttribute('data-id');
+            
             fetch(`/notifications/mark-read/${notificationId}/`, {
                 method: 'POST',
                 headers: {
@@ -288,36 +767,57 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                if (data.status === 'success') {
+                if (data.status === 'success' || data.success) {
                     const card = document.getElementById(`notification-${notificationId}`);
-                    card.classList.remove('notification-unread');
-                    card.classList.add('notification-read');
                     
-                    // Mettre à jour les badges
-                    const readBadge = document.createElement('span');
-                    readBadge.classList.add('badge', 'bg-success');
-                    readBadge.innerText = 'Lu';
+                    // Animer la transition
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.transform = 'scale(0.98)';
+                    card.style.opacity = '0.8';
                     
-                    const statusContainer = card.querySelector('.notification-header > div:last-child');
-                    statusContainer.innerHTML = '';
-                    statusContainer.appendChild(readBadge);
-                    
-                    // Supprimer le bouton "marquer comme lu"
-                    this.remove();
-                    
-                    // Mise à jour des compteurs
-                    updateCounters();
+                    setTimeout(() => {
+                        // Appliquer les changements
+                        card.classList.remove('notification-unread');
+                        card.classList.add('notification-read');
+                        
+                        // Mettre à jour le badge de statut
+                        const statusBadge = card.querySelector('.status-badge');
+                        statusBadge.classList.remove('status-unread');
+                        statusBadge.classList.add('status-read');
+                        statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Lu';
+                        
+                        // Supprimer le bouton "marquer comme lu"
+                        this.remove();
+                        
+                        // Restaurer l'animation
+                        card.style.transform = 'scale(1)';
+                        card.style.opacity = '1';
+                        
+                        // Mise à jour des compteurs
+                        unreadCount--;
+                        readCount++;
+                        updateCounters();
+                        
+                        // Afficher une notification
+                        showToast('<i class="fas fa-check-circle me-2"></i> Notification marquée comme lue', 'success');
+                    }, 200);
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('<i class="fas fa-exclamation-circle me-2"></i> Erreur lors de la mise à jour', 'danger');
+            });
         });
     });
     
     // Supprimer une notification
     document.querySelectorAll('.delete-notification').forEach(button => {
         button.addEventListener('click', function() {
+            const notificationId = this.getAttribute('data-id');
+            const card = document.getElementById(`notification-${notificationId}`);
+            const isUnread = card.classList.contains('notification-unread');
+            
             if (confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
-                const notificationId = this.getAttribute('data-id');
                 fetch(`/notifications/delete/${notificationId}/`, {
                     method: 'POST',
                     headers: {
@@ -328,25 +828,64 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        const card = document.getElementById(`notification-${notificationId}`);
-                        card.remove();
+                        // Animer la suppression
+                        card.style.transition = 'all 0.5s ease';
+                        card.style.transform = 'translateX(100px)';
+                        card.style.opacity = '0';
                         
-                        // Mise à jour des compteurs
-                        updateCounters();
-                        
-                        // Si plus de notifications, afficher l'état vide
-                        if (document.querySelectorAll('.notification-card').length === 0) {
-                            location.reload();
-                        }
+                        setTimeout(() => {
+                            card.style.maxHeight = '0';
+                            card.style.margin = '0';
+                            card.style.padding = '0';
+                            card.style.overflow = 'hidden';
+                            
+                            setTimeout(() => {
+                                card.remove();
+                                
+                                // Mise à jour des compteurs
+                                totalCount--;
+                                if (isUnread) unreadCount--;
+                                else readCount--;
+                                updateCounters();
+                                
+                                // Afficher une notification
+                                showToast('<i class="fas fa-trash me-2"></i> Notification supprimée', 'warning');
+                                
+                                // Si plus de notifications, afficher l'état vide
+                                if (document.querySelectorAll('.notification-card').length === 0) {
+                                    location.reload();
+                                }
+                            }, 300);
+                        }, 200);
                     }
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('<i class="fas fa-exclamation-circle me-2"></i> Erreur lors de la suppression', 'danger');
+                });
             }
         });
     });
     
+    // Fonctions pour les boutons flottants (mobile)
+    const floatMarkAllRead = document.getElementById('floatMarkAllRead');
+    const floatDeleteRead = document.getElementById('floatDeleteRead');
+    
+    if (floatMarkAllRead) {
+        floatMarkAllRead.addEventListener('click', markAllAsRead);
+    }
+    
+    if (floatDeleteRead) {
+        floatDeleteRead.addEventListener('click', deleteAllRead);
+    }
+    
     // Marquer toutes les notifications comme lues
-    document.getElementById('markAllAsReadBtn').addEventListener('click', function() {
+    const markAllAsReadBtn = document.getElementById('markAllAsReadBtn');
+    if (markAllAsReadBtn) {
+        markAllAsReadBtn.addEventListener('click', markAllAsRead);
+    }
+    
+    function markAllAsRead() {
         if (confirm('Marquer toutes les notifications comme lues ?')) {
             fetch('/notifications/mark-all-read/', {
                 method: 'POST',
@@ -358,16 +897,49 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // Actualiser la page pour refléter les changements
-                    location.reload();
+                    showToast('<i class="fas fa-check-double me-2"></i> Toutes les notifications ont été marquées comme lues', 'success');
+                    
+                    // Mise à jour visuelle sans rechargement
+                    document.querySelectorAll('.notification-unread').forEach(card => {
+                        card.classList.remove('notification-unread');
+                        card.classList.add('notification-read');
+                        
+                        const statusBadge = card.querySelector('.status-badge');
+                        if (statusBadge) {
+                            statusBadge.classList.remove('status-unread');
+                            statusBadge.classList.add('status-read');
+                            statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Lu';
+                        }
+                        
+                        const markReadBtn = card.querySelector('.mark-read');
+                        if (markReadBtn) markReadBtn.remove();
+                    });
+                    
+                    // Mise à jour des compteurs
+                    readCount = totalCount;
+                    unreadCount = 0;
+                    updateCounters();
+                    
+                    // Délai avant actualisation pour voir les effets
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('<i class="fas fa-exclamation-circle me-2"></i> Erreur lors de la mise à jour', 'danger');
+            });
         }
-    });
+    }
     
     // Supprimer toutes les notifications lues
-    document.getElementById('deleteAllReadBtn').addEventListener('click', function() {
+    const deleteAllReadBtn = document.getElementById('deleteAllReadBtn');
+    if (deleteAllReadBtn) {
+        deleteAllReadBtn.addEventListener('click', deleteAllRead);
+    }
+    
+    function deleteAllRead() {
         if (confirm('Supprimer toutes les notifications lues ?')) {
             fetch('/notifications/delete-all-read/', {
                 method: 'POST',
@@ -379,18 +951,103 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // Actualiser la page pour refléter les changements
-                    location.reload();
+                    showToast(`<i class="fas fa-trash me-2"></i> ${data.deleted_count || 'Toutes les'} notifications lues supprimées`, 'warning');
+                    
+                    // Animation de suppression
+                    document.querySelectorAll('.notification-read').forEach(card => {
+                        card.style.transition = 'all 0.5s ease';
+                        card.style.transform = 'translateX(100px)';
+                        card.style.opacity = '0';
+                        
+                        setTimeout(() => {
+                            card.style.maxHeight = '0';
+                            card.style.margin = '0';
+                            card.style.padding = '0';
+                            card.style.overflow = 'hidden';
+                        }, 200);
+                    });
+                    
+                    // Mise à jour des compteurs
+                    totalCount = unreadCount;
+                    readCount = 0;
+                    updateCounters();
+                    
+                    // Délai avant actualisation pour voir les effets
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('<i class="fas fa-exclamation-circle me-2"></i> Erreur lors de la suppression', 'danger');
+            });
         }
-    });
+    }
     
-    // Fonction pour mettre à jour les compteurs (non implémentée, nécessiterait un rechargement AJAX)
+    // Fonction pour mettre à jour les compteurs
     function updateCounters() {
-        // Cette fonction pourrait faire un appel AJAX pour mettre à jour les compteurs
-        // Pour l'instant on ne fait rien de spécial
+        const unreadCountElement = document.getElementById('unreadCount');
+        const readCountElement = document.getElementById('readCount');
+        
+        if (unreadCountElement) unreadCountElement.textContent = unreadCount;
+        if (readCountElement) readCountElement.textContent = readCount;
+    }
+    
+    // Animation pour les cartes de notification
+    setTimeout(() => {
+        document.querySelectorAll('.notification-card').forEach(card => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        });
+    }, 100);
+    
+    // Filtres supplémentaires (démonstration UI seulement)
+    const filterByCategory = document.getElementById('filterByCategory');
+    const filterByDate = document.getElementById('filterByDate');
+    
+    if (filterByCategory) {
+        filterByCategory.addEventListener('click', function() {
+            const categoryOptions = ['Tous', 'Congés', 'Frais', 'Kilomètres', 'Système', 'Autre'];
+            
+            // Simple alert pour démonstration - dans une version réelle, ceci serait un dropdown
+            const category = prompt(`Choisissez une catégorie: ${categoryOptions.join(', ')}`);
+            if (category && category.toLowerCase() !== 'tous') {
+                document.querySelectorAll('.notification-card').forEach(card => {
+                    const categoryBadge = card.querySelector('.category-badge');
+                    if (categoryBadge && categoryBadge.textContent.trim().toLowerCase().includes(category.toLowerCase())) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                showToast(`<i class="fas fa-filter me-2"></i> Filtré par catégorie: ${category}`, 'info');
+            } else {
+                document.querySelectorAll('.notification-card').forEach(card => {
+                    card.style.display = '';
+                });
+            }
+        });
+    }
+    
+    if (filterByDate) {
+        filterByDate.addEventListener('click', function() {
+            const dateOptions = ['Tous', 'Aujourd\'hui', 'Cette semaine', 'Ce mois'];
+            
+            // Simple alert pour démonstration - dans une version réelle, ceci serait un dropdown
+            const dateFilter = prompt(`Filtrer par date: ${dateOptions.join(', ')}`);
+            if (dateFilter && dateFilter.toLowerCase() !== 'tous') {
+                // Simuler le filtrage par date (pour démo UI)
+                if (dateFilter.toLowerCase() === 'aujourd\'hui') {
+                    showToast('<i class="fas fa-calendar-day me-2"></i> Filtré : notifications d\'aujourd\'hui', 'info');
+                } else if (dateFilter.toLowerCase() === 'cette semaine') {
+                    showToast('<i class="fas fa-calendar-week me-2"></i> Filtré : notifications de cette semaine', 'info');
+                } else {
+                    showToast('<i class="fas fa-calendar-alt me-2"></i> Filtré : notifications de ce mois', 'info');
+                }
+            }
+        });
     }
     
     // Fonction pour récupérer le token CSRF
@@ -408,6 +1065,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return cookieValue;
     }
+    
+    // Animation pour les badges de statistiques
+    document.querySelectorAll('.stats-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            const icon = this.querySelector('.stats-icon');
+            if (icon) {
+                icon.style.transform = 'scale(1.1) rotate(5deg)';
+            }
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            const icon = this.querySelector('.stats-icon');
+            if (icon) {
+                icon.style.transform = '';
+            }
+        });
+    });
 });
 </script>
 {% endblock %}

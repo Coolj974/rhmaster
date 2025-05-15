@@ -481,66 +481,130 @@
     <!-- Résumé visuel des statistiques -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="stats-visual">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5 class="mb-3"><i class="fas fa-chart-line me-2 text-primary"></i>Synthèse des congés</h5>
-                        <div class="mb-4">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span>Solde disponible</span>
-                                <span class="fw-bold">{{ leave_balance.available|default:"0" }} / {{ leave_balance.acquired|default:"0" }} jours</span>
+            <div class="stats-visual rounded-4 shadow-sm border-0 position-relative">
+                <div class="row p-3">
+                    <!-- Synthèse des congés -->
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-bubble bg-primary-subtle text-primary me-3">
+                                <i class="fas fa-calendar-alt"></i>
                             </div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar-fill bg-primary" style="width: {{ leave_balance.available_percentage|default:"0" }}%"></div>
-                            </div>
-                            <small class="text-muted">Jours utilisés: {{ leave_balance.taken|default:"0" }}</small>
+                            <h5 class="mb-0 fw-bold">Synthèse des congés</h5>
                         </div>
                         
-                        <div class="row">
-                            <div class="col-4 text-center">
-                                <div class="h3 mb-0 text-success">{{ stats.approved_count|default:"0" }}</div>
-                                <div class="small text-muted">Approuvés</div>
+                        <div class="stat-card mb-4">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-medium">Solde disponible</span>
+                                    <span class="badge-modern {% if leave_balance.available < 5 %}warning{% elif leave_balance.available < 2 %}danger{% else %}success{% endif %}">
+                                        {{ leave_balance.available|default:"0" }} / {{ leave_balance.acquired|default:"0" }} jours
+                                    </span>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-bar 
+                                        {% if leave_balance.available_percentage < 20 %}bg-danger
+                                        {% elif leave_balance.available_percentage < 50 %}bg-warning
+                                        {% else %}bg-primary{% endif %}" 
+                                        style="width: {{ leave_balance.available_percentage|default:"0" }}%">
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <span class="small">Utilisés: {{ leave_balance.taken|default:"0" }}</span>
+                                    <span class="small fw-semibold {% if leave_balance.available_percentage < 30 %}text-danger{% elif leave_balance.available_percentage < 60 %}text-warning{% else %}text-success{% endif %}">
+                                        {{ leave_balance.available_percentage|default:"0" }}% restant
+                                    </span>
+                                </div>
                             </div>
-                            <div class="col-4 text-center">
-                                <div class="h3 mb-0 text-warning">{{ stats.pending_count|default:"0" }}</div>
-                                <div class="small text-muted">En attente</div>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-4">
+                                <div class="stat-counter success">
+                                    <div class="counter-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="counter-value">{{ stats.approved_count|default:"0" }}</div>
+                                    <div class="counter-label">Approuvés</div>
+                                </div>
                             </div>
-                            <div class="col-4 text-center">
-                                <div class="h3 mb-0 text-danger">{{ stats.rejected_count|default:"0" }}</div>
-                                <div class="small text-muted">Refusés</div>
+                            <div class="col-4">
+                                <div class="stat-counter warning">
+                                    <div class="counter-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="counter-value">{{ stats.pending_count|default:"0" }}</div>
+                                    <div class="counter-label">En attente</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-counter danger">
+                                    <div class="counter-icon">
+                                        <i class="fas fa-times"></i>
+                                    </div>
+                                    <div class="counter-value">{{ stats.rejected_count|default:"0" }}</div>
+                                    <div class="counter-label">Refusés</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
+                    <!-- Notes de frais -->
                     <div class="col-md-6">
-                        <h5 class="mb-3"><i class="fas fa-money-bill-wave me-2 text-warning"></i>Notes de frais</h5>
-                        <div class="row mb-4">
-                            <div class="col-6 border-end">
-                                <div class="text-center">
-                                    <div class="h3 mb-0">{{ expenses_stats.total|default:"0" }}</div>
-                                    <div class="small text-muted">Total soumis</div>
-                                </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-bubble bg-success-subtle text-success me-3">
+                                <i class="fas fa-money-bill-wave"></i>
                             </div>
-                            <div class="col-6">
-                                <div class="text-center">
-                                    <div class="h3 mb-0 text-success">{{ expenses_stats.reimbursed|default:"0" }} €</div>
-                                    <div class="small text-muted">Remboursés</div>
+                            <h5 class="mb-0 fw-bold">Notes de frais</h5>
+                        </div>
+                        
+                        <div class="stat-card mb-4">
+                            <div class="card-body p-3">
+                                <div class="row">
+                                    <div class="col-6 border-end">
+                                        <div class="text-center p-2">
+                                            <div class="small mb-1">Total soumis</div>
+                                            <div class="h3 mb-0 fw-bold">{{ expenses_stats.total|default:"0" }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-center p-2">
+                                            <div class="small mb-1">Remboursés</div>
+                                            <div class="h3 mb-0 fw-bold text-success">
+                                                <i class="fas fa-euro-sign fa-sm"></i> {{ expenses_stats.reimbursed|default:"0" }}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="row">
-                            <div class="col-4 text-center">
-                                <div class="h3 mb-0 text-success">{{ expenses_stats.approved|default:"0" }}</div>
-                                <div class="small text-muted">Approuvés</div>
+                        <div class="row mt-4">
+                            <div class="col-4">
+                                <div class="stat-counter success">
+                                    <div class="counter-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="counter-value">{{ expenses_stats.approved|default:"0" }}</div>
+                                    <div class="counter-label">Approuvés</div>
+                                </div>
                             </div>
-                            <div class="col-4 text-center">
-                                <div class="h3 mb-0 text-warning">{{ expenses_stats.pending|default:"0" }}</div>
-                                <div class="small text-muted">En attente</div>
+                            <div class="col-4">
+                                <div class="stat-counter warning">
+                                    <div class="counter-icon">
+                                        <i class="fas fa-hourglass-half"></i>
+                                    </div>
+                                    <div class="counter-value">{{ expenses_stats.pending|default:"0" }}</div>
+                                    <div class="counter-label">En attente</div>
+                                </div>
                             </div>
-                            <div class="col-4 text-center">
-                                <div class="h3 mb-0 text-danger">{{ expenses_stats.rejected|default:"0" }}</div>
-                                <div class="small text-muted">Refusés</div>
+                            <div class="col-4">
+                                <div class="stat-counter danger">
+                                    <div class="counter-icon">
+                                        <i class="fas fa-ban"></i>
+                                    </div>
+                                    <div class="counter-value">{{ expenses_stats.rejected|default:"0" }}</div>
+                                    <div class="counter-label">Refusés</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -548,6 +612,160 @@
             </div>
         </div>
     </div>
+
+    <!-- Additional CSS for modern components -->
+    <style>
+        /* Modern styling for stat cards */
+        .stat-card {
+            border-radius: 12px;
+            border: none;
+            background-color: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Icon bubble */
+        .icon-bubble {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        /* Modern progress bar */
+        .progress-container {
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s ease-in-out;
+        }
+        
+        /* Modern badges */
+        .badge-modern {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .badge-modern.success {
+            background-color: #e6f7f0;
+            color: #0cb876;
+        }
+        
+        .badge-modern.warning {
+            background-color: #fff8e6;
+            color: #f5a623;
+        }
+        
+        .badge-modern.danger {
+            background-color: #feeceb;
+            color: #f64e60;
+        }
+        
+        /* Modern counters */
+        .stat-counter {
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background-color: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+            height: 100%;
+        }
+        
+        .stat-counter:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .counter-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 1.2rem;
+        }
+        
+        .stat-counter.success .counter-icon {
+            background-color: #e6f7f0;
+            color: #0cb876;
+        }
+        
+        .stat-counter.warning .counter-icon {
+            background-color: #fff8e6;
+            color: #f5a623;
+        }
+        
+        .stat-counter.danger .counter-icon {
+            background-color: #feeceb;
+            color: #f64e60;
+        }
+        
+        .counter-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .counter-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        /* Stats visual container */
+        .stats-visual {
+            background-color: #fff;
+            transition: all 0.3s ease;
+            padding: 1.5rem;
+        }
+    </style>
+
+    <!-- JavaScript for counter animation -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate counters
+            const counterElements = document.querySelectorAll('.counter-value');
+            counterElements.forEach(counter => {
+                const target = parseInt(counter.textContent, 10);
+                let count = 0;
+                const increment = target / 20;
+                
+                const updateCount = () => {
+                    if (count < target) {
+                        count += increment;
+                        counter.textContent = Math.ceil(count);
+                        setTimeout(updateCount, 50);
+                    } else {
+                        counter.textContent = target;
+                    }
+                };
+                
+                updateCount();
+            });
+        });
+    </script>
 
     <!-- Section pour les demandes de congés en attente (pour les RH et admins) -->
     {% if is_hr or is_admin %}
@@ -812,40 +1030,229 @@
                 </div>
             </div>
             
-            <!-- Actions rapides -->
-            <div class="card mb-4">
-                <div class="card-header py-3">
+            <!-- Actions rapides (draggable) -->
+            <div class="card mb-4 quick-actions-floating" id="quickActionsCard" style="position: fixed; bottom: 20px; right: 20px; z-index: 100; max-width: 320px;">
+                <div class="card-header py-2 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">Actions rapides</h6>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="minimizeQuickActions" title="Réduire">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <a href="{% url 'leave_request' %}" class="btn btn-outline-primary w-100 py-3">
-                                <i class="fas fa-plane-departure mb-2 d-block" style="font-size: 1.5rem;"></i>
+                <div class="card-body p-2" id="quickActionsBody">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <a href="{% url 'leave_request' %}" class="btn btn-outline-primary w-100 py-2">
+                                <i class="fas fa-plane-departure me-1"></i>
                                 Congé
                             </a>
                         </div>
-                        <div class="col-6 mb-3">
-                            <a href="{% url 'submit_expense' %}" class="btn btn-outline-warning w-100 py-3">
-                                <i class="fas fa-receipt mb-2 d-block" style="font-size: 1.5rem;"></i>
+                        <div class="col-6">
+                            <a href="{% url 'submit_expense' %}" class="btn btn-outline-warning w-100 py-2">
+                                <i class="fas fa-receipt me-1"></i>
                                 Frais
                             </a>
                         </div>
-                        <div class="col-6 mb-3">
-                            <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-outline-info w-100 py-3">
-                                <i class="fas fa-route mb-2 d-block" style="font-size: 1.5rem;"></i>
+                        <div class="col-6 mt-2">
+                            <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-outline-info w-100 py-2">
+                                <i class="fas fa-route me-1"></i>
                                 Trajet
                             </a>
                         </div>
-                        <div class="col-6 mb-3">
-                            <a href="{% url 'profile' %}" class="btn btn-outline-secondary w-100 py-3">
-                                <i class="fas fa-user-cog mb-2 d-block" style="font-size: 1.5rem;"></i>
+                        <div class="col-6 mt-2">
+                            <a href="{% url 'profile' %}" class="btn btn-outline-secondary w-100 py-2">
+                                <i class="fas fa-user-cog me-1"></i>
                                 Profil
                             </a>
                         </div>
                     </div>
                 </div>
+                <div class="card-footer p-1 text-center" id="quickActionsMinimized" style="display: none;">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="expandQuickActions">
+                        <i class="fas fa-expand-alt me-1"></i> Actions
+                    </button>
+                </div>
             </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const quickActionsCard = document.getElementById('quickActionsCard');
+                    const minimizeBtn = document.getElementById('minimizeQuickActions');
+                    const expandBtn = document.getElementById('expandQuickActions');
+                    const quickActionsBody = document.getElementById('quickActionsBody');
+                    const quickActionsMinimized = document.getElementById('quickActionsMinimized');
+                    const cardHeader = quickActionsCard.querySelector('.card-header');
+                    
+                    // Variables for dragging
+                    let isDragging = false;
+                    let startX, startY, initialLeft, initialTop;
+                    
+                    // Functions for responsiveness
+                    function checkScreenSize() {
+                        // On small screens, lock to bottom
+                        if (window.innerWidth < 768) {
+                            quickActionsCard.style.position = 'fixed';
+                            quickActionsCard.style.left = 'auto';
+                            quickActionsCard.style.right = '10px';
+                            quickActionsCard.style.top = 'auto';
+                            quickActionsCard.style.bottom = '10px';
+                            quickActionsCard.style.maxWidth = '160px';
+                            cardHeader.style.cursor = 'default'; // Remove drag cursor on mobile
+                            
+                            // Auto-minimize on small screens
+                            if (window.innerWidth < 480) {
+                                quickActionsBody.style.display = 'none';
+                                quickActionsMinimized.style.display = 'block';
+                            }
+                        } else {
+                            quickActionsCard.style.maxWidth = '320px';
+                            cardHeader.style.cursor = 'move';
+                            
+                            // Restore saved position on larger screens
+                            restorePosition();
+                        }
+                    }
+                    
+                    // Initialize position based on screen size
+                    checkScreenSize();
+                    
+                    // Check screen size on resize
+                    window.addEventListener('resize', checkScreenSize);
+                    
+                    // Handle mouse events for dragging (desktop)
+                    cardHeader.addEventListener('mousedown', function(e) {
+                        if (window.innerWidth >= 768 && !e.target.closest('button')) {
+                            isDragging = true;
+                            startX = e.clientX;
+                            startY = e.clientY;
+                            initialLeft = quickActionsCard.offsetLeft;
+                            initialTop = quickActionsCard.offsetTop;
+                            quickActionsCard.style.position = 'absolute';
+                        }
+                    });
+                    
+                    document.addEventListener('mousemove', function(e) {
+                        if (isDragging) {
+                            const newLeft = initialLeft + (e.clientX - startX);
+                            const newTop = initialTop + (e.clientY - startY);
+                            
+                            // Keep within viewport bounds
+                            const maxX = window.innerWidth - quickActionsCard.offsetWidth;
+                            const maxY = window.innerHeight - quickActionsCard.offsetHeight;
+                            
+                            quickActionsCard.style.left = Math.min(Math.max(0, newLeft), maxX) + 'px';
+                            quickActionsCard.style.top = Math.min(Math.max(0, newTop), maxY) + 'px';
+                            quickActionsCard.style.right = 'auto';
+                            quickActionsCard.style.bottom = 'auto';
+                        }
+                    });
+                    
+                    document.addEventListener('mouseup', function() {
+                        if (isDragging) {
+                            isDragging = false;
+                            savePosition();
+                        }
+                    });
+                    
+                    // Handle touch events for dragging (mobile)
+                    cardHeader.addEventListener('touchstart', function(e) {
+                        if (window.innerWidth >= 768 && !e.target.closest('button')) {
+                            const touch = e.touches[0];
+                            isDragging = true;
+                            startX = touch.clientX;
+                            startY = touch.clientY;
+                            initialLeft = quickActionsCard.offsetLeft;
+                            initialTop = quickActionsCard.offsetTop;
+                            quickActionsCard.style.position = 'absolute';
+                            
+                            // Prevent scrolling when dragging
+                            e.preventDefault();
+                        }
+                    }, { passive: false });
+                    
+                    document.addEventListener('touchmove', function(e) {
+                        if (isDragging) {
+                            const touch = e.touches[0];
+                            const newLeft = initialLeft + (touch.clientX - startX);
+                            const newTop = initialTop + (touch.clientY - startY);
+                            
+                            // Keep within viewport bounds
+                            const maxX = window.innerWidth - quickActionsCard.offsetWidth;
+                            const maxY = window.innerHeight - quickActionsCard.offsetHeight;
+                            
+                            quickActionsCard.style.left = Math.min(Math.max(0, newLeft), maxX) + 'px';
+                            quickActionsCard.style.top = Math.min(Math.max(0, newTop), maxY) + 'px';
+                            quickActionsCard.style.right = 'auto';
+                            quickActionsCard.style.bottom = 'auto';
+                            
+                            // Prevent scrolling when dragging
+                            e.preventDefault();
+                        }
+                    }, { passive: false });
+                    
+                    document.addEventListener('touchend', function() {
+                        if (isDragging) {
+                            isDragging = false;
+                            savePosition();
+                        }
+                    });
+                    
+                    // Minimize/Expand functionality
+                    minimizeBtn.addEventListener('click', function() {
+                        quickActionsBody.style.display = 'none';
+                        quickActionsMinimized.style.display = 'block';
+                        saveMinimizedState(true);
+                    });
+                    
+                    expandBtn.addEventListener('click', function() {
+                        quickActionsBody.style.display = 'block';
+                        quickActionsMinimized.style.display = 'none';
+                        saveMinimizedState(false);
+                    });
+                    
+                    // Save position in localStorage
+                    function savePosition() {
+                        if (window.innerWidth >= 768) {
+                            const position = {
+                                left: quickActionsCard.style.left,
+                                top: quickActionsCard.style.top
+                            };
+                            localStorage.setItem('quickActionsPosition', JSON.stringify(position));
+                        }
+                    }
+                    
+                    // Restore position from localStorage
+                    function restorePosition() {
+                        const savedPosition = localStorage.getItem('quickActionsPosition');
+                        if (savedPosition && window.innerWidth >= 768) {
+                            const position = JSON.parse(savedPosition);
+                            quickActionsCard.style.position = 'absolute';
+                            quickActionsCard.style.left = position.left || '20px';
+                            quickActionsCard.style.top = position.top || '20px';
+                            quickActionsCard.style.right = 'auto';
+                            quickActionsCard.style.bottom = 'auto';
+                        }
+                    }
+                    
+                    // Save minimized state
+                    function saveMinimizedState(isMinimized) {
+                        localStorage.setItem('quickActionsMinimized', isMinimized);
+                    }
+                    
+                    // Restore minimized state
+                    function restoreMinimizedState() {
+                        const isMinimized = localStorage.getItem('quickActionsMinimized') === 'true';
+                        if (isMinimized && window.innerWidth >= 480) {
+                            quickActionsBody.style.display = 'none';
+                            quickActionsMinimized.style.display = 'block';
+                        }
+                    }
+                    
+                    // Restore minimized state on page load
+                    restoreMinimizedState();
+                });
+            </script>
             
             <!-- Notifications récentes -->
             {% if notifications %}

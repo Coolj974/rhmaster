@@ -12,34 +12,50 @@ def get_notifications(request):
     Vue API pour récupérer les notifications de l'utilisateur connecté
     Utilisée par AJAX pour mettre à jour le dropdown de notifications
     """
-    unread_notifications = Notification.objects.filter(
-        user=request.user,
-        read=False
-    ).order_by('-created_at')[:5]  # Récupérer les 5 dernières notifications non lues
-    
-    all_notifications = Notification.objects.filter(
-        user=request.user
-    ).order_by('-created_at')[:15]  # Récupérer les 15 dernières notifications
-    
-    unread_count = unread_notifications.count()
-    
-    notifications_data = []
-    for notification in all_notifications:
-        notifications_data.append({
-            'id': notification.id,
-            'title': notification.title,
-            'message': notification.message,
-            'icon': notification.icon or 'fa-bell',
-            'link_url': notification.url,
-            'created_at': notification.created_at.strftime('%d/%m/%Y %H:%M'),
-            'is_read': notification.read,
-            'time_since': _get_time_since(notification.created_at)
+    try:
+        # Récupérer les notifications non lues (limitées à 5)
+        unread_notifications = Notification.objects.filter(
+            user=request.user,
+            read=False
+        ).order_by('-created_at')[:5]
+        
+        # Récupérer toutes les notifications (limitées à 15)
+        all_notifications = Notification.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:15]
+        
+        # Compter le total de notifications non lues
+        unread_count = Notification.objects.filter(
+            user=request.user,
+            read=False
+        ).count()
+        
+        # Formater les données pour le client
+        notifications_data = []
+        for notification in all_notifications:
+            notifications_data.append({
+                'id': notification.id,
+                'title': notification.title,
+                'message': notification.message,
+                'icon': notification.icon or 'fa-bell',
+                'color': notification.color or 'primary',
+                'url': notification.url,
+                'created_at': notification.created_at.strftime('%d/%m/%Y %H:%M'),
+                'read': notification.read,
+                'time_since': _get_time_since(notification.created_at)
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'unread_count': unread_count,
+            'notifications': notifications_data
         })
-    
-    return JsonResponse({
-        'unread_count': unread_count,
-        'notifications': notifications_data
-    })
+    except Exception as e:
+        # Gérer les erreurs et renvoyer une réponse appropriée
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 @login_required
 def get_notifications_dropdown(request):
@@ -47,11 +63,10 @@ def get_notifications_dropdown(request):
     Vue API pour récupérer les notifications pour le dropdown de navigation
     Version simplifiée de get_notifications avec un format spécifique pour l'interface dropdown
     """
-    # Récupérer les notifications non lues (limitées à 5)
-    unread_notifications = Notification.objects.filter(
-        user=request.user,
-        read=False
-    ).order_by('-created_at')[:5]
+    # Récupérer les notifications (limitées à 10)
+    notifications = Notification.objects.filter(
+        user=request.user
+    ).order_by('-created_at')[:10]
     
     # Compter le total de notifications non lues
     unread_count = Notification.objects.filter(
@@ -59,23 +74,25 @@ def get_notifications_dropdown(request):
         read=False
     ).count()
     
-    # Formater les données pour le dropdown
-    dropdown_data = []
-    for notification in unread_notifications:
-        dropdown_data.append({
-            'id': notification.id,
-            'title': notification.title,
-            'message': notification.message[:50] + ('...' if len(notification.message) > 50 else ''),
-            'icon': notification.icon or 'fa-bell',
-            'link_url': notification.url,
-            'created_at': _get_time_since(notification.created_at),
-            'is_read': notification.read,
-        })
+    # Vérifier s'il y a plus de notifications que celles affichées
+    more_notifications = Notification.objects.filter(
+        user=request.user
+    ).count() > 10
+    
+    # Préparer le contexte pour le template
+    context = {
+        'notifications': notifications,
+        'unread_count': unread_count,
+        'more_notifications': more_notifications
+    }
+    
+    # Rendre le HTML du dropdown
+    from django.template.loader import render_to_string
+    html = render_to_string('rh_management/notification_dropdown.html', context)
     
     return JsonResponse({
-        'unread_count': unread_count,
-        'notifications': dropdown_data,
-        'has_more': unread_count > 5
+        'count': unread_count,
+        'html': html
     })
 
 @login_required
@@ -96,10 +113,25 @@ def mark_notification_as_read(request, notification_id):
 @login_required
 def mark_notification_read(request, notification_id):
     """
-    Marque une notification spécifique comme lue (alias de mark_notification_as_read)
-    Conservé pour compatibilité avec le code existant
+    Marque une notification spécifique comme lue pour les requêtes AJAX
+    avec une réponse JSON appropriée
     """
-    return mark_notification_as_read(request, notification_id)
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    
+    if not notification.read:
+        notification.read = True
+        notification.save()
+    
+    # Si la requête est AJAX, retourner une réponse JSON
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'message': 'Notification marquée comme lue'
+        })
+    
+    # Sinon, rediriger vers l'URL associée à la notification ou vers le tableau de bord
+    redirect_url = notification.url if notification.url else 'dashboard'
+    return redirect(redirect_url)
 
 @login_required
 def mark_all_as_read(request):
@@ -125,9 +157,27 @@ def mark_all_as_read(request):
 @login_required
 def mark_all_read(request):
     """
-    Fonction alias pour mark_all_as_read pour compatibilité avec le code existant
+    Fonction pour marquer toutes les notifications non lues comme lues
+    avec prise en charge spécifique des requêtes AJAX
     """
-    return mark_all_as_read(request)
+    unread_notifications = Notification.objects.filter(
+        user=request.user,
+        read=False
+    )
+    
+    for notification in unread_notifications:
+        notification.read = True
+        notification.save()
+    
+    # Si la requête est AJAX, renvoyer une réponse JSON
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True, 
+            'message': 'Toutes les notifications ont été marquées comme lues'
+        })
+    
+    # Sinon, rediriger vers la page précédente
+    return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
 
 @login_required
 def notifications_page(request):
@@ -229,36 +279,46 @@ def _get_time_since(timestamp):
     """
     Fonction d'assistance pour calculer le temps écoulé depuis une date
     en format lisible (ex: "il y a 5 minutes", "il y a 2 heures")
+    avec gestion des erreurs améliorée
     """
-    now = timezone.now()
-    diff = now - timestamp
-    
-    seconds = diff.total_seconds()
-    if seconds < 60:
-        return "À l'instant"
-    
-    minutes = seconds // 60
-    if minutes < 60:
-        return f"il y a {int(minutes)} min"
-    
-    hours = minutes // 60
-    if hours < 24:
-        return f"il y a {int(hours)} h"
-    
-    days = hours // 24
-    if days < 7:
-        return f"il y a {int(days)} jours"
-    
-    weeks = days // 7
-    if weeks < 4:
-        return f"il y a {int(weeks)} semaines"
-    
-    months = days // 30
-    if months < 12:
-        return f"il y a {int(months)} mois"
-    
-    years = days // 365
-    return f"il y a {int(years)} ans"
+    try:
+        now = timezone.now()
+        
+        # Vérifier si timestamp est un objet datetime valide
+        if not timestamp:
+            return "Date inconnue"
+        
+        diff = now - timestamp
+        
+        seconds = diff.total_seconds()
+        if seconds < 60:
+            return "À l'instant"
+        
+        minutes = seconds // 60
+        if minutes < 60:
+            return f"il y a {int(minutes)} min"
+        
+        hours = minutes // 60
+        if hours < 24:
+            return f"il y a {int(hours)} h"
+        
+        days = hours // 24
+        if days < 7:
+            return f"il y a {int(days)} jours"
+        
+        weeks = days // 7
+        if weeks < 4:
+            return f"il y a {int(weeks)} semaines"
+        
+        months = days // 30
+        if months < 12:
+            return f"il y a {int(months)} mois"
+        
+        years = days // 365
+        return f"il y a {int(years)} ans"
+    except Exception:
+        # En cas d'erreur, retourner une valeur par défaut
+        return "Date inconnue"
 
 def get_notifications_count(user):
     """

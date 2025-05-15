@@ -1,0 +1,388 @@
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Variables pour les compteurs
+    let totalCount = {{ stats.total }};
+    let unreadCount = {{ stats.unread }};
+    let readCount = {{ stats.read }};
+    
+    // Mettre en place le filtre de recherche
+    const searchInput = document.getElementById('searchNotifications');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            document.querySelectorAll('.notification-card').forEach(card => {
+                const title = card.querySelector('.notification-title').innerText.toLowerCase();
+                const message = card.querySelector('.notification-message').innerText.toLowerCase();
+                
+                if (title.includes(searchTerm) || message.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Fonction pour afficher un toast de succès
+    function showToast(message, type = 'success') {
+        const toastContainer = document.createElement('div');
+        toastContainer.style.position = 'fixed';
+        toastContainer.style.bottom = '20px';
+        toastContainer.style.left = '50%';
+        toastContainer.style.transform = 'translateX(-50%)';
+        toastContainer.style.zIndex = '9999';
+        
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show`;
+        toast.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+        toast.style.borderRadius = '10px';
+        toast.style.minWidth = '300px';
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        toastContainer.appendChild(toast);
+        document.body.appendChild(toastContainer);
+        
+        setTimeout(() => {
+            toast.classList.add('hide');
+            setTimeout(() => {
+                document.body.removeChild(toastContainer);
+            }, 500);
+        }, 3000);
+    }
+    
+    // Marquer une notification comme lue
+    document.querySelectorAll('.mark-read').forEach(button => {
+        button.addEventListener('click', function() {
+            const notificationId = this.getAttribute('data-id');
+            
+            fetch(`/notifications/mark-read/${notificationId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success' || data.success) {
+                    const card = document.getElementById(`notification-${notificationId}`);
+                    
+                    // Animer la transition
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.transform = 'scale(0.98)';
+                    card.style.opacity = '0.8';
+                    
+                    setTimeout(() => {
+                        // Appliquer les changements
+                        card.classList.remove('notification-unread');
+                        card.classList.add('notification-read');
+                        
+                        // Mettre à jour le badge de statut
+                        const statusBadge = card.querySelector('.status-badge');
+                        statusBadge.classList.remove('status-unread');
+                        statusBadge.classList.add('status-read');
+                        statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Lu';
+                        
+                        // Supprimer le bouton "marquer comme lu"
+                        this.remove();
+                        
+                        // Restaurer l'animation
+                        card.style.transform = 'scale(1)';
+                        card.style.opacity = '1';
+                        
+                        // Mise à jour des compteurs
+                        unreadCount--;
+                        readCount++;
+                        updateCounters();
+                        
+                        // Afficher une notification
+                        showToast('<i class="fas fa-check-circle me-2"></i> Notification marquée comme lue', 'success');
+                    }, 200);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('<i class="fas fa-exclamation-circle me-2"></i> Erreur lors de la mise à jour', 'danger');
+            });
+        });
+    });
+    
+    // Supprimer une notification
+    document.querySelectorAll('.delete-notification').forEach(button => {
+        button.addEventListener('click', function() {
+            const notificationId = this.getAttribute('data-id');
+            const card = document.getElementById(`notification-${notificationId}`);
+            const isUnread = card.classList.contains('notification-unread');
+            
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
+                fetch(`/notifications/delete/${notificationId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Animer la suppression
+                        card.style.transition = 'all 0.5s ease';
+                        card.style.transform = 'translateX(100px)';
+                        card.style.opacity = '0';
+                        
+                        setTimeout(() => {
+                            card.style.maxHeight = '0';
+                            card.style.margin = '0';
+                            card.style.padding = '0';
+                            card.style.overflow = 'hidden';
+                            
+                            setTimeout(() => {
+                                card.remove();
+                                
+                                // Mise à jour des compteurs
+                                totalCount--;
+                                if (isUnread) unreadCount--;
+                                else readCount--;
+                                updateCounters();
+                                
+                                // Afficher une notification
+                                showToast('<i class="fas fa-trash me-2"></i> Notification supprimée', 'warning');
+                                
+                                // Si plus de notifications, afficher l'état vide
+                                if (document.querySelectorAll('.notification-card').length === 0) {
+                                    location.reload();
+                                }
+                            }, 300);
+                        }, 200);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('<i class="fas fa-exclamation-circle me-2"></i> Erreur lors de la suppression', 'danger');
+                });
+            }
+        });
+    });
+    
+    // Fonctions pour les boutons flottants (mobile)
+    const floatMarkAllRead = document.getElementById('floatMarkAllRead');
+    const floatDeleteRead = document.getElementById('floatDeleteRead');
+    
+    if (floatMarkAllRead) {
+        floatMarkAllRead.addEventListener('click', markAllAsRead);
+    }
+    
+    if (floatDeleteRead) {
+        floatDeleteRead.addEventListener('click', deleteAllRead);
+    }
+    
+    // Marquer toutes les notifications comme lues
+    const markAllAsReadBtn = document.getElementById('markAllAsReadBtn');
+    if (markAllAsReadBtn) {
+        markAllAsReadBtn.addEventListener('click', markAllAsRead);
+    }
+    
+    function markAllAsRead() {
+        if (confirm('Marquer toutes les notifications comme lues ?')) {
+            fetch('/notifications/mark-all-read/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast('<i class="fas fa-check-double me-2"></i> Toutes les notifications ont été marquées comme lues', 'success');
+                    
+                    // Mise à jour visuelle sans rechargement
+                    document.querySelectorAll('.notification-unread').forEach(card => {
+                        card.classList.remove('notification-unread');
+                        card.classList.add('notification-read');
+                        
+                        const statusBadge = card.querySelector('.status-badge');
+                        if (statusBadge) {
+                            statusBadge.classList.remove('status-unread');
+                            statusBadge.classList.add('status-read');
+                            statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Lu';
+                        }
+                        
+                        const markReadBtn = card.querySelector('.mark-read');
+                        if (markReadBtn) markReadBtn.remove();
+                    });
+                    
+                    // Mise à jour des compteurs
+                    readCount = totalCount;
+                    unreadCount = 0;
+                    updateCounters();
+                    
+                    // Délai avant actualisation pour voir les effets
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('<i class="fas fa-exclamation-circle me-2"></i> Erreur lors de la mise à jour', 'danger');
+            });
+        }
+    }
+    
+    // Supprimer toutes les notifications lues
+    const deleteAllReadBtn = document.getElementById('deleteAllReadBtn');
+    if (deleteAllReadBtn) {
+        deleteAllReadBtn.addEventListener('click', deleteAllRead);
+    }
+    
+    function deleteAllRead() {
+        if (confirm('Supprimer toutes les notifications lues ?')) {
+            fetch('/notifications/delete-all-read/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast(`<i class="fas fa-trash me-2"></i> ${data.deleted_count || 'Toutes les'} notifications lues supprimées`, 'warning');
+                    
+                    // Animation de suppression
+                    document.querySelectorAll('.notification-read').forEach(card => {
+                        card.style.transition = 'all 0.5s ease';
+                        card.style.transform = 'translateX(100px)';
+                        card.style.opacity = '0';
+                        
+                        setTimeout(() => {
+                            card.style.maxHeight = '0';
+                            card.style.margin = '0';
+                            card.style.padding = '0';
+                            card.style.overflow = 'hidden';
+                        }, 200);
+                    });
+                    
+                    // Mise à jour des compteurs
+                    totalCount = unreadCount;
+                    readCount = 0;
+                    updateCounters();
+                    
+                    // Délai avant actualisation pour voir les effets
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('<i class="fas fa-exclamation-circle me-2"></i> Erreur lors de la suppression', 'danger');
+            });
+        }
+    }
+    
+    // Fonction pour mettre à jour les compteurs
+    function updateCounters() {
+        const unreadCountElement = document.getElementById('unreadCount');
+        const readCountElement = document.getElementById('readCount');
+        
+        if (unreadCountElement) unreadCountElement.textContent = unreadCount;
+        if (readCountElement) readCountElement.textContent = readCount;
+    }
+    
+    // Animation pour les cartes de notification
+    setTimeout(() => {
+        document.querySelectorAll('.notification-card').forEach(card => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        });
+    }, 100);
+    
+    // Filtres supplémentaires (démonstration UI seulement)
+    const filterByCategory = document.getElementById('filterByCategory');
+    const filterByDate = document.getElementById('filterByDate');
+    
+    if (filterByCategory) {
+        filterByCategory.addEventListener('click', function() {
+            const categoryOptions = ['Tous', 'Congés', 'Frais', 'Kilomètres', 'Système', 'Autre'];
+            
+            // Simple alert pour démonstration - dans une version réelle, ceci serait un dropdown
+            const category = prompt(`Choisissez une catégorie: ${categoryOptions.join(', ')}`);
+            if (category && category.toLowerCase() !== 'tous') {
+                document.querySelectorAll('.notification-card').forEach(card => {
+                    const categoryBadge = card.querySelector('.category-badge');
+                    if (categoryBadge && categoryBadge.textContent.trim().toLowerCase().includes(category.toLowerCase())) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                showToast(`<i class="fas fa-filter me-2"></i> Filtré par catégorie: ${category}`, 'info');
+            } else {
+                document.querySelectorAll('.notification-card').forEach(card => {
+                    card.style.display = '';
+                });
+            }
+        });
+    }
+    
+    if (filterByDate) {
+        filterByDate.addEventListener('click', function() {
+            const dateOptions = ['Tous', 'Aujourd\'hui', 'Cette semaine', 'Ce mois'];
+            
+            // Simple alert pour démonstration - dans une version réelle, ceci serait un dropdown
+            const dateFilter = prompt(`Filtrer par date: ${dateOptions.join(', ')}`);
+            if (dateFilter && dateFilter.toLowerCase() !== 'tous') {
+                // Simuler le filtrage par date (pour démo UI)
+                if (dateFilter.toLowerCase() === 'aujourd\'hui') {
+                    showToast('<i class="fas fa-calendar-day me-2"></i> Filtré : notifications d\'aujourd\'hui', 'info');
+                } else if (dateFilter.toLowerCase() === 'cette semaine') {
+                    showToast('<i class="fas fa-calendar-week me-2"></i> Filtré : notifications de cette semaine', 'info');
+                } else {
+                    showToast('<i class="fas fa-calendar-alt me-2"></i> Filtré : notifications de ce mois', 'info');
+                }
+            }
+        });
+    }
+    
+    // Fonction pour récupérer le token CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Animation pour les badges de statistiques
+    document.querySelectorAll('.stats-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            const icon = this.querySelector('.stats-icon');
+            if (icon) {
+                icon.style.transform = 'scale(1.1) rotate(5deg)';
+            }
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            const icon = this.querySelector('.stats-icon');
+            if (icon) {
+                icon.style.transform = '';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

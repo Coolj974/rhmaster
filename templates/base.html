@@ -25,8 +25,7 @@
     <script src="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.min.js"></script>
 
     <style>
-        /* CSS minimaliste pour une meilleure performance */
-        body {
+        /* CSS minimaliste pour une meilleure performance */        body {
             background-color: #f8f9fa;
             color: #333;
             font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -88,14 +87,14 @@
             opacity: 1;
         }
         
-        /* Menu déroulant amélioré et simplifié */
-        .dropdown-menu {
+        /* Menu déroulant amélioré et simplifié */        .dropdown-menu {
             border: none;
             box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
             border-radius: 8px;
             padding: 0.75rem 0.5rem;
             min-width: 240px; /* Légèrement plus large */
             margin-top: 8px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         
         .dropdown-item {
@@ -164,6 +163,40 @@
             padding: 0.2rem 0.45rem;
             border-radius: 10px;
             border: 2px solid #fff;
+            transition: all 0.3s ease;
+        }
+        
+        /* Animation de pulse pour le badge des notifications */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .notification-badge.pulse {
+            animation: pulse 1s infinite;
+            box-shadow: 0 0 0 rgba(220, 53, 69, 0.4);
+            animation: pulse 1s infinite;
+        }
+          /* Styles pour le dropdown utilisateur */
+        .user-dropdown .dropdown-item {
+            border-radius: 8px;
+            margin: 0.2rem 0.5rem;
+            padding: 0.7rem 0.8rem;
+            transition: all 0.2s ease;
+        }
+        
+        .user-dropdown .dropdown-item:hover {
+            background-color: rgba(59, 125, 221, 0.08);
+            transform: translateX(4px);
+        }
+        
+        .user-dropdown .dropdown-item i {
+            transition: all 0.2s ease;
+        }
+        
+        .user-dropdown .dropdown-item:hover i {
+            transform: scale(1.1);
         }
         
         /* Tooltip personnalisé amélioré */
@@ -193,12 +226,142 @@
             transform: translateX(-50%) scale(1);
             opacity: 1;
         }
+      /* Style pour l'effet de ripple */
+    .btn {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .ripple-effect {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.7);
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        pointer-events: none;
+        width: 100px;
+        height: 100px;
+        margin-left: -50px;
+        margin-top: -50px;
+    }
+    
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+    
+    /* Effet de clic sur les liens */
+    .nav-link.clicked {
+        transform: scale(0.95);
+        transition: transform 0.15s ease;
+    }
+    
+    /* Animations pour les alertes de message */
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .animated-alert {
+        animation: slideInRight 0.4s ease forwards;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        border: none;
+    }
+    
+    /* Animations pour les notifications */
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.8; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
         
         /* Conteneur principal avec padding adaptatif */
         .main-container {
             padding: 1.5rem;
             max-width: 1600px;
             margin: 0 auto;
+        }
+        
+        /* Styles pour les éléments de notification dans le dropdown */        .notifications-dropdown {
+            transition: opacity 0.3s ease;
+            max-height: 400px;
+            overflow-y: auto;
+            min-width: 350px;
+            padding: 0.75rem;
+        }
+        
+        .notifications-dropdown .notification-item {
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            margin-bottom: 0.25rem;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+        }
+        
+        .notifications-dropdown .notification-item:hover {
+            background-color: rgba(59, 125, 221, 0.05);
+            border-left-color: #3b7ddd;
+        }
+        
+        .notifications-dropdown .notification-item.reading {
+            background-color: rgba(59, 125, 221, 0.1);
+        }
+        
+        .notifications-dropdown .notification-item .notification-time {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+        
+        .notifications-dropdown .notification-item .notification-category {
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            margin-right: 0.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .notifications-dropdown .notification-item .notification-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        
+        .notifications-dropdown .notification-item .notification-status.unread {
+            background-color: #dc3545;
+            box-shadow: 0 0 0 rgba(220, 53, 69, 0.4);
+            animation: pulse 2s infinite;
+        }
+        
+        .notifications-dropdown .notification-item .notification-status.read {
+            background-color: #28a745;
+        }
+        
+        .notifications-dropdown .mark-all-read {
+            font-weight: 600;
+            color: #3b7ddd;
+            transition: all 0.2s ease;
+        }
+        
+        .notifications-dropdown .mark-all-read:hover {
+            color: #2c62b9;
+            text-decoration: underline;
         }
     </style>
     
@@ -362,8 +525,7 @@
                 {% endif %}
             </ul>
             
-            <ul class="navbar-nav">
-                <!-- Notifications -->
+            <ul class="navbar-nav">                <!-- Notifications -->
                 <li class="nav-item dropdown">
                     <a class="nav-link position-relative" href="#" data-bs-toggle="dropdown" id="notificationsDropdown" title="Notifications">
                         <i class="fas fa-bell"></i>
@@ -373,16 +535,18 @@
                         </span>
                         {% endif %}
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end notifications-dropdown" id="notificationsContainer" style="min-width: 320px; max-height: 400px; overflow-y: auto;">
-                        <li class="dropdown-item text-center">
-                            <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                <span class="visually-hidden">Chargement...</span>
+                    <ul class="dropdown-menu dropdown-menu-end notifications-dropdown" id="notificationsContainer">
+                        <li class="dropdown-item text-center p-3">
+                            <div class="d-flex justify-content-center align-items-center">
+                                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                                <span>Chargement des notifications...</span>
                             </div>
                         </li>
                     </ul>
                 </li>
-                
-                <!-- Profil utilisateur -->
+                                  <!-- Profil utilisateur -->
                 <li class="nav-item dropdown user-menu">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown" title="Mon compte">
                         {% if request.user.userprofile.profile_picture %}
@@ -391,28 +555,30 @@
                                  class="rounded-circle me-2"
                                  style="width: 36px; height: 36px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                         {% else %}
-                            <div class="user-avatar bg-primary">
+                            <div class="user-avatar bg-primary rounded-circle d-flex align-items-center justify-content-center me-2"
+                                 style="width: 36px; height: 36px; font-size: 1rem; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 {{ request.user.username|first|upper }}
                             </div>
                         {% endif %}
                         <span class="d-none d-md-inline">{{ request.user.get_full_name|default:request.user.username }}</span>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
+                    <ul class="dropdown-menu dropdown-menu-end user-dropdown" style="min-width: 280px;">
                         <div class="p-3 border-bottom">
                             <div class="d-flex align-items-center">
                                 {% if request.user.userprofile.profile_picture %}
                                     <img src="{{ request.user.userprofile.profile_picture.url }}" 
                                         alt="Photo de profil"
-                                        class="rounded-circle me-2"
-                                        style="width: 48px; height: 48px; object-fit: cover;">
+                                        class="rounded-circle me-3"
+                                        style="width: 48px; height: 48px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
                                 {% else %}
-                                    <div class="user-avatar bg-primary" style="width: 48px; height: 48px; font-size: 1.2rem;">
+                                    <div class="user-avatar bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                         style="width: 48px; height: 48px; font-size: 1.2rem; color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
                                         {{ request.user.username|first|upper }}
                                     </div>
                                 {% endif %}
                                 <div>
-                                    <h6 class="mb-0">{{ request.user.get_full_name|default:request.user.username }}</h6>
-                                    <div class="small text-muted">
+                                    <h6 class="mb-0 fw-bold">{{ request.user.get_full_name|default:request.user.username }}</h6>
+                                    <div class="small text-muted mt-1">
                                         {% if request.user.is_superuser %}
                                             <span class="badge bg-danger">Administrateur</span>
                                         {% elif is_rh %}
@@ -427,22 +593,26 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'profile' %}">
-                                <i class="fas fa-user-circle"></i> Mon profil
+                        </div>                        <li>
+                            <a class="dropdown-item d-flex align-items-center" href="{% url 'profile' %}">
+                                <i class="fas fa-user-circle fs-5 me-3 text-primary"></i> 
+                                <span>Mon profil</span>
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="{% url 'notifications' %}">
-                                <i class="fas fa-bell"></i> Mes notifications
-                                <span class="badge bg-danger rounded-pill ms-auto" id="dropdown-notif-count">0</span>
+                            <a class="dropdown-item d-flex align-items-center" href="{% url 'notifications' %}">
+                                <i class="fas fa-bell fs-5 me-3 text-warning"></i> 
+                                <div class="d-flex justify-content-between align-items-center w-100">
+                                    <span>Mes notifications</span>
+                                    <span class="badge bg-danger rounded-pill" id="dropdown-notif-count">0</span>
+                                </div>
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <a class="dropdown-item" href="{% url 'logout' %}">
-                                <i class="fas fa-sign-out-alt"></i> Déconnexion
+                            <a class="dropdown-item d-flex align-items-center" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt fs-5 me-3 text-danger"></i> 
+                                <span>Déconnexion</span>
                             </a>
                         </li>
                     </ul>
@@ -453,15 +623,27 @@
 </nav>
 
 <!-- Conteneur principal -->
-<main class="main-container">
-    <!-- Messages d'alerte -->
+<main class="main-container"><!-- Messages d'alerte -->
     {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="messages-container" style="position: fixed; top: 80px; right: 20px; max-width: 400px; z-index: 1050;">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3 shadow-sm animated-alert" role="alert">
+                <div class="d-flex align-items-center">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle me-2 fs-5"></i>
+                    {% elif message.tags == 'error' or message.tags == 'danger' %}
+                        <i class="fas fa-exclamation-circle me-2 fs-5"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="fas fa-exclamation-triangle me-2 fs-5"></i>
+                    {% elif message.tags == 'info' %}
+                        <i class="fas fa-info-circle me-2 fs-5"></i>
+                    {% endif %}
+                    <div>{{ message }}</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     {% endif %}
     
     <!-- Contenu spécifique à chaque page -->
@@ -469,9 +651,19 @@
 </main>
 
 <!-- Footer simplifié -->
-<footer class="footer text-center">
+<footer class="footer py-3 mt-4 text-center bg-light">
     <div class="container">
-        <span>&copy; 2025 RH Cyber. Tous droits réservés.</span>
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <span class="text-muted">&copy; 2025 RH Cyber. Tous droits réservés.</span>
+            <div class="footer-links">
+                <a href="#" class="text-decoration-none text-muted mx-2" title="À propos">
+                    <i class="fas fa-info-circle me-1"></i> À propos
+                </a>
+                <a href="#" class="text-decoration-none text-muted mx-2" title="Assistance">
+                    <i class="fas fa-question-circle me-1"></i> Aide
+                </a>
+            </div>
+        </div>
     </div>
 </footer>
 
@@ -482,73 +674,290 @@
 {% block extra_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Récupérer le token CSRF
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]');
-    const csrfValue = csrftoken ? csrftoken.value : '';
-
-    // Fonction pour charger les notifications
+    // Fonction pour améliorer les alertes
+    function setupAlertDismiss() {
+        const alerts = document.querySelectorAll('.alert');
+        
+        alerts.forEach((alert, index) => {
+            // Ajouter un délai avant de fermer automatiquement l'alerte
+            setTimeout(() => {
+                // Créer un nouvel objet bootstrap pour l'alerte
+                const bsAlert = new bootstrap.Alert(alert);
+                
+                // Animation de sortie
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateX(30px)';
+                
+                // Fermer l'alerte après la transition
+                setTimeout(() => {
+                    bsAlert.close();
+                }, 300);
+            }, 5000 + (index * 500)); // Fermer progressivement
+        });
+    }
+    
+    // Configurer les alertes s'il y en a
+    if (document.querySelector('.alert')) {
+        setupAlertDismiss();
+    }
+    
+    // Améliorer l'expérience des liens de navigation
+    document.querySelectorAll('.nav-link:not([data-bs-toggle])').forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (this.getAttribute('href') && this.getAttribute('href') !== '#') {
+                // Ajouter un effet de clic
+                this.classList.add('active', 'clicked');
+                
+                // Petit délai avant la navigation pour voir l'animation
+                if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                    e.preventDefault();
+                    
+                    const href = this.getAttribute('href');
+                    setTimeout(() => {
+                        window.location.href = href;
+                    }, 150);
+                }
+            }
+        });
+    });
+    
+    // Ajouter des effets de ripple aux boutons
+    document.querySelectorAll('.btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            // Créer l'élément de ripple
+            const ripple = document.createElement('span');
+            ripple.classList.add('ripple-effect');
+            
+            // Positionner l'élément ripple à l'endroit du clic
+            const rect = this.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            
+            // Ajouter et supprimer l'élément après l'animation
+            this.appendChild(ripple);
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        });
+    });
+    
+    // Récupérer le token CSRF de manière plus fiable
+    function getCsrfToken() {
+        // D'abord, chercher le token dans un élément d'entrée
+        const csrfInput = document.querySelector('input[name=csrfmiddlewaretoken]');
+        if (csrfInput) return csrfInput.value;
+        
+        // Ensuite, chercher dans un méta tag (utilisé par Django)
+        const csrfMeta = document.querySelector('meta[name=csrf-token]');
+        if (csrfMeta) return csrfMeta.content;
+        
+        // Enfin, essayer de lire depuis les cookies
+        return getCookie('csrftoken');
+    }
+    
+    // Fonction pour lire un cookie par son nom
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    }
+      // Obtenir le token CSRF
+    const csrfValue = getCsrfToken();
+    
     function loadNotifications() {
-        fetch('/api/notifications/dropdown/', {
+        // Récupérer le conteneur de notifications
+        const container = document.getElementById('notificationsContainer');
+        if (!container) return;
+        
+        // Vérifier si le chargement est déjà en cours pour éviter les appels multiples
+        if (container.dataset.loading === 'true') return;
+        container.dataset.loading = 'true';
+          // Afficher l'indicateur de chargement avec animation
+        container.innerHTML = `
+            <li class="dropdown-item text-center p-3">
+                <div class="d-flex justify-content-center align-items-center">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <span>Chargement des notifications...</span>
+                </div>
+            </li>
+        `;
+        
+        // Utiliser une promesse pour éviter les problèmes de canal fermé
+        const fetchPromise = fetch('/api/notifications/dropdown/', {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRFToken': csrfValue
             },
             credentials: 'same-origin'
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Mettre à jour le badge de notifications
-            const badgeElement = document.getElementById('notifications-badge');
-            const countElement = document.getElementById('notifications-count');
-            const dropdownCount = document.getElementById('dropdown-notif-count');
-            
-            if (data.count > 0) {
-                countElement.textContent = data.count > 99 ? '99+' : data.count;
-                if (dropdownCount) dropdownCount.textContent = data.count > 99 ? '99+' : data.count;
-                badgeElement.classList.remove('d-none');
-                badgeElement.classList.add('pulse');
-            } else {
-                badgeElement.classList.add('d-none');
-                badgeElement.classList.remove('pulse');
-                if (dropdownCount) dropdownCount.textContent = '0';
+        });
+        
+        // Traiter la réponse de manière asynchrone avec un délai minimal pour l'UX
+        fetchPromise
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur réseau : ' + response.status);
             }
+            return response.json();
+        })
+        .then(data => {
+            // Simuler un petit délai pour permettre à l'utilisateur de voir le chargement
+            // (améliore la perception de "fraîcheur" des données)
+            setTimeout(() => {
+                // Mise à jour complète une fois les données reçues
+                updateNotifications(data);
+                
+                // Réinitialiser l'état de chargement
+                container.dataset.loading = 'false';            }, 300);
+        })
+        .catch(error => {
+            console.error('Erreur lors du chargement des notifications:', error);
+            container.innerHTML = `
+                <li class="dropdown-item text-center p-3">
+                    <div class="alert alert-danger mb-0">
+                        <i class="fas fa-exclamation-circle me-2"></i> 
+                        Erreur de chargement
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-danger reload-notifications">
+                                <i class="fas fa-sync-alt me-1"></i> Réessayer
+                            </button>
+                        </div>
+                    </div>
+                </li>
+            `;
             
-            // Mettre à jour le contenu du dropdown
-            document.getElementById('notificationsContainer').innerHTML = data.html;
+            // Permettre à l'utilisateur de réessayer en cliquant sur le bouton
+            container.querySelector('.reload-notifications').addEventListener('click', () => {
+                loadNotifications();
+            });
+            
+            // Réinitialiser l'état de chargement
+            container.dataset.loading = 'false';
+        });
+    }
+    
+    // Fonction pour mettre à jour les notifications
+    function updateNotifications(data) {
+        // Mettre à jour le badge de notifications
+        const badgeElement = document.getElementById('notifications-badge');
+        const countElement = document.getElementById('notifications-count');
+        const dropdownCount = document.getElementById('dropdown-notif-count');
+        
+        if (data.count > 0) {
+            countElement.textContent = data.count > 99 ? '99+' : data.count;
+            if (dropdownCount) dropdownCount.textContent = data.count > 99 ? '99+' : data.count;
+            badgeElement.classList.remove('d-none');
+            
+            // Ajouter une animation de pulse
+            badgeElement.classList.add('pulse');
+            
+            // Réinitialiser l'animation après un court délai
+            setTimeout(() => {
+                badgeElement.classList.remove('pulse');
+            }, 1000);
+        } else {
+            badgeElement.classList.add('d-none');
+            badgeElement.classList.remove('pulse');
+            if (dropdownCount) dropdownCount.textContent = '0';
+        }
+        
+        // Vider le conteneur actuel
+        const container = document.getElementById('notificationsContainer');
+        
+        // Créer un élément temporaire pour faciliter les transitions
+        const tempContainer = document.createElement('div');
+        tempContainer.innerHTML = data.html;
+        
+        // Appliquer une transition douce au contenu
+        container.style.opacity = '0';
+          // Mettre à jour le contenu après une courte transition
+        setTimeout(() => {
+            container.innerHTML = data.html;
+            container.style.opacity = '1';
             
             // Ajouter les événements aux éléments du dropdown
             setupNotificationListeners();
-        })
-        .catch(error => console.error('Erreur lors du chargement des notifications:', error));
+            
+            // Animer l'entrée des éléments
+            const items = container.querySelectorAll('.notification-item');
+            items.forEach((item, index) => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(10px)';
+                
+                setTimeout(() => {
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateY(0)';
+                }, 50 * index);
+            });
+            
+            // Ajouter un effet de highlight aux nouvelles notifications
+            const unreadItems = container.querySelectorAll('.notification-item .notification-status.unread');
+            unreadItems.forEach(item => {
+                const parent = item.closest('.notification-item');
+                if (parent) {
+                    parent.style.borderLeftColor = '#dc3545';
+                    setTimeout(() => {
+                        parent.style.borderLeftColor = '';
+                    }, 5000);
+                }
+            });        }, 200);
     }
-
+    
     // Configuration des écouteurs d'événements pour les notifications
     function setupNotificationListeners() {
         // Marquage d'une notification comme lue
         document.querySelectorAll('.notification-item').forEach(item => {
             item.addEventListener('click', function(e) {
-                const notificationId = this.getAttribute('data-notification-id');
+                // Empêcher d'abord la navigation par défaut
+                if (!this.getAttribute('href') || this.getAttribute('href') === '#') {
+                    e.preventDefault();
+                }
                 
-                fetch(`/notifications/mark-read/${notificationId}/`, {
+                const notificationId = this.getAttribute('data-notification-id');
+                const href = this.getAttribute('href');
+                
+                // Ajouter une classe pour indiquer que la notification est en cours de lecture
+                this.classList.add('reading');
+                
+                // Stocker le résultat de fetch dans une variable pour éviter la fermeture du canal
+                const fetchPromise = fetch(`/notifications/mark-read/${notificationId}/`, {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'X-CSRFToken': csrfValue
                     },
                     credentials: 'same-origin'
-                })
+                });
+                
+                // Attendre que la requête soit terminée avant de naviguer ou de recharger
+                fetchPromise
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        loadNotifications(); // Recharger les notifications
+                        // Ajouter une animation de sortie avant de recharger
+                        this.style.opacity = '0';
+                        this.style.transform = 'translateX(10px)';
+                        
+                        // Recharger les notifications après la transition
+                        setTimeout(() => {
+                            loadNotifications();
+                        }, 300);
+                    }
+                    
+                    // Si un href valide est défini, naviguez après le traitement
+                    if (href && href !== '#') {
+                        // Petit délai pour voir l'animation
+                        setTimeout(() => {
+                            window.location.href = href;
+                        }, 300);
                     }
                 })
                 .catch(error => console.error('Erreur lors du marquage comme lu:', error));
-                
-                // Ne pas empêcher la navigation si l'URL est définie
-                if (!this.getAttribute('href') || this.getAttribute('href') === '#') {
-                    e.preventDefault();
-                }
             });
         });
         
@@ -558,51 +967,146 @@ document.addEventListener('DOMContentLoaded', function() {
             markAllReadBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                fetch('/notifications/mark-all-read/', {
+                // Ajouter une animation pour indiquer l'action
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Traitement...';
+                
+                // Animer les éléments de notification
+                document.querySelectorAll('.notification-item').forEach((item, index) => {
+                    setTimeout(() => {
+                        item.style.opacity = '0';
+                        item.style.transform = 'translateX(10px)';
+                    }, 50 * index);
+                });
+                
+                // Stocker le résultat de fetch dans une variable pour éviter la fermeture du canal
+                const fetchPromise = fetch('/notifications/mark-all-read/', {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'X-CSRFToken': csrfValue
                     },
                     credentials: 'same-origin'
-                })
+                });
+                
+                // Attendre que la requête soit terminée avant de naviguer
+                fetchPromise
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        loadNotifications(); // Recharger les notifications
+                        // Attendre que l'animation soit terminée
+                        setTimeout(() => {
+                            loadNotifications();
+                        }, 300);
                     }
                 })
                 .catch(error => console.error('Erreur lors du marquage de toutes les notifications:', error));
             });
         }
-    }
-
-    // Charger les notifications au chargement de la page
+    }    // Charger les notifications au chargement de la page
     if (document.getElementById('notificationsContainer')) {
-        loadNotifications();
+        // Attendre que le DOM soit complètement chargé
+        setTimeout(() => {
+            loadNotifications();
+        }, 500);
     }
     
     // Configurer l'ouverture du dropdown pour charger les notifications
     const notificationsDropdown = document.getElementById('notificationsDropdown');
     if (notificationsDropdown) {
-        notificationsDropdown.addEventListener('click', function() {
+        notificationsDropdown.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Charger les notifications lors de l'ouverture du dropdown
             loadNotifications();
         });
     }
     
-    // Rafraîchir les notifications périodiquement (toutes les 60 secondes)
+    // Rafraîchir les notifications périodiquement (toutes les 2 minutes)
     if (document.getElementById('notificationsContainer')) {
-        setInterval(loadNotifications, 60000);
+        // Utiliser un système de rafraîchissement plus intelligent
+        let lastRefreshTime = Date.now();
+        let isPageActive = true;
+        let refreshInterval;
+        
+        // Fonction pour gérer le rafraîchissement
+        function manageRefresh() {
+            // Si l'utilisateur est actif, rafraîchir plus fréquemment
+            const refreshTime = isPageActive ? 120000 : 300000; // 2 min si actif, 5 min sinon
+            
+            clearInterval(refreshInterval);
+            refreshInterval = setInterval(function() {
+                const now = Date.now();
+                // Ne rafraîchir que si assez de temps s'est écoulé
+                if (now - lastRefreshTime >= refreshTime) {
+                    if (document.getElementById('notificationsContainer')) {
+                        loadNotifications();
+                        lastRefreshTime = now;
+                    } else {
+                        clearInterval(refreshInterval);
+                    }
+                }
+            }, 30000); // Vérifier toutes les 30 secondes, mais ne rafraîchir que selon les conditions ci-dessus
+        }
+        
+        // Démarrer le rafraîchissement
+        manageRefresh();
+        
+        // Surveiller l'activité de l'utilisateur
+        document.addEventListener('visibilitychange', function() {
+            isPageActive = !document.hidden;
+            
+            // Si l'utilisateur revient sur la page, rafraîchir immédiatement
+            if (isPageActive) {
+                const now = Date.now();
+                if (now - lastRefreshTime >= 60000) { // Si ça fait plus d'une minute
+                    loadNotifications();
+                    lastRefreshTime = now;
+                }
+            }
+            
+            // Ajuster la fréquence de rafraîchissement
+            manageRefresh();
+        });
     }
-    
-    // Ajouter des transitions fluides aux menus déroulants
+      // Ajouter des transitions fluides aux menus déroulants
     const dropdowns = document.querySelectorAll('.dropdown');
     dropdowns.forEach(dropdown => {
         dropdown.addEventListener('show.bs.dropdown', function() {
             const menu = this.querySelector('.dropdown-menu');
+            
+            // Appliquer une animation d'entrée au menu
             setTimeout(() => {
-                menu.classList.add('show');
+                menu.style.opacity = '0';
+                menu.style.transform = 'translateY(-10px)';
+                
+                // Animation d'entrée
+                setTimeout(() => {
+                    menu.style.opacity = '1';
+                    menu.style.transform = 'translateY(0)';
+                }, 50);
             }, 0);
+        });
+        
+        // Animer la sortie du menu dropdown
+        dropdown.addEventListener('hide.bs.dropdown', function(e) {
+            const menu = this.querySelector('.dropdown-menu');
+            
+            // Préserver l'événement si l'utilisateur clique à l'intérieur du menu
+            // et que ce n'est pas un élément avec l'attribut data-bs-dismiss
+            if (e.clickEvent && menu.contains(e.clickEvent.target) && 
+                !e.clickEvent.target.hasAttribute('data-bs-dismiss')) {
+                e.preventDefault();
+                return;
+            }
+            
+            // Sinon, appliquer l'animation de sortie
+            e.preventDefault();
+            menu.style.opacity = '0';
+            menu.style.transform = 'translateY(-10px)';
+            
+            // Fermer le dropdown après l'animation
+            setTimeout(() => {
+                bootstrap.Dropdown.getInstance(this.querySelector('[data-bs-toggle="dropdown"]')).hide();
+            }, 200);
         });
     });
 });
