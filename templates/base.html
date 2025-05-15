@@ -808,12 +808,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             // Simuler un petit délai pour permettre à l'utilisateur de voir le chargement
             // (améliore la perception de "fraîcheur" des données)
-            setTimeout(() => {
-                // Mise à jour complète une fois les données reçues
+            setTimeout(() => {                // Mise à jour complète une fois les données reçues
                 updateNotifications(data);
                 
                 // Réinitialiser l'état de chargement
-                container.dataset.loading = 'false';            }, 300);
+                container.dataset.loading = 'false';
+            }, 300);
         })
         .catch(error => {
             console.error('Erreur lors du chargement des notifications:', error);
@@ -872,10 +872,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Créer un élément temporaire pour faciliter les transitions
         const tempContainer = document.createElement('div');
         tempContainer.innerHTML = data.html;
-        
-        // Appliquer une transition douce au contenu
+          // Appliquer une transition douce au contenu
         container.style.opacity = '0';
-          // Mettre à jour le contenu après une courte transition
+        
+        // Mettre à jour le contenu après une courte transition
         setTimeout(() => {
             container.innerHTML = data.html;
             container.style.opacity = '1';
@@ -900,14 +900,13 @@ document.addEventListener('DOMContentLoaded', function() {
             unreadItems.forEach(item => {
                 const parent = item.closest('.notification-item');
                 if (parent) {
-                    parent.style.borderLeftColor = '#dc3545';
-                    setTimeout(() => {
+                    parent.style.borderLeftColor = '#dc3545';                    setTimeout(() => {
                         parent.style.borderLeftColor = '';
                     }, 5000);
                 }
-            });        }, 200);
+            });
+        }, 200);
     }
-    
     // Configuration des écouteurs d'événements pour les notifications
     function setupNotificationListeners() {
         // Marquage d'une notification comme lue
@@ -1002,7 +1001,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 .catch(error => console.error('Erreur lors du marquage de toutes les notifications:', error));
             });
         }
-    }    // Charger les notifications au chargement de la page
+    }
+    
+    // Charger les notifications au chargement de la page
     if (document.getElementById('notificationsContainer')) {
         // Attendre que le DOM soit complètement chargé
         setTimeout(() => {

@@ -201,8 +201,7 @@
     .slide-up {
         animation: slideUp 0.5s ease forwards;
     }
-    
-    /* Carte de résumé pour la vue détaillée */
+      /* Carte de résumé pour la vue détaillée */
     .expense-summary-card {
         border-left: 4px solid;
         border-radius: 10px;
@@ -220,15 +219,240 @@
     .expense-summary-card.rejected {
         border-left-color: #e74a3b;
     }
+    
+    /* Styles responsifs et optimisations */
+    .expense-icon-small {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 0.8rem;
+    }
+    
+    /* Loader pour les tableaux */
+    .spinner-border {
+        vertical-align: middle;
+    }
+    
+    /* Skeletons pour le chargement */
+    .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s infinite;
+        border-radius: 4px;
+        height: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .skeleton-circle {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+    }
+    
+    .skeleton-text-sm {
+        height: 8px;
+        width: 30%;
+    }
+    
+    .skeleton-text-md {
+        height: 10px;
+        width: 50%;
+    }
+    
+    .skeleton-text-lg {
+        height: 14px;
+        width: 70%;
+    }
+    
+    @keyframes skeleton-loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    
+    /* Styles pour les boutons d'exportation */
+    .export-buttons {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .export-button {
+        border: 1px solid #e3e6f0;
+        background-color: #f8f9fc;
+        color: #6e707e;
+        border-radius: 4px;
+        padding: 4px 10px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+    }
+    
+    .export-button i {
+        margin-right: 5px;
+    }
+    
+    .export-button:hover {
+        background-color: #eaecf4;
+        color: #4e73df;
+    }
+    
+    /* Styles pour le datatable responsive */
+    .dataTable thead th {
+        white-space: nowrap;
+    }
+    
+    .dataTable .no-sort {
+        pointer-events: none;
+    }
+    
+    /* Animation de transition pour les tableaux */
+    .dataTable tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    
+    .dataTable tbody tr:hover {
+        background-color: rgba(78, 115, 223, 0.05) !important;
+    }
+    
+    /* Améliorations pour les appareils mobiles */
+    @media (max-width: 767.98px) {
+        .stats-value {
+            font-size: 1.75rem;
+        }
+        
+        .card-header {
+            padding: 0.75rem;
+        }
+        
+        .stats-card .card-body {
+            padding: 1rem;
+        }
+        
+        .dataTables_wrapper .dataTables_filter {
+            text-align: left;
+            margin-top: 10px;
+        }
+        
+        .dataTables_wrapper .dataTables_filter input {
+            width: 100%;
+            margin-left: 0;
+        }
+        
+        .dataTable tbody td {
+            padding: 0.5rem 0.75rem;
+        }
+        
+        .modal-dialog {
+            margin: 0.5rem;
+        }
+        
+        .expense-header h1 {
+            font-size: 1.5rem;
+        }
+        
+        .nav-tabs .nav-link {
+            padding: 0.5rem 0.75rem;
+        }
+        
+        .expense-card .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .expense-card .status-badge {
+            margin-top: 0.5rem;
+            align-self: flex-start;
+        }
+        
+        .expense-actions {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .expense-actions .created-date {
+            margin-bottom: 0.5rem;
+        }
+    }
+    
+    /* Optimisations pour les tablettes */
+    @media (min-width: 768px) and (max-width: 991.98px) {
+        .stats-card .row {
+            flex-direction: column;
+        }
+    }
+    
+    /* Bouton flottant pour nouvelle note (visible seulement sur mobile) */
+    .floating-action-button {
+        display: none;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background-color: #4e73df;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        line-height: 56px;
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+    
+    .floating-action-button:hover,
+    .floating-action-button:focus {
+        background-color: #2e59d9;
+        transform: scale(1.05);
+        color: white !important;
+        text-decoration: none;
+    }
+    
+    @media (max-width: 767.98px) {
+        .floating-action-button {
+            display: block;
+        }
+    }
+    
+    /* Animations améliorées */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes scaleIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
+    
+    .slide-up {
+        animation: slideUp 0.5s ease forwards;
+    }
+    
+    .scale-in {
+        animation: scaleIn 0.3s ease forwards;
+    }
 </style>
-{% endblock %}
+{% endblock extra_css %}
 
 {% block content %}
 <div class="container py-4">
     <!-- En-tête de la page -->
     <div class="d-sm-flex align-items-center justify-content-between expense-header">
         <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-receipt me-2"></i>Mes notes de frais</h1>
-        <div>
+        <div class="d-none d-sm-block">
             <a href="{% url 'submit_expense' %}" class="btn btn-primary shadow-sm me-2">
                 <i class="fas fa-plus-circle me-1"></i> Nouvelle note
             </a>
@@ -238,10 +462,11 @@
         </div>
     </div>
 
+    <!-- Message flottant pour les notifications -->
     {% if messages %}
-    <div class="mb-4 fade-in">
+    <div class="messages-container mb-4">
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm scale-in" role="alert">
                 <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -249,6 +474,11 @@
         {% endfor %}
     </div>
     {% endif %}
+    
+    <!-- Bouton flottant pour mobile -->
+    <a href="{% url 'submit_expense' %}" class="floating-action-button">
+        <i class="fas fa-plus"></i>
+    </a>
 
     <!-- Statistiques des notes de frais -->
     <div class="row mb-4">
@@ -442,14 +672,28 @@
                 </div>
             {% endif %}
         </div>
-        
-        <!-- Vue en tableau -->
+          <!-- Vue en tableau -->
         <div class="tab-pane fade" id="table-view" role="tabpanel" aria-labelledby="table-view-tab">
             {% if expenses %}
                 <div class="card shadow table-expenses">
+                    <div class="card-header bg-white py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                        <h6 class="m-0 mb-2 mb-md-0 font-weight-bold text-primary">
+                            <i class="fas fa-table mr-1"></i> Historique des notes de frais
+                        </h6>
+                        <div class="d-flex">
+                            <div id="tableLoader" class="d-none">
+                                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                                <span class="small text-muted">Chargement des données...</span>
+                            </div>
+                            
+                            <div class="export-buttons ms-3"></div>
+                        </div>
+                    </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table mb-0" id="expensesTable">
+                            <table class="table mb-0 w-100" id="expensesTable">
                                 <thead>
                                     <tr>
                                         <th>Date</th>
@@ -458,7 +702,7 @@
                                         <th>Projet</th>
                                         <th>Montant</th>
                                         <th>Statut</th>
-                                        <th>Actions</th>
+                                        <th class="no-sort text-end">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -466,15 +710,32 @@
                                     <tr>
                                         <td>{{ expense.date|date:"d/m/Y" }}</td>
                                         <td>{{ expense.description }}</td>
-                                        <td>{{ expense.get_expense_type_display }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="expense-icon-small me-2
+                                                    {% if expense.expense_type == 'travel' %}bg-primary bg-opacity-10 text-primary
+                                                    {% elif expense.expense_type == 'meal' %}bg-success bg-opacity-10 text-success
+                                                    {% elif expense.expense_type == 'accommodation' %}bg-info bg-opacity-10 text-info
+                                                    {% elif expense.expense_type == 'equipment' %}bg-warning bg-opacity-10 text-warning
+                                                    {% else %}bg-secondary bg-opacity-10 text-secondary{% endif %}">
+                                                    <i class="fas 
+                                                        {% if expense.expense_type == 'travel' %}fa-plane
+                                                        {% elif expense.expense_type == 'meal' %}fa-utensils
+                                                        {% elif expense.expense_type == 'accommodation' %}fa-hotel
+                                                        {% elif expense.expense_type == 'equipment' %}fa-laptop
+                                                        {% else %}fa-receipt{% endif %} fa-sm"></i>
+                                                </div>
+                                                <span class="d-none d-md-inline">{{ expense.get_expense_type_display }}</span>
+                                            </div>
+                                        </td>
                                         <td>{{ expense.project|default:"Non spécifié" }}</td>
-                                        <td>{{ expense.amount|floatformat:2 }} €</td>
+                                        <td><span class="fw-medium">{{ expense.amount|floatformat:2 }} €</span></td>
                                         <td>
                                             <span class="badge status-{{ expense.status }} px-2 py-1">
                                                 {{ expense.get_status_display }}
                                             </span>
                                         </td>
-                                        <td>
+                                        <td class="text-end">
                                             <button type="button" class="btn btn-sm btn-outline-primary view-expense"
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#viewExpenseModal"
@@ -495,13 +756,13 @@
                                                     data-has-attachment="{{ expense.attachment|yesno:'true,false' }}"
                                                     {% if expense.receipt %}data-receipt-url="{{ expense.receipt.url }}"{% endif %}
                                                     {% if expense.attachment %}data-attachment-url="{{ expense.attachment.url }}"{% endif %}>
-                                                <i class="fas fa-eye"></i>
+                                                <i class="fas fa-eye"></i> <span class="d-none d-md-inline">Détails</span>
                                             </button>
                                             
                                             {% if expense.status == 'pending' %}
                                                 <a href="{% url 'cancel_expense' expense.id %}" class="btn btn-sm btn-outline-danger"
                                                    onclick="return confirm('Êtes-vous sûr de vouloir annuler cette note de frais ?')">
-                                                    <i class="fas fa-times"></i>
+                                                    <i class="fas fa-times"></i> <span class="d-none d-md-inline">Annuler</span>
                                                 </a>
                                             {% endif %}
                                         </td>
@@ -639,17 +900,125 @@
 </div>
 
 {% block extra_scripts %}
+<!-- Chargement optimisé de jQuery et DataTables avec defer -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js" defer></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialiser DataTable si présent
-    if (typeof $.fn.DataTable !== 'undefined' && document.getElementById('expensesTable')) {
-        $('#expensesTable').DataTable({
-            language: {
-                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
-            },
-            order: [[0, 'desc']], // Trier par date décroissante
-            pageLength: 10
+    // Chargement paresseux des ressources DataTables
+    function loadDataTables() {
+        const tableLoader = document.getElementById('tableLoader');
+        if (tableLoader) tableLoader.classList.remove('d-none');
+        
+        if (typeof $.fn.DataTable !== 'undefined' && document.getElementById('expensesTable')) {
+            // Détruire l'instance existante si elle existe
+            if ($.fn.dataTable.isDataTable('#expensesTable')) {
+                $('#expensesTable').DataTable().destroy();
+            }
+            
+            // Initialiser avec configurations optimisées
+            const table = $('#expensesTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
+                },
+                order: [[0, 'desc']], // Trier par date décroissante
+                pageLength: 10,
+                deferRender: true,
+                processing: true,
+                responsive: true,
+                columnDefs: [
+                    { targets: 'no-sort', orderable: false }
+                ],
+                dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                     "<'row'<'col-sm-12'tr>>" +
+                     "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                initComplete: function() {
+                    if (tableLoader) tableLoader.classList.add('d-none');
+                    
+                    // Ajout des boutons d'exportation
+                    const exportButtons = document.querySelector('.export-buttons');
+                    if (exportButtons) {
+                        // Bouton d'impression
+                        const printButton = document.createElement('button');
+                        printButton.className = 'export-button';
+                        printButton.innerHTML = '<i class="fas fa-print"></i> Imprimer';
+                        printButton.addEventListener('click', function() {
+                            window.print();
+                        });
+                        exportButtons.appendChild(printButton);
+                        
+                        // Fonction pour exporter en CSV
+                        const csvButton = document.createElement('button');
+                        csvButton.className = 'export-button';
+                        csvButton.innerHTML = '<i class="fas fa-file-csv"></i> CSV';
+                        csvButton.addEventListener('click', function() {
+                            exportTableToCSV('mes_notes_frais.csv');
+                        });
+                        exportButtons.appendChild(csvButton);
+                    }
+                    
+                    // Cache les éléments de recherche si moins de 10 entrées
+                    const api = this.api();
+                    if (api.rows().count() < 10) {
+                        $('.dataTables_length').hide();
+                    }
+                }
+            });
+            
+            // Ajouter la classe de survol aux lignes pour l'effet de style
+            $('#expensesTable tbody').on('mouseenter', 'tr', function() {
+                $(this).addClass('hover-highlight');
+            }).on('mouseleave', 'tr', function() {
+                $(this).removeClass('hover-highlight');
+            });
+        }
+    }
+    
+    // Fonction pour exporter en CSV
+    window.exportTableToCSV = function(filename) {
+        let csv = [];
+        const rows = document.querySelectorAll('#expensesTable tr');
+        
+        for (let i = 0; i < rows.length; i++) {
+            const row = [], cols = rows[i].querySelectorAll('td, th');
+            
+            for (let j = 0; j < cols.length; j++) {
+                // Nettoyer le texte (sans les balises HTML)
+                let cellText = cols[j].innerText;
+                
+                // Éviter la colonne des actions (dernière colonne)
+                if (j === cols.length - 1 && i > 0) continue;
+                
+                // Format CSV: entourez de guillemets et échappez les guillemets internes
+                row.push('"' + cellText.replace(/"/g, '""') + '"');
+            }
+            
+            csv.push(row.join(','));
+        }
+        
+        // Télécharger le fichier CSV
+        const csvFile = new Blob([csv.join('\n')], {type: 'text/csv'});
+        const downloadLink = document.createElement('a');
+        downloadLink.download = filename;
+        downloadLink.href = window.URL.createObjectURL(csvFile);
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    }
+    
+    // Chargement conditionnel de DataTables - seulement si l'onglet tableau est actif
+    const tableViewTab = document.getElementById('table-view-tab');
+    if (tableViewTab) {
+        tableViewTab.addEventListener('shown.bs.tab', function() {
+            loadDataTables();
         });
+        
+        // Si l'onglet tableau est actif au chargement, initialiser DataTables
+        if (localStorage.getItem('activeExpenseTab') === '#table-view-tab') {
+            setTimeout(loadDataTables, 100);
+        }
     }
     
     // Conservation de l'onglet actif après rafraîchissement
@@ -669,107 +1038,160 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Gestion du modal pour voir les détails d'une note de frais
-    const viewExpenseButtons = document.querySelectorAll('.view-expense');
+    // Gestion optimisée du modal pour voir les détails d'une note de frais
+    function updateModal(data) {
+        // Mettre à jour le modal avec les données
+        document.getElementById('modal-description').textContent = data.description;
+        document.getElementById('modal-amount').textContent = data.totalAmount.toFixed(2) + " €";
+        document.getElementById('modal-date').textContent = data.date;
+        document.getElementById('modal-type').textContent = data.type;
+        document.getElementById('modal-vat').textContent = data.vat + "%";
+        document.getElementById('modal-project').textContent = data.project;
+        document.getElementById('modal-location').textContent = data.location;
+        document.getElementById('modal-refacturable').textContent = data.refacturable;
+        document.getElementById('modal-created-at').textContent = data.createdAt;
+        
+        // Style du statut
+        const statusBadge = document.getElementById('modal-status-badge');
+        statusBadge.textContent = data.status;
+        statusBadge.className = 'status-badge status-' + data.statusCode;
+        
+        // Style de la carte de résumé
+        const summaryCard = document.getElementById('expense-summary-card');
+        summaryCard.className = 'expense-summary-card p-3 ' + data.statusCode;
+        
+        // Afficher/cacher les justificatifs
+        const receiptContainer = document.getElementById('receipt-container');
+        const attachmentContainer = document.getElementById('attachment-container');
+        
+        if (data.hasReceipt) {
+            document.getElementById('modal-receipt-link').href = data.receiptUrl;
+            receiptContainer.style.display = 'block';
+        } else {
+            receiptContainer.style.display = 'none';
+        }
+        
+        if (data.hasAttachment) {
+            document.getElementById('modal-attachment-link').href = data.attachmentUrl;
+            attachmentContainer.style.display = 'block';
+        } else {
+            attachmentContainer.style.display = 'none';
+        }
+        
+        // Afficher/cacher les commentaires
+        const commentContainer = document.getElementById('comment-container');
+        if (data.comment && data.comment.trim() !== '') {
+            document.getElementById('modal-comment').textContent = data.comment;
+            commentContainer.style.display = 'block';
+        } else {
+            commentContainer.style.display = 'none';
+        }
+        
+        // Configurer le bouton d'annulation
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+        if (data.statusCode === 'pending') {
+            cancelBtn.href = `/cancel-expense/${data.id}/`;
+            cancelBtn.style.display = 'block';
+        } else {
+            cancelBtn.style.display = 'none';
+        }
+    }
     
-    viewExpenseButtons.forEach(button => {
-        button.addEventListener('click', function() {
+    // Délégation d'événements pour les boutons de détails
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('.view-expense');
+        if (button) {
             // Récupérer les données
-            const id = this.getAttribute('data-id');
-            const description = this.getAttribute('data-description');
-            const amount = this.getAttribute('data-amount');
-            const date = this.getAttribute('data-date');
-            const type = this.getAttribute('data-type');
-            const vat = this.getAttribute('data-vat');
-            const project = this.getAttribute('data-project');
-            const location = this.getAttribute('data-location');
-            const status = this.getAttribute('data-status');
-            const statusCode = this.getAttribute('data-status-code');
-            const refacturable = this.getAttribute('data-refacturable');
-            const createdAt = this.getAttribute('data-created-at');
-            const comment = this.getAttribute('data-comment');
-            const hasReceipt = this.getAttribute('data-has-receipt') === 'true';
-            const hasAttachment = this.getAttribute('data-has-attachment') === 'true';
-            const receiptUrl = this.getAttribute('data-receipt-url');
-            const attachmentUrl = this.getAttribute('data-attachment-url');
+            const id = button.getAttribute('data-id');
+            const description = button.getAttribute('data-description');
+            const amount = button.getAttribute('data-amount');
+            const date = button.getAttribute('data-date');
+            const type = button.getAttribute('data-type');
+            const vat = button.getAttribute('data-vat');
+            const project = button.getAttribute('data-project');
+            const location = button.getAttribute('data-location');
+            const status = button.getAttribute('data-status');
+            const statusCode = button.getAttribute('data-status-code');
+            const refacturable = button.getAttribute('data-refacturable');
+            const createdAt = button.getAttribute('data-created-at');
+            const comment = button.getAttribute('data-comment');
+            const hasReceipt = button.getAttribute('data-has-receipt') === 'true';
+            const hasAttachment = button.getAttribute('data-has-attachment') === 'true';
+            const receiptUrl = button.getAttribute('data-receipt-url');
+            const attachmentUrl = button.getAttribute('data-attachment-url');
             
             // Calculer le montant total avec TVA
             const baseAmount = parseFloat(amount);
             const vatRate = parseFloat(vat);
             const totalAmount = baseAmount * (1 + (vatRate / 100));
             
-            // Mettre à jour le modal avec les données
-            document.getElementById('modal-description').textContent = description;
-            document.getElementById('modal-amount').textContent = totalAmount.toFixed(2) + " €";
-            document.getElementById('modal-date').textContent = date;
-            document.getElementById('modal-type').textContent = type;
-            document.getElementById('modal-vat').textContent = vat + "%";
-            document.getElementById('modal-project').textContent = project;
-            document.getElementById('modal-location').textContent = location;
-            document.getElementById('modal-refacturable').textContent = refacturable;
-            document.getElementById('modal-created-at').textContent = createdAt;
-            
-            // Style du statut
-            const statusBadge = document.getElementById('modal-status-badge');
-            statusBadge.textContent = status;
-            statusBadge.className = 'status-badge status-' + statusCode;
-            
-            // Style de la carte de résumé
-            const summaryCard = document.getElementById('expense-summary-card');
-            summaryCard.className = 'expense-summary-card p-3 ' + statusCode;
-            
-            // Afficher/cacher les justificatifs
-            const receiptContainer = document.getElementById('receipt-container');
-            const attachmentContainer = document.getElementById('attachment-container');
-            
-            if (hasReceipt) {
-                document.getElementById('modal-receipt-link').href = receiptUrl;
-                receiptContainer.style.display = 'block';
-            } else {
-                receiptContainer.style.display = 'none';
-            }
-            
-            if (hasAttachment) {
-                document.getElementById('modal-attachment-link').href = attachmentUrl;
-                attachmentContainer.style.display = 'block';
-            } else {
-                attachmentContainer.style.display = 'none';
-            }
-            
-            // Afficher/cacher les commentaires
-            const commentContainer = document.getElementById('comment-container');
-            if (comment && comment.trim() !== '') {
-                document.getElementById('modal-comment').textContent = comment;
-                commentContainer.style.display = 'block';
-            } else {
-                commentContainer.style.display = 'none';
-            }
-            
-            // Configurer le bouton d'annulation
-            const cancelBtn = document.getElementById('modal-cancel-btn');
-            if (statusCode === 'pending') {
-                cancelBtn.href = `/cancel-expense/${id}/`;
-                cancelBtn.style.display = 'block';
-            } else {
-                cancelBtn.style.display = 'none';
-            }
-        });
+            // Mettre à jour le modal
+            updateModal({
+                id, description, date, type, vat, project, location, status, statusCode,
+                refacturable, createdAt, comment, hasReceipt, hasAttachment,
+                receiptUrl, attachmentUrl, totalAmount
+            });
+        }
     });
     
-    // Animation au défilement pour les cartes
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in');
-                observer.unobserve(entry.target);
-            }
+    // Animation au défilement optimisée avec IntersectionObserver
+    const animateOnScroll = (entries, observer) => {
+        requestAnimationFrame(() => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                    observer.unobserve(entry.target);
+                }
+            });
         });
-    }, { threshold: 0.1 });
+    };
     
-    document.querySelectorAll('.expense-card').forEach(card => {
+    const observer = new IntersectionObserver(animateOnScroll, { 
+        threshold: 0.1,
+        rootMargin: '50px'
+    });
+    
+    document.querySelectorAll('.expense-card, .stats-card, .empty-state').forEach(card => {
         observer.observe(card);
     });
+    
+    // Fermeture automatique des alertes après 5 secondes
+    const autoCloseAlerts = () => {
+        document.querySelectorAll('.alert').forEach(alert => {
+            setTimeout(() => {
+                const closeButton = alert.querySelector('.btn-close');
+                if (closeButton) {
+                    closeButton.click();
+                }
+            }, 5000);
+        });
+    };
+    
+    // Exécuter la fermeture automatique des alertes
+    autoCloseAlerts();
+    
+    // Préchargement des images pour améliorer les performances
+    function preloadImages() {
+        const imagePaths = [
+            '/static/img/icons/expense.svg',
+            '/static/img/icons/receipt.svg',
+            '/static/img/icons/approved.svg',
+            '/static/img/icons/pending.svg',
+            '/static/img/icons/rejected.svg'
+        ];
+        
+        imagePaths.forEach(path => {
+            const img = new Image();
+            img.src = path;
+        });
+    }
+    
+    // Précharger les images en arrière-plan après le chargement de la page
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(preloadImages);
+    } else {
+        setTimeout(preloadImages, 1000);    }
 });
 </script>
-{% endblock %}
-{% endblock %}
+{% endblock extra_scripts %}
+{% endblock content %}

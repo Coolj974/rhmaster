@@ -134,7 +134,22 @@ def submit_kilometric_expense(request):
 def my_kilometric_expenses(request):
     """Affiche les frais kilométriques de l'utilisateur."""
     expenses = KilometricExpense.objects.filter(user=request.user).order_by("-date")
-    return render(request, "rh_management/my_kilometric_expenses.html", {"expenses": expenses})
+    
+    # Calculer les statistiques
+    from django.db.models import Sum
+    stats = {
+        'total_count': expenses.count(),
+        'pending_count': expenses.filter(status='pending').count(),
+        'total_distance': expenses.aggregate(Sum('distance'))['distance__sum'] or 0,
+        'total_amount': expenses.aggregate(Sum('amount'))['amount__sum'] or 0,
+        'approved_amount': expenses.filter(status='approved').aggregate(Sum('amount'))['amount__sum'] or 0,
+    }
+    
+    return render(request, "rh_management/my_kilometric_expenses.html", {
+        "expenses": expenses,
+        "kilometric_expenses": expenses,  # Ajouter cette variable pour la partie JavaScript
+        "stats": stats
+    })
 
 @login_required
 @user_passes_test(is_admin_or_hr)
@@ -200,6 +215,9 @@ def manage_kilometric_expenses(request):
     """Affiche tous les frais kilométriques pour validation."""
     expenses = KilometricExpense.objects.all().order_by('-date')
     
+    # Frais kilométriques en attente (pending)
+    pending_expenses = expenses.filter(status='pending')
+    
     # Forcer le calcul des montants
     for expense in expenses:
         if not expense.amount or expense.amount == 0:
@@ -214,13 +232,15 @@ def manage_kilometric_expenses(request):
     
     context = {
         'expenses': expenses,
-        'pending_count': expenses.filter(status='pending').count(),
+        'pending_expenses': pending_expenses,  # Ajouter les frais en attente au contexte
+        'all_expenses': expenses,  # Pour la section historique
+        'pending_count': pending_expenses.count(),
         'total_distance': float(total_stats['total_distance'] or 0),
         'total_amount': float(total_stats['total_amount'] or 0),
         'average_distance': float(total_stats['total_distance'] or 0) / expenses.count() if expenses.exists() else 0,
         'new_leave_requests_count': LeaveRequest.objects.filter(status='pending').count(),
         'new_expense_reports_count': ExpenseReport.objects.filter(status='pending').count(),
-        'new_kilometric_expenses_count': expenses.filter(status='pending').count(),
+        'new_kilometric_expenses_count': pending_expenses.count(),
         'is_admin': request.user.is_superuser,
         'is_rh': request.user.is_staff,
         'is_encadrant': request.user.groups.filter(name='Encadrant').exists(),

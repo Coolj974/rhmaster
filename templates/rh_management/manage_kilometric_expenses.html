@@ -177,12 +177,28 @@
     .slide-up {
         animation: slideUp 0.5s ease forwards;
     }
-    
-    /* Styles de la carte */
+      /* Styles de la carte */
     #trip-map {
         height: 300px;
         border-radius: 8px;
         box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.1);
+    }
+    
+    #map-container, .trip-map {
+        height: 300px;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 1;
+        min-height: 250px;
+        width: 100%;
+    }
+    
+    /* Fix pour les cartes dans les modales */
+    .modal.show .trip-map {
+        display: block !important;
+        visibility: visible !important;
+        height: 300px !important;
     }
     
     .user-bubble {
@@ -250,8 +266,12 @@
     .route-path:last-child:before {
         display: none;
     }
+    
+    .print-only {
+        display: none;
+    }
 </style>
-{% endblock %}
+{% endblock extra_css %}
 
 {% block content %}
 <div class="container py-4">
@@ -613,23 +633,32 @@
                                                         <h6 class="mb-0">Carte du trajet</h6>
                                                     </div>
                                                     <div class="card-body">
-                                                        <div id="trip-map-{{ expense.id }}" class="trip-map" style="height: 300px;"></div>
-                                                        <script>
+                                                        <div id="trip-map-{{ expense.id }}" class="trip-map" style="height: 300px;"></div>                                                        <script>
                                                             document.addEventListener('DOMContentLoaded', function() {
                                                                 const mapId = 'trip-map-{{ expense.id }}';
-                                                                const mapElement = document.getElementById(mapId);
                                                                 
                                                                 // Initialiser la carte quand le modal est affiché
                                                                 $('#detailsModal{{ expense.id }}').on('shown.bs.modal', function() {
-                                                                    initTripMap(
-                                                                        mapElement, 
-                                                                        {{ expense.departure_lat|default:"null" }}, 
-                                                                        {{ expense.departure_lng|default:"null" }}, 
-                                                                        {{ expense.arrival_lat|default:"null" }}, 
-                                                                        {{ expense.arrival_lng|default:"null" }},
-                                                                        "{{ expense.departure }}", 
-                                                                        "{{ expense.arrival }}"
-                                                                    );
+                                                                    console.log("Modal détail affiché, initialisation de la carte:", mapId);
+                                                                    const mapElement = document.getElementById(mapId);
+                                                                    
+                                                                    if (!mapElement) {
+                                                                        console.error("Élément carte non trouvé:", mapId);
+                                                                        return;
+                                                                    }
+                                                                    
+                                                                    // Redimensionner le conteneur avant d'initialiser la carte
+                                                                    setTimeout(function() {
+                                                                        initTripMap(
+                                                                            mapElement, 
+                                                                            {{ expense.departure_lat|default:"null" }}, 
+                                                                            {{ expense.departure_lng|default:"null" }}, 
+                                                                            {{ expense.arrival_lat|default:"null" }}, 
+                                                                            {{ expense.arrival_lng|default:"null" }},
+                                                                            "{{ expense.departure }}", 
+                                                                            "{{ expense.arrival }}"
+                                                                        );
+                                                                    }, 100);
                                                                 });
                                                             });
                                                         </script>
@@ -876,22 +905,31 @@
                                                         <h6 class="mb-0">Carte du trajet</h6>
                                                     </div>
                                                     <div class="card-body">
-                                                        <div id="history-map-{{ expense.id }}" class="trip-map" style="height: 300px;"></div>
-                                                        <script>
+                                                        <div id="history-map-{{ expense.id }}" class="trip-map" style="height: 300px;"></div>                                                        <script>
                                                             document.addEventListener('DOMContentLoaded', function() {
                                                                 const mapId = 'history-map-{{ expense.id }}';
-                                                                const mapElement = document.getElementById(mapId);
                                                                 
                                                                 $('#detailsHistoryModal{{ expense.id }}').on('shown.bs.modal', function() {
-                                                                    initTripMap(
-                                                                        mapElement, 
-                                                                        {{ expense.departure_lat|default:"null" }}, 
-                                                                        {{ expense.departure_lng|default:"null" }}, 
-                                                                        {{ expense.arrival_lat|default:"null" }}, 
-                                                                        {{ expense.arrival_lng|default:"null" }},
-                                                                        "{{ expense.departure }}", 
-                                                                        "{{ expense.arrival }}"
-                                                                    );
+                                                                    console.log("Modal historique affiché, initialisation de la carte:", mapId);
+                                                                    const mapElement = document.getElementById(mapId);
+                                                                    
+                                                                    if (!mapElement) {
+                                                                        console.error("Élément carte historique non trouvé:", mapId);
+                                                                        return;
+                                                                    }
+                                                                    
+                                                                    // Redimensionner le conteneur avant d'initialiser la carte
+                                                                    setTimeout(function() {
+                                                                        initTripMap(
+                                                                            mapElement, 
+                                                                            {{ expense.departure_lat|default:"null" }}, 
+                                                                            {{ expense.departure_lng|default:"null" }}, 
+                                                                            {{ expense.arrival_lat|default:"null" }}, 
+                                                                            {{ expense.arrival_lng|default:"null" }},
+                                                                            "{{ expense.departure }}", 
+                                                                            "{{ expense.arrival }}"
+                                                                        );
+                                                                    }, 100);
                                                                 });
                                                             });
                                                         </script>
@@ -978,6 +1016,7 @@
         </div>
     </div>
 </div>
+{% endblock content %}
 
 <!-- Modal pour visualiser un trajet sur la carte -->
 <div class="modal fade" id="viewMapModal" tabindex="-1" aria-labelledby="viewMapModalLabel" aria-hidden="true">
@@ -1017,6 +1056,8 @@
 {% block extra_scripts %}
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
 
 <script>
 // Fonction pour initialiser la carte
@@ -1026,6 +1067,8 @@ function initializeMap(departure, arrival, departureLat, departureLng, arrivalLa
     if (mapContainer._leaflet_id) {
         mapContainer._leaflet_id = null;
     }
+    
+    console.log("Initialisation de la carte principale avec:", departure, arrival);
     
     // Initialiser la carte
     const map = L.map('map-container').setView([46.603354, 1.888334], 5); // Vue centrée sur la France
@@ -1055,8 +1098,7 @@ function initializeMap(departure, arrival, departureLat, departureLng, arrivalLa
         ? L.latLng(arrivalLat, arrivalLng) 
         : L.latLng(45.764043, 4.835659); // Lyon par défaut
     
-    console.log("Departure coordinates:", departurePoint);
-    console.log("Arrival coordinates:", arrivalPoint);
+    console.log("Points de départ et d'arrivée:", departurePoint, arrivalPoint);
     
     // Créer une icône personnalisée pour le point de départ
     const departureIcon = L.divIcon({
@@ -1088,32 +1130,65 @@ function initializeMap(departure, arrival, departureLat, departureLng, arrivalLa
     departureMarker.bindPopup('<strong>Départ</strong><br>' + departure);
     arrivalMarker.bindPopup('<strong>Arrivée</strong><br>' + arrival);
     
-    // Calculer et afficher l'itinéraire
-    const routingControl = L.Routing.control({
-        waypoints: [
-            departurePoint,
-            arrivalPoint
-        ],
-        routeWhileDragging: false,
-        lineOptions: {
-            styles: [{ color: '#3388ff', weight: 6 }]
-        },
-        createMarker: function() { return null; }, // Pas de marqueurs par défaut
-        router: L.Routing.osrmv1({
-            serviceUrl: 'https://router.project-osrm.org/route/v1',
-            profile: 'driving',
-            language: 'fr'
-        }),
-        showAlternatives: false,
-        fitSelectedRoutes: true
-    }).addTo(map);
+    // Calculer et afficher l'itinéraire si Leaflet Routing Machine est chargé
+    if (typeof L.Routing !== 'undefined') {
+        console.log("Utilisation de Leaflet Routing Machine pour l'itinéraire");
+        const routingControl = L.Routing.control({
+            waypoints: [
+                departurePoint,
+                arrivalPoint
+            ],
+            routeWhileDragging: false,
+            lineOptions: {
+                styles: [{ color: '#3388ff', weight: 6 }]
+            },
+            createMarker: function() { return null; }, // Pas de marqueurs par défaut
+            router: L.Routing.osrmv1({
+                serviceUrl: 'https://router.project-osrm.org/route/v1',
+                profile: 'driving',
+                language: 'fr'
+            }),
+            showAlternatives: false,
+            fitSelectedRoutes: true
+        }).addTo(map);
+        
+        // Masquer le panneau d'instructions d'itinéraire
+        routingControl.hide();
+    } else {
+        console.warn("L.Routing n'est pas disponible, traçage d'une ligne simple");
+        // Tracer une ligne simple entre les points
+        L.polyline([departurePoint, arrivalPoint], {color: '#3388ff', weight: 6}).addTo(map);
+        
+        // Ajuster la vue manuellement
+        const bounds = L.latLngBounds([departurePoint, arrivalPoint]);
+        map.fitBounds(bounds, { padding: [50, 50] });
+    }
     
-    // Masquer le panneau d'instructions d'itinéraire
-    routingControl.hide();
-    
-    // Ajuster la vue pour inclure tout l'itinéraire
-    const bounds = L.latLngBounds([departurePoint, arrivalPoint]);
-    map.fitBounds(bounds, { padding: [50, 50] });
+    // Forcer une mise à jour de la taille de la carte après un court délai
+    setTimeout(function() {
+        console.log("Invalidation de la taille de la carte", mapElement.id);
+        try {
+            map.invalidateSize(true);
+            
+            // Ajuster la vue pour bien montrer les marqueurs
+            const bounds = L.latLngBounds([departurePoint, arrivalPoint]);
+            map.fitBounds(bounds, { padding: [50, 50] });
+            
+            // Vérifier si la carte est visible et a une taille non nulle
+            const mapSize = map.getSize();
+            console.log("Taille de la carte:", mapSize);
+            if (mapSize.x === 0 || mapSize.y === 0) {
+                console.warn("Carte de taille nulle, tentative de redimensionnement forcé");
+                // Forcer une seconde mise à jour après un délai plus long
+                setTimeout(function() {
+                    map.invalidateSize(true);
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }, 500);
+            }
+        } catch (e) {
+            console.error("Erreur lors de l'invalidation de la taille de la carte:", e);
+        }
+    }, 200);
     
     return map;
 }
@@ -1122,7 +1197,12 @@ function initializeMap(departure, arrival, departureLat, departureLng, arrivalLa
 function showMapModal(id) {
     // Récupérer les données du trajet
     const expense = expenses.find(exp => exp.id === parseInt(id));
-    if (!expense) return;
+    if (!expense) {
+        console.error("Frais kilométrique non trouvé avec l'ID:", id);
+        return;
+    }
+    
+    console.log("Affichage du modal pour le trajet:", expense);
     
     // Mettre à jour les informations du modal
     document.getElementById('viewMapModalLabel').textContent = 'Trajet du ' + expense.date;
@@ -1137,15 +1217,25 @@ function showMapModal(id) {
     
     // Initialiser la carte après l'affichage du modal
     document.getElementById('viewMapModal').addEventListener('shown.bs.modal', function () {
-        initializeMap(
-            expense.departure,
-            expense.arrival,
-            expense.departure_lat,
-            expense.departure_lng,
-            expense.arrival_lat,
-            expense.arrival_lng
-        );
-    });
+        console.log("Modal carte principal affiché, initialisation de la carte");
+        // Nettoyage préventif pour éviter les problèmes d'initialisation multiple
+        const mapContainer = document.getElementById('map-container');
+        if (mapContainer._leaflet_id) {
+            console.log("Nettoyage de la carte existante avant réinitialisation");
+            mapContainer._leaflet_id = null;
+        }
+        
+        setTimeout(function() {
+            initializeMap(
+                expense.departure,
+                expense.arrival,
+                expense.departure_lat,
+                expense.departure_lng,
+                expense.arrival_lat,
+                expense.arrival_lng
+            );
+        }, 100);
+    }, { once: true });
 }
 
 // Liste des dépenses pour la carte (remplie dynamiquement)
@@ -1167,13 +1257,247 @@ const expenses = [
         fiscal_power: "{{ expense.fiscal_power }}",
         status: "{{ expense.status }}"
     }{% if not forloop.last %},{% endif %}
-    {% endfor %};
+    {% endfor %}
+];
 
-// Attacher l'événement aux boutons de visualisation
-document.querySelectorAll('.view-map-btn').forEach(button => {
-    button.addEventListener('click', function() {
-        const expenseId = this.getAttribute('data-id');
-        showMapModal(expenseId);    });
+// Fonction pour initialiser une carte dans une modale de détails
+function initTripMap(mapElement, departureLat, departureLng, arrivalLat, arrivalLng, departure, arrival) {
+    console.log("Initialisation de la carte dans le modal de détails", mapElement ? mapElement.id : 'élément non défini');
+    
+    // Vérifier si l'élément existe
+    if (!mapElement) {
+        console.error("L'élément de carte n'existe pas");
+        return;
+    }
+    
+    // Nettoyer la carte existante si elle existe
+    if (mapElement._leaflet_id) {
+        console.log("Nettoyage de la carte existante");
+        mapElement._leaflet_id = null;
+    }
+    
+    // Initialiser la carte
+    const map = L.map(mapElement.id).setView([46.603354, 1.888334], 5); // Vue centrée sur la France
+    
+    // Ajouter le layer de carte OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(map);
+    
+    // S'assurer que les coordonnées sont des nombres
+    departureLat = parseFloat(departureLat);
+    departureLng = parseFloat(departureLng);
+    arrivalLat = parseFloat(arrivalLat);
+    arrivalLng = parseFloat(arrivalLng);
+    
+    console.log("Départ coords:", departureLat, departureLng);
+    console.log("Arrivée coords:", arrivalLat, arrivalLng);
+    
+    // Vérifier si les coordonnées sont valides
+    const validDepartureCoords = !isNaN(departureLat) && !isNaN(departureLng);
+    const validArrivalCoords = !isNaN(arrivalLat) && !isNaN(arrivalLng);
+    
+    // Utiliser des coordonnées par défaut si nécessaire
+    const departurePoint = validDepartureCoords 
+        ? L.latLng(departureLat, departureLng) 
+        : L.latLng(48.864716, 2.349014); // Paris par défaut
+    
+    const arrivalPoint = validArrivalCoords 
+        ? L.latLng(arrivalLat, arrivalLng) 
+        : L.latLng(45.764043, 4.835659); // Lyon par défaut
+    
+    // Créer une icône personnalisée pour le point de départ
+    const departureIcon = L.divIcon({
+        html: '<i class="fas fa-circle text-success" style="font-size: 14px;"></i>',
+        className: 'map-custom-icon',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+    
+    // Créer une icône personnalisée pour le point d'arrivée
+    const arrivalIcon = L.divIcon({
+        html: '<i class="fas fa-circle text-danger" style="font-size: 14px;"></i>',
+        className: 'map-custom-icon',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+    
+    // Ajouter le marqueur de départ
+    const departureMarker = L.marker(departurePoint, {
+        icon: departureIcon
+    }).addTo(map);
+    
+    // Ajouter le marqueur d'arrivée
+    const arrivalMarker = L.marker(arrivalPoint, {
+        icon: arrivalIcon
+    }).addTo(map);
+    
+    // Ajouter des popups pour les marqueurs
+    departureMarker.bindPopup('<strong>Départ</strong><br>' + departure);
+    arrivalMarker.bindPopup('<strong>Arrivée</strong><br>' + arrival);
+    
+    // Calculer et afficher l'itinéraire si Leaflet Routing Machine est chargé
+    if (typeof L.Routing !== 'undefined') {
+        console.log("Utilisation de Leaflet Routing Machine pour l'itinéraire");
+        const routingControl = L.Routing.control({
+            waypoints: [
+                departurePoint,
+                arrivalPoint
+            ],
+            routeWhileDragging: false,
+            lineOptions: {
+                styles: [{ color: '#3388ff', weight: 6 }]
+            },
+            createMarker: function() { return null; }, // Pas de marqueurs par défaut
+            router: L.Routing.osrmv1({
+                serviceUrl: 'https://router.project-osrm.org/route/v1',
+                profile: 'driving',
+                language: 'fr'
+            }),
+            showAlternatives: false,
+            fitSelectedRoutes: true
+        }).addTo(map);
+        
+        // Masquer le panneau d'instructions d'itinéraire
+        routingControl.hide();
+    } else {
+        console.warn("L.Routing n'est pas disponible, traçage d'une ligne simple");
+        // Tracer une ligne simple entre les points
+        L.polyline([departurePoint, arrivalPoint], {color: '#3388ff', weight: 6}).addTo(map);
+        
+        // Ajuster la vue manuellement
+        const bounds = L.latLngBounds([departurePoint, arrivalPoint]);
+        map.fitBounds(bounds, { padding: [50, 50] });
+    }
+    
+    // Forcer une mise à jour de la taille de la carte après un court délai
+    setTimeout(function() {
+        console.log("Invalidation de la taille de la carte", mapElement.id);
+        try {
+            map.invalidateSize(true);
+            
+            // Ajuster la vue pour bien montrer les marqueurs
+            const bounds = L.latLngBounds([departurePoint, arrivalPoint]);
+            map.fitBounds(bounds, { padding: [50, 50] });
+            
+            // Vérifier si la carte est visible et a une taille non nulle
+            const mapSize = map.getSize();
+            console.log("Taille de la carte:", mapSize);
+            if (mapSize.x === 0 || mapSize.y === 0) {
+                console.warn("Carte de taille nulle, tentative de redimensionnement forcé");
+                // Forcer une seconde mise à jour après un délai plus long
+                setTimeout(function() {
+                    map.invalidateSize(true);
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }, 500);
+            }
+        } catch (e) {
+            console.error("Erreur lors de l'invalidation de la taille de la carte:", e);
+        }
+    }, 200);
+    
+    // Ajouter un événement de redimensionnement pour ajuster la carte
+    window.addEventListener('resize', function() {
+        setTimeout(function() {
+            map.invalidateSize();
+        }, 200);
+    });
+    
+    return map;
+}
+
+// Fonction pour précharger les ressources Leaflet
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Initialisation du préchargement de Leaflet et des événements");
+    
+    // Attacher l'événement aux boutons de visualisation
+    document.querySelectorAll('.view-map-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const expenseId = this.getAttribute('data-id');
+            console.log("Bouton de carte cliqué pour l'ID:", expenseId);
+            showMapModal(expenseId);
+        });
+    });
+    
+    // Précharger les dépendances Leaflet Routing Machine si elles ne sont pas déjà chargées
+    if (typeof L !== 'undefined' && typeof L.Routing === 'undefined') {
+        console.log("Préchargement de Leaflet Routing Machine");
+        const routingStyle = document.createElement('link');
+        routingStyle.rel = 'stylesheet';
+        routingStyle.href = 'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css';
+        document.head.appendChild(routingStyle);
+        
+        const routingScript = document.createElement('script');
+        routingScript.src = 'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js';
+        document.head.appendChild(routingScript);
+    }
+    
+    // Initialiser les événements des modales de détails
+    document.querySelectorAll('[id^="detailsModal"]').forEach(modal => {
+        modal.addEventListener('show.bs.modal', function(event) {
+            console.log("Modale de détails en cours d'ouverture:", modal.id);
+        });
+    });
+    
+    // Initialiser les événements des modales d'historique
+    document.querySelectorAll('[id^="detailsHistoryModal"]').forEach(modal => {
+        modal.addEventListener('show.bs.modal', function(event) {
+            console.log("Modale d'historique en cours d'ouverture:", modal.id);
+        });
+    });
 });
+
+// Fonction pour inspecter et réparer les conteneurs de carte
+function checkMapContainers() {
+    console.log("Vérification des conteneurs de carte...");
+    
+    // Vérifier tous les conteneurs de carte
+    document.querySelectorAll('.trip-map, #map-container').forEach(container => {
+        const computedStyle = window.getComputedStyle(container);
+        console.log("Conteneur:", container.id, "Style calculé:", {
+            display: computedStyle.display,
+            visibility: computedStyle.visibility,
+            height: computedStyle.height,
+            width: computedStyle.width
+        });
+        
+        // Forcer les styles si nécessaire
+        if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden' || 
+            computedStyle.height === '0px' || computedStyle.width === '0px') {
+            console.warn("Conteneur caché ou de taille nulle, tentative de réparation:", container.id);
+            container.style.display = 'block';
+            container.style.visibility = 'visible';
+            container.style.height = '300px';
+            container.style.width = '100%';
+        }
+    });
+}
+
+// Vérifier les conteneurs après le chargement et quand une modale est affichée
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(checkMapContainers, 1000);
+    
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('shown.bs.modal', function() {
+            setTimeout(checkMapContainers, 100);
+        });
+    });
+});
+
+// Documentation des problèmes et des solutions pour la carte Leaflet
+/*
+Problèmes identifiés:
+1. La fonction initTripMap() était appelée dans les modales mais n'était pas définie
+2. Leaflet Routing Machine n'était pas correctement chargé
+3. La carte ne se redimensionnait pas correctement dans les modales
+
+Solutions implémentées:
+1. Ajout de la fonction initTripMap()
+2. Chargement de Leaflet Routing Machine et fallback si non disponible
+3. Utilisation de map.invalidateSize() pour forcer la mise à jour de la taille
+4. Ajout de logs pour faciliter le débogage
+5. Vérification de l'existence des éléments DOM et des coordonnées valides
+*/
 </script>
-{% endblock %}
+{% endblock extra_scripts %}

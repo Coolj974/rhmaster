@@ -15,10 +15,10 @@ from rh_management.views import (
     reset_password,
     submit_kilometric_expense, my_kilometric_expenses, manage_kilometric_expenses,
     approve_kilometric_expense, reject_kilometric_expense, edit_kilometric_expense,
-    cancel_kilometric_expense,
+    cancel_kilometric_expense, approve_all_kilometric_expenses,
     export_expenses, export_expenses_excel, export_expenses_pdf, export_leaves,
     delete_leave, delete_expense, delete_kilometric_expense,
-    dashboard_filtered, my_leaves, my_expenses_view,
+    dashboard_filtered, my_leaves, my_expenses_view, approve_all_expenses,
     # Important - explicitly import these two views
     manage_roles_view, delete_role,
     # Password Manager views
@@ -162,6 +162,7 @@ urlpatterns = [
     path("cancel-expense/<int:expense_id>/", cancel_expense, name="cancel_expense"),
     path('delete_expense/<int:id>/', delete_expense, name='delete_expense'),
     path('expense-action/<int:expense_id>/', expense_action, name='expense_action'),
+    path('approve-all-expenses/', approve_all_expenses, name='approve_all_expenses'),  # Approuver toutes les notes de frais
 
     # Kilometric Expense Management
     path("submit-kilometric-expense/", submit_kilometric_expense, name="submit_kilometric_expense"),  # Submit kilometric expense
@@ -173,6 +174,7 @@ urlpatterns = [
     path("cancel-kilometric-expense/<int:expense_id>/", cancel_kilometric_expense, name="cancel_kilometric_expense"),  # Ajout de cette ligne
     path('delete_kilometric_expense/<int:id>/', delete_kilometric_expense, name='delete_kilometric_expense'),
     path('kilometric-expense-action/<int:expense_id>/', kilometric_expense_action, name='kilometric_expense_action'),
+    path('approve-all-kilometric-expenses/', approve_all_kilometric_expenses, name='approve_all_kilometric_expenses'),  # Approuver tous les frais kilométriques
     path('export-kilometric-expenses/', export_kilometric_expenses, name='export_kilometric_expenses'),  # Nouvelle URL pour exporter les frais kilométriques
     
     # Password Manager
