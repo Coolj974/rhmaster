@@ -31,6 +31,10 @@ from rh_management.views import (
     export_leave_balances, get_leave_balance_history, adjust_leave_balance, adjust_collective_leave_balance
 )
 
+# Import les nouvelles vues d'historique
+from rh_management.views.expense_views import expense_history, admin_expense_history
+from rh_management.views.leave_views import leave_history, admin_leave_history
+
 # Import les nouvelles vues de notification
 from rh_management.views.notification_views import (
     notifications_view, mark_notification_read, mark_all_read,
@@ -209,7 +213,11 @@ urlpatterns = [
 
     # API
     path("api/leaves/", api_leaves, name="api_leaves"),
-    path('api/dashboard-stats/', dashboard_stats_api, name='dashboard_stats_api'),
+    path('api/dashboard-stats/', dashboard_stats_api, name='dashboard_stats_api'),    # Historiques
+    path("expense-history/", expense_history, name="expense_history"),  # Historique des notes de frais
+    path("leave-history/", leave_history, name="leave_history"),  # Historique des demandes de congé
+    path("admin-leave-history/", admin_leave_history, name="admin_leave_history"),  # Historique admin des congés
+    path("admin-expense-history/", admin_expense_history, name="admin_expense_history"),  # Historique admin des notes de frais
 ]
 
 # Add static and media URL patterns

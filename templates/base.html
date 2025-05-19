@@ -4,72 +4,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CybeRH - Application de gestion des ressources humaines">
+    <meta name="theme-color" content="#3b7ddd">
     <title>CybeRH</title>
     
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Préchargement des ressources critiques -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     
-    <!-- Font Awesome (version plus légère) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Bootstrap CSS avec intégrité pour sécurité -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" 
+          rel="stylesheet" 
+          integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" 
+          crossorigin="anonymous">
     
+    <!-- Font Awesome (version optimisée) -->
+    <link rel="stylesheet" 
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" 
+          integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" 
+          crossorigin="anonymous" 
+          referrerpolicy="no-referrer">
+    
+    <!-- Chargement conditionnel des ressources de carte -->
+    {% if 'kilometric' in request.path %}
     <!-- OpenStreetMap resources with Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
-          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <!-- Leaflet Routing Machine pour calculer les itinéraires -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin="">
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+          crossorigin=""></script>    <!-- Leaflet Routing Machine pour calculer les itinéraires -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css">
+    <script defer src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
     <!-- Leaflet Control Geocoder pour la recherche d'adresses -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css" />
-    <script src="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.min.js"></script>
-
-    <style>
-        /* CSS minimaliste pour une meilleure performance */        body {
-            background-color: #f8f9fa;
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css">
+    <script defer src="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.min.js"></script>
+    {% endif %}    <style>
+        /* CSS optimisé avec variables pour cohérence et performance */
+        :root {
+            --primary-color: #3b7ddd;
+            --primary-dark: #2c62b9;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --transition-speed: 0.2s;
+        }
+        
+        body {
+            background-color: var(--light-color);
             color: #333;
             font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.5;
         }
         
         /* Amélioration de la navbar */
         .navbar {
             background-color: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: var(--box-shadow);
             padding: 0.6rem 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 1030;
         }
-        
-        .navbar-brand {
+          .navbar-brand {
             font-weight: 600;
-            color: #3b7ddd;
-            transition: color 0.2s;
+            color: var(--primary-color);
+            transition: color var(--transition-speed);
             font-size: 1.25rem;
             letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
         }
         
         .navbar-brand:hover {
-            color: #2c62b9;
+            color: var(--primary-dark);
         }
         
         /* Amélioration des liens de navigation */
         .nav-link {
             color: #495057;
-            padding: 0.8rem 1rem;  /* Plus grand pour meilleure ergonomie */
+            padding: 0.8rem 1rem;
             position: relative;
-            transition: all 0.2s ease;
-            border-radius: 6px;   /* Plus arrondi */
+            transition: all var(--transition-speed) ease;
+            border-radius: var(--border-radius);
             font-weight: 500;
             display: flex;
             align-items: center;
         }
-        
-        .nav-link:hover {
-            color: #3b7ddd;
+          .nav-link:hover {
+            color: var(--primary-color);
             background-color: rgba(59, 125, 221, 0.05);
             transform: translateY(-1px);
         }
         
         .nav-link.active {
-            color: #3b7ddd;
+            color: var(--primary-color);
             font-weight: 600;
             background-color: rgba(59, 125, 221, 0.1);
         }
@@ -81,20 +115,22 @@
             text-align: center;
             margin-right: 8px;
             opacity: 0.8;
+            transition: opacity var(--transition-speed);
         }
         
         .nav-link:hover i {
             opacity: 1;
         }
-        
-        /* Menu déroulant amélioré et simplifié */        .dropdown-menu {
+          /* Menu déroulant amélioré et optimisé */
+        .dropdown-menu {
             border: none;
             box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
-            border-radius: 8px;
+            border-radius: var(--border-radius);
             padding: 0.75rem 0.5rem;
-            min-width: 240px; /* Légèrement plus large */
+            min-width: 240px;
             margin-top: 8px;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            will-change: opacity, transform;
         }
         
         .dropdown-item {
@@ -103,6 +139,8 @@
             transition: all 0.15s ease;
             color: #495057;
             font-weight: 500;
+            display: flex;
+            align-items: center;
         }
         
         .dropdown-item:hover {
@@ -667,8 +705,10 @@
     </div>
 </footer>
 
-<!-- Bootstrap JS (version compacte pour performance) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Bootstrap JS avec intégrité et chargement différé -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" 
+        integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" 
+        crossorigin="anonymous" defer></script>
 
 <!-- Scripts spécifiques par page -->
 {% block extra_scripts %}
@@ -1002,10 +1042,26 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+      // Système de cache pour les notifications
+    let notificationCache = null;
+    let notificationLastFetch = 0;
     
-    // Charger les notifications au chargement de la page
-    if (document.getElementById('notificationsContainer')) {
-        // Attendre que le DOM soit complètement chargé
+    // Charger les notifications avec gestion de cache
+    function loadNotifications() {
+        const container = document.getElementById('notificationsContainer');
+        if (!container) return;
+        
+        // Vérifier la validité du cache (30 secondes)
+        const now = Date.now();
+        if (notificationCache && now - notificationLastFetch < 30000) {
+            updateNotifications(notificationCache);
+            return;
+        }
+        
+        if (container.dataset.loading === 'true') return;
+        container.dataset.loading = 'true';
+        
+        // Continuer avec la requête si pas de cache valide
         setTimeout(() => {
             loadNotifications();
         }, 500);
@@ -1015,17 +1071,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const notificationsDropdown = document.getElementById('notificationsDropdown');
     if (notificationsDropdown) {
         notificationsDropdown.addEventListener('click', function(e) {
-            e.preventDefault();
-            // Charger les notifications lors de l'ouverture du dropdown
             loadNotifications();
         });
     }
     
-    // Rafraîchir les notifications périodiquement (toutes les 2 minutes)
+    // Système de rafraîchissement intelligent
     if (document.getElementById('notificationsContainer')) {
-        // Utiliser un système de rafraîchissement plus intelligent
-        let lastRefreshTime = Date.now();
-        let isPageActive = true;
+        let isPageActive = !document.hidden;
         let refreshInterval;
         
         // Fonction pour gérer le rafraîchissement

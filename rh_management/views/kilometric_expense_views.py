@@ -413,7 +413,7 @@ def approve_all_kilometric_expenses(request):
             user=expense.user,
             title="Frais kilométrique approuvé",
             message=f"Votre trajet de {expense.distance} km entre {expense.departure} et {expense.arrival} a été approuvé pour un montant de {expense.amount} €.",
-            link_url="/my-kilometric-expenses/",
+            url="/my-kilometric-expenses/",
             icon="fa-route"
         )
     

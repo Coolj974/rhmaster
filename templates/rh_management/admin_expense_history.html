@@ -1,0 +1,694 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block extra_css %}
+<style>
+    /* Styles pour la page d'historique des notes de frais - version admin */
+    .history-header {
+        padding: 1rem 0;
+        margin-bottom: 1.5rem;
+    }
+    
+    .filter-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        margin-bottom: 2rem;
+        border: none;
+    }
+    
+    .filter-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .expense-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.15rem 1.25rem rgba(0,0,0,0.075);
+        border: none;
+    }
+    
+    .expense-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
+    }
+    
+    .expense-card .card-header {
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #fff;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .expense-card .status-badge {
+        padding: 0.35rem 0.85rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .expense-card .card-body {
+        padding: 1.25rem;
+    }
+    
+    .expense-details {
+        margin-bottom: 1.25rem;
+    }
+    
+    .expense-details .detail-label {
+        color: #6c757d;
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .expense-details .detail-value {
+        font-weight: 600;
+    }
+    
+    .stats-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+        border: none;
+        overflow: hidden;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .stats-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .stats-header {
+        margin-bottom: 1rem;
+        color: #5a5c69;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    
+    .stats-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+    
+    .stats-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .status-pending {
+        background-color: rgba(246, 194, 62, 0.15);
+        color: #f6c23e;
+    }
+    
+    .status-approved {
+        background-color: rgba(28, 200, 138, 0.15);
+        color: #1cc88a;
+    }
+    
+    .status-rejected {
+        background-color: rgba(231, 74, 59, 0.15);
+        color: #e74a3b;
+    }
+    
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .page-link {
+        border-radius: 5px;
+        margin: 0 3px;
+        color: #4e73df;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .page-item.active .page-link {
+        background-color: #4e73df;
+        border-color: #4e73df;
+    }
+    
+    .filter-form .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .filter-form select,
+    .filter-form input {
+        border-radius: 8px;
+    }
+    
+    /* Animation pour les cartes */
+    @keyframes fadeInUp {
+        from { 
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to { 
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-fade-in-up {
+        animation: fadeInUp 0.5s ease forwards;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- En-tête de la page -->
+    <div class="d-sm-flex align-items-center justify-content-between history-header">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-history me-2"></i>Historique des notes de frais</h1>
+        <div>
+            <a href="{% url 'manage_expenses' %}" class="btn btn-primary shadow-sm me-2">
+                <i class="fas fa-file-invoice-dollar me-1"></i> Gestion des notes
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm">
+                <i class="fas fa-arrow-left me-1"></i> Tableau de bord
+            </a>
+        </div>
+    </div>
+
+    <!-- Cartes de statistiques -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card animate-fade-in-up" style="animation-delay: 0.1s;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-primary">TOTAL NOTES</div>
+                            <div class="stats-value">{{ stats.total_count }}</div>
+                            <div class="text-xs text-muted">notes soumises</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="fas fa-file-invoice"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card animate-fade-in-up" style="animation-delay: 0.2s;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-success">APPROUVÉES</div>
+                            <div class="stats-value">{{ stats.approved_count }}</div>
+                            <div class="text-xs text-muted">notes approuvées</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-success bg-opacity-10 text-success">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card animate-fade-in-up" style="animation-delay: 0.3s;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-warning">EN ATTENTE</div>
+                            <div class="stats-value">{{ stats.pending_count }}</div>
+                            <div class="text-xs text-muted">notes en attente</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card animate-fade-in-up" style="animation-delay: 0.4s;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stats-header text-info">MONTANT TOTAL</div>
+                            <div class="stats-value">{{ stats.total_amount|floatformat:2 }}€</div>
+                            <div class="text-xs text-muted">toutes notes confondues</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stats-icon bg-info bg-opacity-10 text-info">
+                                <i class="fas fa-euro-sign"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtre avancé -->
+    <div class="card filter-card mb-4 animate-fade-in-up" style="animation-delay: 0.5s;">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-filter me-2"></i>Filtres avancés</h6>
+            <div class="dropdown no-arrow">
+                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="dropdownMenuLink">
+                    <a class="dropdown-item" href="?"><i class="fas fa-undo me-2"></i>Réinitialiser les filtres</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <form action="" method="GET" class="filter-form">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="user">Employé</label>
+                            <select class="form-select" name="user" id="user">
+                                <option value="">Tous les employés</option>
+                                {% for user in all_users %}
+                                    <option value="{{ user.id }}" {% if filters.user_id == user.id %}selected{% endif %}>
+                                        {{ user.get_full_name|default:user.username }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="status">Statut</label>
+                            <select class="form-select" name="status" id="status">
+                                <option value="">Tous les statuts</option>
+                                <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>En attente</option>
+                                <option value="approved" {% if filters.status == 'approved' %}selected{% endif %}>Approuvé</option>
+                                <option value="rejected" {% if filters.status == 'rejected' %}selected{% endif %}>Refusé</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="expense_type">Type de note</label>
+                            <select class="form-select" name="expense_type" id="expense_type">
+                                <option value="">Tous les types</option>
+                                <option value="meal" {% if filters.expense_type == 'meal' %}selected{% endif %}>Repas</option>
+                                <option value="transport" {% if filters.expense_type == 'transport' %}selected{% endif %}>Transport</option>
+                                <option value="hotel" {% if filters.expense_type == 'hotel' %}selected{% endif %}>Hôtel</option>
+                                <option value="fuel" {% if filters.expense_type == 'fuel' %}selected{% endif %}>Carburant</option>
+                                <option value="other" {% if filters.expense_type == 'other' %}selected{% endif %}>Autre</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="project">Projet</label>
+                            <input type="text" class="form-control" name="project" id="project" value="{{ filters.project }}" placeholder="Filtrer par projet">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="refacturable">Refacturable</label>
+                            <select class="form-select" name="refacturable" id="refacturable">
+                                <option value="">Tous</option>
+                                <option value="1" {% if filters.refacturable == '1' %}selected{% endif %}>Oui</option>
+                                <option value="0" {% if filters.refacturable == '0' %}selected{% endif %}>Non</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="start_date">Date de début</label>
+                            <input type="date" class="form-control" name="start_date" id="start_date" value="{{ filters.start_date }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="end_date">Date de fin</label>
+                            <input type="date" class="form-control" name="end_date" id="end_date" value="{{ filters.end_date }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="sort_by">Trier par</label>
+                            <select class="form-select" name="sort_by" id="sort_by">
+                                <option value="-date" {% if filters.sort_by == '-date' %}selected{% endif %}>Date (récent)</option>
+                                <option value="date" {% if filters.sort_by == 'date' %}selected{% endif %}>Date (ancien)</option>
+                                <option value="-created_at" {% if filters.sort_by == '-created_at' %}selected{% endif %}>Date de création (récent)</option>
+                                <option value="created_at" {% if filters.sort_by == 'created_at' %}selected{% endif %}>Date de création (ancien)</option>
+                                <option value="-amount" {% if filters.sort_by == '-amount' %}selected{% endif %}>Montant (décroissant)</option>
+                                <option value="amount" {% if filters.sort_by == 'amount' %}selected{% endif %}>Montant (croissant)</option>
+                                <option value="user__username" {% if filters.sort_by == 'user__username' %}selected{% endif %}>Employé (A-Z)</option>
+                                <option value="-user__username" {% if filters.sort_by == '-user__username' %}selected{% endif %}>Employé (Z-A)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 text-end">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Appliquer</button>
+                    <a href="?" class="btn btn-outline-secondary ms-2"><i class="fas fa-undo me-1"></i>Réinitialiser</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if expenses %}
+        <!-- Tableau des notes de frais -->
+        <div class="card mb-4 animate-fade-in-up" style="animation-delay: 0.6s;">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-list me-2"></i>Historique des notes de frais</h6>
+                <span class="badge bg-primary">{{ expenses.paginator.count }} note(s)</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Employé</th>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Type</th>
+                                <th>Montant</th>
+                                <th>Projet</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in expenses %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if expense.user.profile.picture %}
+                                            <img src="{{ expense.user.profile.picture.url }}" class="rounded-circle me-2" width="30" height="30" alt="{{ expense.user.username }}">
+                                        {% else %}
+                                            <div class="rounded-circle me-2 bg-primary text-white d-flex align-items-center justify-content-center" style="width:30px;height:30px">{{ expense.user.first_name|first|upper }}</div>
+                                        {% endif %}
+                                        <div>{{ expense.user.get_full_name|default:expense.user.username }}</div>
+                                    </div>
+                                </td>
+                                <td>{{ expense.date|date:"d/m/Y" }}</td>
+                                <td>{{ expense.description|truncatechars:30 }}</td>
+                                <td>
+                                    {% if expense.expense_type == 'meal' %}
+                                    <span class="badge bg-info">Repas</span>
+                                    {% elif expense.expense_type == 'transport' %}
+                                    <span class="badge bg-primary">Transport</span>
+                                    {% elif expense.expense_type == 'hotel' %}
+                                    <span class="badge bg-secondary">Hôtel</span>
+                                    {% elif expense.expense_type == 'fuel' %}
+                                    <span class="badge bg-dark">Carburant</span>
+                                    {% else %}
+                                    <span class="badge bg-light text-dark">Autre</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ expense.amount|floatformat:2 }} €</td>
+                                <td>{{ expense.project|default:"-"|truncatechars:15 }}</td>
+                                <td>
+                                    {% if expense.status == 'pending' %}
+                                    <span class="status-badge status-pending">En attente</span>
+                                    {% elif expense.status == 'approved' %}
+                                    <span class="status-badge status-approved">Approuvé</span>
+                                    {% elif expense.status == 'rejected' %}
+                                    <span class="status-badge status-rejected">Refusé</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary view-details" data-bs-toggle="modal" data-bs-target="#expenseModal{{ expense.id }}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    {% if expense.status == 'pending' %}
+                                    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#approveModal{{ expense.id }}">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ expense.id }}">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container">
+            <ul class="pagination">
+                {% if expenses.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if filters.query_string %}&{{ filters.query_string }}{% endif %}" aria-label="Première page">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ expenses.previous_page_number }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}" aria-label="Précédent">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for i in expenses.paginator.page_range %}
+                    {% if expenses.number == i %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                    {% elif i > expenses.number|add:'-3' and i < expenses.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">{{ i }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if expenses.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ expenses.next_page_number }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}" aria-label="Suivant">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ expenses.paginator.num_pages }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}" aria-label="Dernière page">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <!-- Modal pour chaque note de frais -->
+        {% for expense in expenses %}
+        <!-- Modal Détails -->
+        <div class="modal fade" id="expenseModal{{ expense.id }}" tabindex="-1" aria-labelledby="expenseModalLabel{{ expense.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="expenseModalLabel{{ expense.id }}">Détails de la note de frais</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="expense-details">
+                            <div class="mb-3">
+                                <div class="detail-label">Employé</div>
+                                <div class="detail-value">{{ expense.user.get_full_name|default:expense.user.username }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="detail-label">Description</div>
+                                <div class="detail-value">{{ expense.description }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="detail-label">Type</div>
+                                <div class="detail-value">
+                                    {% if expense.expense_type == 'meal' %}
+                                        Repas
+                                    {% elif expense.expense_type == 'transport' %}
+                                        Transport
+                                    {% elif expense.expense_type == 'hotel' %}
+                                        Hôtel
+                                    {% elif expense.expense_type == 'fuel' %}
+                                        Carburant
+                                    {% else %}
+                                        Autre
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="detail-label">Date</div>
+                                <div class="detail-value">{{ expense.date|date:"d/m/Y" }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="detail-label">Montant</div>
+                                <div class="detail-value">{{ expense.amount|floatformat:2 }} €</div>
+                            </div>
+                            {% if expense.vat %}
+                            <div class="mb-3">
+                                <div class="detail-label">TVA</div>
+                                <div class="detail-value">{{ expense.vat }}%</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="detail-label">Montant TTC</div>
+                                <div class="detail-value">{{ expense.amount|add:expense.amount|multiply:expense.vat|divide:100|floatformat:2 }} €</div>
+                            </div>
+                            {% endif %}
+                            {% if expense.project %}
+                            <div class="mb-3">
+                                <div class="detail-label">Projet</div>
+                                <div class="detail-value">{{ expense.project }}</div>
+                            </div>
+                            {% endif %}
+                            {% if expense.location %}
+                            <div class="mb-3">
+                                <div class="detail-label">Lieu</div>
+                                <div class="detail-value">{{ expense.location }}</div>
+                            </div>
+                            {% endif %}
+                            <div class="mb-3">
+                                <div class="detail-label">Refacturable</div>
+                                <div class="detail-value">{% if expense.refacturable %}Oui{% else %}Non{% endif %}</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="detail-label">Statut</div>
+                                <div class="detail-value">
+                                    {% if expense.status == 'pending' %}
+                                    <span class="badge bg-warning">En attente</span>
+                                    {% elif expense.status == 'approved' %}
+                                    <span class="badge bg-success">Approuvé</span>
+                                    {% elif expense.status == 'rejected' %}
+                                    <span class="badge bg-danger">Refusé</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="detail-label">Date de création</div>
+                                <div class="detail-value">{{ expense.created_at|date:"d/m/Y H:i" }}</div>
+                            </div>
+                            {% if expense.comment %}
+                            <div class="mb-3">
+                                <div class="detail-label">Commentaire</div>
+                                <div class="detail-value">{{ expense.comment }}</div>
+                            </div>
+                            {% endif %}
+                            {% if expense.receipt %}
+                            <div class="mb-3">
+                                <div class="detail-label">Justificatif</div>
+                                <div class="detail-value">
+                                    <a href="{{ expense.receipt.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i> Télécharger
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if expense.attachment %}
+                            <div class="mb-3">
+                                <div class="detail-label">Pièce jointe</div>
+                                <div class="detail-value">
+                                    <a href="{{ expense.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i> Télécharger
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if expense.status == 'pending' %}
+        <!-- Modal d'approbation -->
+        <div class="modal fade" id="approveModal{{ expense.id }}" tabindex="-1" aria-labelledby="approveModalLabel{{ expense.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="approveModalLabel{{ expense.id }}">Approuver cette note de frais</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="{% url 'expense_action' expense.id %}" method="post">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <p>Êtes-vous sûr de vouloir approuver cette note de frais ?</p>
+                            <div class="mb-3">
+                                <label for="comment{{ expense.id }}" class="form-label">Commentaire (optionnel)</label>
+                                <textarea class="form-control" id="comment{{ expense.id }}" name="comment" rows="3" placeholder="Ajouter un commentaire..."></textarea>
+                            </div>
+                            <input type="hidden" name="action" value="approve">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                            <button type="submit" class="btn btn-success">Approuver</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de rejet -->
+        <div class="modal fade" id="rejectModal{{ expense.id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ expense.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="rejectModalLabel{{ expense.id }}">Refuser cette note de frais</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="{% url 'expense_action' expense.id %}" method="post">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <p>Êtes-vous sûr de vouloir refuser cette note de frais ?</p>
+                            <div class="mb-3">
+                                <label for="comment{{ expense.id }}" class="form-label">Motif du refus</label>
+                                <textarea class="form-control" id="comment{{ expense.id }}" name="comment" rows="3" placeholder="Motif du refus..." required></textarea>
+                            </div>
+                            <input type="hidden" name="action" value="reject">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                            <button type="submit" class="btn btn-danger">Refuser</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    {% else %}
+        <!-- Message quand aucune note ne correspond -->
+        <div class="card mb-4 animate-fade-in-up" style="animation-delay: 0.6s;">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-receipt fa-4x text-gray-300 mb-3"></i>
+                <h5 class="text-gray-700 mb-3">Aucune note de frais trouvée</h5>
+                <p class="text-gray-500">Aucune note ne correspond à vos critères de recherche. Essayez de modifier vos filtres ou cliquez ci-dessous pour voir toutes les notes.</p>
+                <a href="?" class="btn btn-outline-primary mt-3">Voir toutes les notes</a>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block extra_css %}
 <style>
@@ -287,11 +288,13 @@
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <!-- En-tête de la page -->
+<div class="container py-4">    <!-- En-tête de la page -->
     <div class="d-sm-flex align-items-center justify-content-between leave-header">
         <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-calendar-check me-2"></i>Gestion des demandes de congés</h1>
         <div>
+            <a href="{% url 'admin_leave_history' %}" class="btn btn-info shadow-sm me-2">
+                <i class="fas fa-history me-1"></i> Historique complet
+            </a>
             <a href="{% url 'export_leaves' %}" class="btn btn-success shadow-sm me-2">
                 <i class="fas fa-file-export me-1"></i> Exporter
             </a>
@@ -749,212 +752,6 @@
                     <button id="refreshEmpty" class="btn btn-outline-primary">
                         <i class="fas fa-sync-alt me-1"></i> Actualiser
                     </button>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Historique des demandes de congé -->
-    <div class="card shadow-sm mb-4 rounded-4">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center bg-white rounded-top">
-            <div>
-                <h5 class="m-0 font-weight-bold text-primary">Historique des demandes de congé</h5>
-            </div>
-            <div>
-                <select id="statusFilterHistoric" class="form-select form-select-sm d-inline-block w-auto me-2">
-                    <option value="">Tous</option>
-                    <option value="approved">Approuvées</option>
-                    <option value="rejected">Rejetées</option>
-                </select>
-                <button type="button" class="btn btn-sm btn-outline-primary" id="refreshHistory">
-                    <i class="fas fa-sync-alt me-1"></i> Actualiser
-                </button>
-            </div>
-        </div>
-        <div class="card-body p-0">
-            {% if all_leaves %}
-                <div class="table-responsive">
-                    <table class="table table-hover leave-table align-middle mb-0" id="allLeavesTable">
-                        <thead>
-                            <tr>
-                                <th class="ps-3">Employé</th>
-                                <th>Type</th>
-                                <th>Début</th>
-                                <th>Fin</th>
-                                <th>Durée</th>
-                                <th>Demande</th>
-                                <th>Statut</th>
-                                <th class="text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for leave in all_leaves %}
-                                <tr class="leave-row {% if leave.status == 'pending' %}table-warning{% elif leave.status == 'rejected' %}table-danger{% endif %}">
-                                    <td class="ps-3">{{ leave.user.get_full_name|default:leave.user.username }}</td>
-                                    <td>{{ leave.get_leave_type_display }}</td>
-                                    <td>{{ leave.start_date|date:"d/m/Y" }}</td>
-                                    <td>{{ leave.end_date|date:"d/m/Y" }}</td>
-                                    <td>{{ leave.days_requested }} jour(s)</td>
-                                    <td>{{ leave.created_at|date:"d/m/Y" }}</td>
-                                    <td>
-                                        <span class="badge status-{{ leave.status }}">{{ leave.get_status_display }}</span>
-                                    </td>
-                                    <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-outline-info view-leave" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#detailsHistoryModal{{ leave.id }}">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        {% if is_admin %}
-                                            <a href="{% url 'delete_leave' leave.id %}" class="btn btn-sm btn-outline-danger"
-                                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette demande de congé ?')">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                
-                                <!-- Modal pour voir les détails (historique) -->
-                                <div class="modal fade" id="detailsHistoryModal{{ leave.id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Détails de la demande de congé</h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <!-- Contenu similaire au modal de détails précédent -->
-                                                <div class="row mb-4">
-                                                    <div class="col-md-6">
-                                                        <div class="card shadow-sm mb-3">
-                                                            <div class="card-header bg-light">
-                                                                <h6 class="mb-0">Informations générales</h6>
-                                                            </div>
-                                                            <div class="card-body">
-                                                                <p><strong>Employé:</strong> {{ leave.user.get_full_name|default:leave.user.username }}</p>
-                                                                <p><strong>Type de congé:</strong> {{ leave.get_leave_type_display }}</p>
-                                                                <p><strong>Date de début:</strong> {{ leave.start_date|date:"d/m/Y" }}</p>
-                                                                <p><strong>Date de fin:</strong> {{ leave.end_date|date:"d/m/Y" }}</p>
-                                                                <p><strong>Demi-journée:</strong> {{ leave.half_day|yesno:"Oui,Non" }}</p>
-                                                                {% if leave.half_day %}
-                                                                    <p><strong>Période:</strong> {{ leave.get_half_day_period_display }}</p>
-                                                                {% endif %}
-                                                                <p><strong>Durée totale:</strong> {{ leave.days_requested }} jour(s)</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="card shadow-sm mb-3">
-                                                            <div class="card-header bg-light">
-                                                                <h6 class="mb-0">Détails de la demande</h6>
-                                                            </div>
-                                                            <div class="card-body">
-                                                                <p><strong>Date de la demande:</strong> {{ leave.created_at|date:"d/m/Y H:i" }}</p>
-                                                                <p><strong>Statut actuel:</strong> 
-                                                                    <span class="badge status-{{ leave.status }}">{{ leave.get_status_display }}</span>
-                                                                </p>
-                                                                {% if leave.reason %}
-                                                                    <p><strong>Motif:</strong> {{ leave.reason }}</p>
-                                                                {% endif %}
-                                                                {% if leave.comment %}
-                                                                    <p><strong>Commentaire:</strong> {{ leave.comment }}</p>
-                                                                {% endif %}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                
-                                                {% if leave.attachment %}
-                                                <div class="card shadow-sm">
-                                                    <div class="card-header bg-light">
-                                                        <h6 class="mb-0">Justificatif</h6>
-                                                    </div>
-                                                    <div class="card-body text-center">
-                                                        {% if leave.attachment.url|lower|slice:"-4:" == ".pdf" %}
-                                                            <div class="mb-3">
-                                                                <i class="fas fa-file-pdf fa-3x text-danger"></i>
-                                                                <p class="mt-2">Ce justificatif est un fichier PDF.</p>
-                                                            </div>
-                                                        {% else %}
-                                                            <img src="{{ leave.attachment.url }}" class="attachment-preview mb-3" alt="Justificatif">
-                                                        {% endif %}
-                                                        <div>
-                                                            <a href="{{ leave.attachment.url }}" class="btn btn-primary" target="_blank">
-                                                                <i class="fas fa-eye me-1"></i> Voir
-                                                            </a>
-                                                            <a href="{{ leave.attachment.url }}" class="btn btn-secondary ms-2" download>
-                                                                <i class="fas fa-download me-1"></i> Télécharger
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {% endif %}
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Pagination -->
-                {% if all_leaves.has_other_pages %}
-                <div class="p-3">
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-center">
-                            {% if all_leaves.has_previous %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page=1{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
-                                        <i class="fas fa-angle-double-left"></i>
-                                    </a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ all_leaves.previous_page_number }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
-                                        <i class="fas fa-angle-left"></i>
-                                    </a>
-                                </li>
-                            {% endif %}
-
-                            {% for i in all_leaves.paginator.page_range %}
-                                {% if all_leaves.number == i %}
-                                    <li class="page-item active">
-                                        <span class="page-link">{{ i }}</span>
-                                    </li>
-                                {% elif i > all_leaves.number|add:'-3' and i < all_leaves.number|add:'3' %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ i }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">{{ i }}</a>
-                                    </li>
-                                {% endif %}
-                            {% endfor %}
-
-                            {% if all_leaves.has_next %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ all_leaves.next_page_number }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
-                                        <i class="fas fa-angle-right"></i>
-                                    </a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ all_leaves.paginator.num_pages }}{% if filters.query_string %}&{{ filters.query_string }}{% endif %}">
-                                        <i class="fas fa-angle-double-right"></i>
-                                    </a>
-                                </li>
-                            {% endif %}
-                        </ul>
-                    </nav>
-                </div>
-                {% endif %}
-                
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <i class="fas fa-calendar"></i>
-                    </div>
-                    <h4 class="mb-3">Aucune demande de congé</h4>
-                    <p class="text-muted mb-4">Il n'y a actuellement aucune demande de congé dans le système.</p>
                 </div>
             {% endif %}
         </div>

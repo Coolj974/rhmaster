@@ -405,10 +405,8 @@ def manage_expenses(request):
     end_date = request.GET.get('end_date', '')
     refacturable = request.GET.get('refacturable', '')
     sort_by = request.GET.get('sort_by', 'date')
-    sort_order = request.GET.get('sort_order', 'desc')
-
-    # Construire la requête de base
-    queryset = Expense.objects.all()
+    sort_order = request.GET.get('sort_order', 'desc')    # Construire la requête de base
+    queryset = ExpenseReport.objects.all()
 
     # Appliquer les filtres
     if status:
@@ -464,17 +462,15 @@ def manage_expenses(request):
     # Paginer les résultats
     paginator = Paginator(queryset, 10)  # 10 items par page
     page_number = request.GET.get('page', 1)
-    all_expenses = paginator.get_page(page_number)
-
-    # Calculer les statistiques
+    all_expenses = paginator.get_page(page_number)    # Calculer les statistiques
     stats = {
-        'total_count': Expense.objects.count(),
-        'pending_count': Expense.objects.filter(status='pending').count(),
-        'approved_count': Expense.objects.filter(status='approved').count(),
-        'rejected_count': Expense.objects.filter(status='rejected').count(),
-        'total_amount': Expense.objects.aggregate(Sum('amount'))['amount__sum'] or 0,
-        'pending_amount': Expense.objects.filter(status='pending').aggregate(Sum('amount'))['amount__sum'] or 0,
-        'approved_amount': Expense.objects.filter(status='approved').aggregate(Sum('amount'))['amount__sum'] or 0,
+        'total_count': ExpenseReport.objects.count(),
+        'pending_count': ExpenseReport.objects.filter(status='pending').count(),
+        'approved_count': ExpenseReport.objects.filter(status='approved').count(),
+        'rejected_count': ExpenseReport.objects.filter(status='rejected').count(),
+        'total_amount': ExpenseReport.objects.aggregate(Sum('amount'))['amount__sum'] or 0,
+        'pending_amount': ExpenseReport.objects.filter(status='pending').aggregate(Sum('amount'))['amount__sum'] or 0,
+        'approved_amount': ExpenseReport.objects.filter(status='approved').aggregate(Sum('amount'))['amount__sum'] or 0,
     }
 
     # Récupérer tous les utilisateurs pour le filtre
@@ -509,11 +505,9 @@ def export_expenses(request):
     """
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="expenses.csv"'
-    
     writer = csv.writer(response, delimiter=';')
     writer.writerow(['Employé', 'Email', 'Date', 'Description', 'Type', 'Montant', 'TVA', 'Montant TTC', 'Projet', 'Lieu', 'Refacturable', 'Statut', 'Date de création'])
-    
-    expenses = Expense.objects.all().select_related('user')
+    expenses = ExpenseReport.objects.all().select_related('user')
     
     for expense in expenses:
         montant_ttc = expense.amount * (1 + expense.vat/100) if expense.vat else expense.amount
@@ -541,7 +535,7 @@ def expense_action(request, expense_id):
     """
     Vue pour approuver ou rejeter une note de frais
     """
-    expense = get_object_or_404(Expense, id=expense_id)
+    expense = get_object_or_404(ExpenseReport, id=expense_id)
     
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -557,7 +551,7 @@ def expense_action(request, expense_id):
                 user=expense.user,
                 title="Note de frais approuvée",
                 message=f"Votre note de frais de {expense.amount} € pour '{expense.description}' a été approuvée.",
-                link_url="/my-expenses/",
+                url="/my-expenses/",
                 icon="fa-receipt"
             )
             
@@ -577,7 +571,7 @@ def expense_action(request, expense_id):
                 user=expense.user,
                 title="Note de frais rejetée",
                 message=f"Votre note de frais de {expense.amount} € pour '{expense.description}' a été rejetée.",
-                link_url="/my-expenses/",
+                url="/my-expenses/",
                 icon="fa-receipt"
             )
             
@@ -591,7 +585,7 @@ def approve_all_expenses(request):
     """
     Approuve toutes les notes de frais en attente
     """
-    pending_expenses = Expense.objects.filter(status='pending')
+    pending_expenses = ExpenseReport.objects.filter(status='pending')
     count = pending_expenses.count()
     
     for expense in pending_expenses:
@@ -603,9 +597,183 @@ def approve_all_expenses(request):
             user=expense.user,
             title="Note de frais approuvée",
             message=f"Votre note de frais de {expense.amount} € pour '{expense.description}' a été approuvée.",
-            link_url="/my-expenses/",
+            url="/my-expenses/",
             icon="fa-receipt"
         )
     
     messages.success(request, f"{count} note(s) de frais ont été approuvées avec succès.")
     return redirect('manage_expenses')
+
+@login_required
+def expense_history(request):
+    """
+    Vue pour afficher l'historique complet des notes de frais de l'utilisateur.
+    Inclut des fonctionnalités de filtrage et de pagination.
+    """
+    # Récupérer les filtres de la requête
+    status = request.GET.get('status', '')
+    expense_type = request.GET.get('expense_type', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    sort_by = request.GET.get('sort_by', '-date')  # Par défaut, tri par date décroissante
+    
+    # Récupérer toutes les notes de frais de l'utilisateur
+    queryset = ExpenseReport.objects.filter(user=request.user)
+    
+    # Appliquer les filtres
+    if status:
+        queryset = queryset.filter(status=status)
+    if expense_type:
+        queryset = queryset.filter(expense_type=expense_type)
+    if start_date:
+        queryset = queryset.filter(date__gte=start_date)
+    if end_date:
+        queryset = queryset.filter(date__lte=end_date)
+    
+    # Appliquer le tri
+    queryset = queryset.order_by(sort_by)
+    
+    # Construire la chaîne de requête pour la pagination
+    query_params = []
+    if status:
+        query_params.append(f'status={status}')
+    if expense_type:
+        query_params.append(f'expense_type={expense_type}')
+    if start_date:
+        query_params.append(f'start_date={start_date}')
+    if end_date:
+        query_params.append(f'end_date={end_date}')
+    if sort_by != '-date':
+        query_params.append(f'sort_by={sort_by}')
+    
+    query_string = '&'.join(query_params)
+    
+    # Calculer les statistiques
+    stats = {
+        'total_count': queryset.count(),
+        'pending_count': queryset.filter(status='pending').count(),
+        'approved_count': queryset.filter(status='approved').count(),
+        'rejected_count': queryset.filter(status='rejected').count(),
+        'total_amount': queryset.aggregate(Sum('amount'))['amount__sum'] or 0,
+        'pending_amount': queryset.filter(status='pending').aggregate(Sum('amount'))['amount__sum'] or 0,
+        'approved_amount': queryset.filter(status='approved').aggregate(Sum('amount'))['amount__sum'] or 0,
+    }
+    
+    # Paginer les résultats
+    paginator = Paginator(queryset, 10)  # 10 items par page
+    page_number = request.GET.get('page', 1)
+    expenses = paginator.get_page(page_number)
+    
+    context = {
+        'expenses': expenses,
+        'stats': stats,
+        'filters': {
+            'status': status,
+            'expense_type': expense_type,
+            'start_date': start_date,
+            'end_date': end_date,
+            'sort_by': sort_by,
+            'query_string': query_string
+        }
+    }
+    
+    return render(request, 'rh_management/expense_history.html', context)
+
+@login_required
+@user_is_hr_or_admin
+def admin_expense_history(request):
+    """
+    Vue pour afficher l'historique complet des notes de frais pour tous les utilisateurs.
+    Accessible uniquement par les administrateurs et le personnel RH.
+    """
+    # Récupérer les filtres de la requête
+    status = request.GET.get('status', '')
+    expense_type = request.GET.get('expense_type', '')
+    user_id = request.GET.get('user', '')
+    project = request.GET.get('project', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    refacturable = request.GET.get('refacturable', '')
+    sort_by = request.GET.get('sort_by', '-date')  # Par défaut, tri par date décroissante
+    
+    # Récupérer toutes les notes de frais
+    queryset = ExpenseReport.objects.all()
+    
+    # Appliquer les filtres
+    if status:
+        queryset = queryset.filter(status=status)
+    if expense_type:
+        queryset = queryset.filter(expense_type=expense_type)
+    if user_id:
+        queryset = queryset.filter(user_id=user_id)
+    if project:
+        queryset = queryset.filter(project__icontains=project)
+    if start_date:
+        queryset = queryset.filter(date__gte=start_date)
+    if end_date:
+        queryset = queryset.filter(date__lte=end_date)
+    if refacturable:
+        refacturable_bool = refacturable == '1'
+        queryset = queryset.filter(refacturable=refacturable_bool)
+    
+    # Appliquer le tri
+    queryset = queryset.order_by(sort_by)
+    
+    # Construire la chaîne de requête pour la pagination
+    query_params = []
+    if status:
+        query_params.append(f'status={status}')
+    if expense_type:
+        query_params.append(f'expense_type={expense_type}')
+    if user_id:
+        query_params.append(f'user={user_id}')
+    if project:
+        query_params.append(f'project={project}')
+    if start_date:
+        query_params.append(f'start_date={start_date}')
+    if end_date:
+        query_params.append(f'end_date={end_date}')
+    if refacturable:
+        query_params.append(f'refacturable={refacturable}')
+    if sort_by != '-date':
+        query_params.append(f'sort_by={sort_by}')
+    
+    query_string = '&'.join(query_params)
+    
+    # Calculer les statistiques
+    stats = {
+        'total_count': queryset.count(),
+        'pending_count': queryset.filter(status='pending').count(),
+        'approved_count': queryset.filter(status='approved').count(),
+        'rejected_count': queryset.filter(status='rejected').count(),
+        'total_amount': queryset.aggregate(Sum('amount'))['amount__sum'] or 0,
+        'pending_amount': queryset.filter(status='pending').aggregate(Sum('amount'))['amount__sum'] or 0,
+        'approved_amount': queryset.filter(status='approved').aggregate(Sum('amount'))['amount__sum'] or 0,
+    }
+    
+    # Récupérer tous les utilisateurs pour le filtre
+    all_users = User.objects.all().order_by('first_name', 'last_name')
+    
+    # Paginer les résultats
+    paginator = Paginator(queryset, 10)  # 10 items par page
+    page_number = request.GET.get('page', 1)
+    expenses = paginator.get_page(page_number)
+    
+    context = {
+        'expenses': expenses,
+        'stats': stats,
+        'filters': {
+            'status': status,
+            'expense_type': expense_type,
+            'user_id': int(user_id) if user_id.isdigit() else None,
+            'project': project,
+            'start_date': start_date,
+            'end_date': end_date,
+            'refacturable': refacturable,
+            'sort_by': sort_by,
+            'query_string': query_string
+        },
+        'all_users': all_users
+    }
+    
+    return render(request, 'rh_management/admin_expense_history.html', context)

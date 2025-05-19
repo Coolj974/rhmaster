@@ -40,3 +40,14 @@ def intdiv(value, arg):
         return int(value) // arg
     except (ValueError, TypeError):
         return 0
+
+@register.filter
+def divide(value, arg):
+    """Division décimale sécurisée"""
+    try:
+        arg = float(arg)
+        if arg == 0:
+            return 0
+        return float(value) / arg
+    except (ValueError, TypeError):
+        return 0

@@ -264,7 +264,7 @@ def leave_request(request):
                 user=hr_user,
                 title="Nouvelle demande de congé",
                 message=f"{request.user.get_full_name()} a soumis une demande de congé pour {days_requested} jour(s).",
-                link_url="/manage-leaves/",
+                url="/manage-leaves/",
                 icon="fa-calendar-check"
             )
         
@@ -444,7 +444,7 @@ def adjust_leave_balance(request):
                 title="Ajustement de solde de congés",
                 message=f"Votre solde de congés a été ajusté de {adjustment} jour(s). Raison : {reason}",
                 icon="fa-calendar-day",
-                link_url="/my-leaves/"
+                url="/my-leaves/"
             )
             
             messages.success(request, f"Le solde de congés de {user.get_full_name()} a été ajusté de {adjustment} jour(s).")
@@ -498,7 +498,7 @@ def adjust_collective_leave_balance(request):
                     title="Ajustement de solde de congés",
                     message=f"Votre solde de congés a été ajusté de {adjustment} jour(s). Raison : {reason}",
                     icon="fa-calendar-day",
-                    link_url="/my-leaves/"
+                    url="/my-leaves/"
                 )
                 
                 success_count += 1
@@ -675,11 +675,11 @@ def leave_action(request, leave_id):
             leave_request.status = 'approved'
             leave_request.comment = comment
             leave_request.save()
-            
-            # Mettre à jour le solde de congés de l'utilisateur
+              # Mettre à jour le solde de congés de l'utilisateur
             balance, created = LeaveBalance.objects.get_or_create(user=leave_request.user)
-            # Corriger l'erreur de type en convertissant days_requested en float
-            balance.taken += float(leave_request.days_requested)
+            # Convertir days_requested en Decimal pour éviter l'erreur de type
+            from decimal import Decimal
+            balance.taken += Decimal(str(leave_request.days_requested))
             balance.save()
             
             messages.success(request, "La demande de congé a été approuvée.")
@@ -950,3 +950,164 @@ def manage_leaves(request):
     }
 
     return render(request, 'rh_management/manage_leaves.html', context)
+
+@login_required
+def leave_history(request):
+    """
+    Vue pour afficher l'historique complet des demandes de congé de l'utilisateur.
+    Inclut des fonctionnalités de filtrage et de pagination.
+    """
+    # Récupérer les filtres de la requête
+    status = request.GET.get('status', '')
+    leave_type = request.GET.get('leave_type', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    sort_by = request.GET.get('sort_by', '-start_date')  # Par défaut, tri par date de début décroissante
+    
+    # Récupérer toutes les demandes de congé de l'utilisateur
+    queryset = LeaveRequest.objects.filter(user=request.user)
+    
+    # Appliquer les filtres
+    if status:
+        queryset = queryset.filter(status=status)
+    if leave_type:
+        queryset = queryset.filter(leave_type=leave_type)
+    if start_date:
+        queryset = queryset.filter(start_date__gte=start_date)
+    if end_date:
+        queryset = queryset.filter(end_date__lte=end_date)
+    
+    # Appliquer le tri
+    queryset = queryset.order_by(sort_by)
+    
+    # Construire la chaîne de requête pour la pagination
+    query_params = []
+    if status:
+        query_params.append(f'status={status}')
+    if leave_type:
+        query_params.append(f'leave_type={leave_type}')
+    if start_date:
+        query_params.append(f'start_date={start_date}')
+    if end_date:
+        query_params.append(f'end_date={end_date}')
+    if sort_by != '-start_date':
+        query_params.append(f'sort_by={sort_by}')
+    
+    query_string = '&'.join(query_params)
+    
+    # Calculer les statistiques
+    stats = {
+        'total_count': queryset.count(),
+        'pending_count': queryset.filter(status='pending').count(),
+        'approved_count': queryset.filter(status='approved').count(),
+        'rejected_count': queryset.filter(status='rejected').count(),
+        'total_days': sum(leave.days_requested for leave in queryset),
+        'approved_days': sum(leave.days_requested for leave in queryset.filter(status='approved')),
+        'pending_days': sum(leave.days_requested for leave in queryset.filter(status='pending')),
+    }
+    
+    # Paginer les résultats
+    paginator = Paginator(queryset, 10)  # 10 items par page
+    page_number = request.GET.get('page', 1)
+    leave_requests = paginator.get_page(page_number)
+    
+    context = {
+        'leave_requests': leave_requests,
+        'stats': stats,
+        'filters': {
+            'status': status,
+            'leave_type': leave_type,
+            'start_date': start_date,
+            'end_date': end_date,
+            'sort_by': sort_by,
+            'query_string': query_string
+        }
+    }
+    
+    return render(request, 'rh_management/leave_history.html', context)
+
+@login_required
+@user_is_hr_or_admin
+def admin_leave_history(request):
+    """
+    Vue pour afficher l'historique complet des demandes de congé pour tous les utilisateurs.
+    Accessible uniquement par les administrateurs et le personnel RH.
+    """
+    # Récupérer les filtres de la requête
+    status = request.GET.get('status', '')
+    leave_type = request.GET.get('leave_type', '')
+    user_id = request.GET.get('user', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    sort_by = request.GET.get('sort_by', '-start_date')  # Par défaut, tri par date de début décroissante
+    
+    # Récupérer toutes les demandes de congé
+    queryset = LeaveRequest.objects.all()
+    
+    # Appliquer les filtres
+    if status:
+        queryset = queryset.filter(status=status)
+    if leave_type:
+        queryset = queryset.filter(leave_type=leave_type)
+    if user_id:
+        queryset = queryset.filter(user_id=user_id)
+    if start_date:
+        queryset = queryset.filter(start_date__gte=start_date)
+    if end_date:
+        queryset = queryset.filter(end_date__lte=end_date)
+    
+    # Appliquer le tri
+    queryset = queryset.order_by(sort_by)
+    
+    # Construire la chaîne de requête pour la pagination
+    query_params = []
+    if status:
+        query_params.append(f'status={status}')
+    if leave_type:
+        query_params.append(f'leave_type={leave_type}')
+    if user_id:
+        query_params.append(f'user={user_id}')
+    if start_date:
+        query_params.append(f'start_date={start_date}')
+    if end_date:
+        query_params.append(f'end_date={end_date}')
+    if sort_by != '-start_date':
+        query_params.append(f'sort_by={sort_by}')
+    
+    query_string = '&'.join(query_params)
+    
+    # Calculer les statistiques
+    stats = {
+        'total_count': queryset.count(),
+        'pending_count': queryset.filter(status='pending').count(),
+        'approved_count': queryset.filter(status='approved').count(),
+        'rejected_count': queryset.filter(status='rejected').count(),
+        'total_days': sum(leave.days_requested for leave in queryset),
+        'approved_days': sum(leave.days_requested for leave in queryset.filter(status='approved')),
+        'pending_days': sum(leave.days_requested for leave in queryset.filter(status='pending')),
+    }
+    
+    # Récupérer tous les utilisateurs pour le filtre
+    all_users = User.objects.all().order_by('first_name', 'last_name')
+    
+    # Paginer les résultats
+    paginator = Paginator(queryset, 10)  # 10 items par page
+    page_number = request.GET.get('page', 1)
+    leave_requests = paginator.get_page(page_number)
+    
+    context = {
+        'leave_requests': leave_requests,
+        'stats': stats,
+        'filters': {
+            'status': status,
+            'leave_type': leave_type,
+            'user_id': int(user_id) if user_id.isdigit() else None,
+            'start_date': start_date,
+            'end_date': end_date,
+            'sort_by': sort_by,
+            'query_string': query_string
+        },
+        'all_users': all_users
+    }
+    
+    return render(request, 'rh_management/admin_leave_history.html', context)

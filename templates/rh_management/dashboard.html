@@ -2,33 +2,79 @@
 
 {% block extra_css %}
 <style>
-    /* Styles améliorés pour le dashboard */
+    /* Variables CSS pour cohérence et facilité de maintenance */
+    :root {
+        --card-border-radius: 12px;
+        --card-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        --card-hover-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        --primary-blue: #4e73df;
+        --primary-blue-dark: #2e59d9;
+        --primary-blue-light: rgba(78, 115, 223, 0.1);
+        --secondary-color: #858796;
+        --success-color: #1cc88a;
+        --danger-color: #e74a3b;
+        --warning-color: #f6c23e;
+        --info-color: #36b9cc;
+        --transition-speed: 0.3s;
+        --card-spacing: 1.5rem;
+    }
+    
+    /* Optimisation pour les appareils à haute densité de pixels */
+    @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+        .dashboard-container {
+            text-rendering: optimizeLegibility;
+        }
+    }
+    
+    /* Préchargement pour les transitions */
+    .dashboard-container * {
+        backface-visibility: hidden;
+    }
+    
+    /* Styles optimisés pour le dashboard avec support a11y */
     .dashboard-container {
         padding: 1.2rem 0;
+        max-width: 1920px;
+        margin: 0 auto;
+        will-change: transform;
+        contain: layout style; /* Optimisation pour le rendu */
     }
     
     .welcome-section {
         background: linear-gradient(135deg, #f8f9fa, #eaecf4);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        border-left: 4px solid #4e73df;
-        transition: all 0.3s ease;
+        border-radius: var(--card-border-radius);
+        padding: var(--card-spacing);
+        margin-bottom: var(--card-spacing);
+        box-shadow: var(--card-shadow);
+        border-left: 4px solid var(--primary-blue);
+        transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+        will-change: transform, box-shadow;
+        position: relative;
+        overflow: hidden;
     }
     
     .welcome-section:hover {
         transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        box-shadow: var(--card-hover-shadow);
     }
     
+    /* Amélioration de l'accessibilité pour le focus */
+    .action-link:focus, .btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.25);
+    }
+    
+    /* Amélioration des animations avec hint pour le navigateur */
     .action-card {
         height: 100%;
         border: none;
-        border-radius: 10px;
+        border-radius: var(--card-border-radius);
         overflow: hidden;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: transform var(--transition-speed) ease, 
+                    box-shadow var(--transition-speed) ease;
+        box-shadow: var(--card-shadow);
+        will-change: transform;
+        background-color: #fff;
     }
     
     .action-card:hover {
@@ -37,7 +83,7 @@
     }
     
     .action-card .card-body {
-        padding: 1.5rem;
+        padding: var(--card-spacing);
         display: flex;
         flex-direction: column;
     }
@@ -60,7 +106,7 @@
     }
     
     .action-card .card-text {
-        color: #6c757d;
+        color: var(--secondary-color);
         flex-grow: 1;
         margin-bottom: 1.25rem;
     }
@@ -77,10 +123,21 @@
         transform: translateY(-2px);
     }
     
+    /* Animation optimisée pour le panneau d'actions rapides */
+    .dragging {
+        cursor: grabbing !important;
+        opacity: 0.92;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+        transition: none !important;
+    }
+    
+    /* Styles pour les cartes de stats avec compteurs animés */
     .stats-card {
-        border-radius: 10px;
-        transition: all 0.3s;
+        border-radius: var(--card-border-radius);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
         height: 100%;
+        overflow: hidden;
+        contain: content; /* Amélioration de la performance de rendu */
     }
     
     .stats-card:hover {
@@ -96,11 +153,29 @@
         display: flex;
         align-items: center;
         transition: all 0.2s;
+        position: relative;
+    }
+    
+    /* Indicateur visuel d'interaction */
+    .stat-item::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: transparent;
+        border-radius: 8px;
+        transition: background-color 0.2s ease;
     }
     
     .stat-item:hover {
         background-color: #f8f9fc;
         transform: translateX(3px);
+    }
+    
+    .stat-item:hover::after {
+        background-color: rgba(78, 115, 223, 0.03);
     }
     
     .stat-icon {
@@ -112,15 +187,19 @@
         justify-content: center;
         font-size: 1.2rem;
         margin-right: 1rem;
+        position: relative;
+        z-index: 1;
     }
     
     .stat-text {
         flex-grow: 1;
+        position: relative;
+        z-index: 1;
     }
     
     .stat-title {
         font-size: 0.85rem;
-        color: #6c757d;
+        color: var(--secondary-color);
         margin-bottom: 0.25rem;
     }
     
@@ -130,18 +209,7 @@
         color: #3a3b45;
     }
     
-    .action-link {
-        text-decoration: none;
-        color: inherit;
-        display: block;
-        height: 100%;
-    }
-    
-    .action-link:hover {
-        color: inherit;
-    }
-    
-    /* Indicateurs d'activité avec pulsation */
+    /* Animation optimisée pour les indicateurs d'activité */
     .activity-indicator {
         width: 10px;
         height: 10px;
@@ -152,7 +220,7 @@
     }
     
     .activity-indicator.active {
-        background-color: #1cc88a;
+        background-color: var(--success-color);
     }
     
     .activity-indicator.active::before {
@@ -182,7 +250,22 @@
         }
     }
     
-    /* Améliorations pour les devices mobiles */
+    /* Support tactile optimisé pour les badges animés */
+    .badge-animated {
+        transition: transform 0.2s ease;
+    }
+    
+    .badge-animated.pulse {
+        animation: badgePulse 0.5s ease;
+    }
+    
+    @keyframes badgePulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+    
+    /* Amélioration tactile pour les appareils mobiles */
     @media (max-width: 767.98px) {
         .welcome-section {
             padding: 1.2rem;
@@ -191,32 +274,46 @@
         .action-card .card-body {
             padding: 1.2rem;
         }
+        
+        /* Optimisation de l'espace sur petit écran */
+        .stats-card {
+            margin-bottom: 1rem;
+        }
+        
+        .stat-item {
+            padding: 0.8rem;
+        }
+        
+        /* Ajustements tactiles pour les badges */
+        .badge {
+            padding: 0.5rem 0.7rem; /* Plus grand pour toucher facilement */
+        }
     }
     
-    /* Messages d'alerte plus visibles */
+    /* Améliorations de l'accessibilité pour le contraste */
     .alert {
         border-radius: 10px;
         border-left: 4px solid;
     }
     
     .alert-success {
-        border-color: #1cc88a;
+        border-color: var(--success-color);
     }
     
     .alert-warning {
-        border-color: #f6c23e;
+        border-color: var(--warning-color);
     }
     
     .alert-danger {
-        border-color: #e74a3b;
+        border-color: var(--danger-color);
     }
     
-    /* Timeline améliorée */
+    /* Améliorations pour la timeline et les notifications */
     .timeline {
         position: relative;
         padding-left: 1.5rem;
         margin: 0 0 0 30px;
-        color: #6c757d;
+        color: var(--secondary-color);
     }
     
     .timeline:before {
@@ -233,11 +330,31 @@
     .timeline-item {
         margin: 1.5rem 0;
         position: relative;
+        opacity: 0;
+        animation: fadeInUp 0.5s ease forwards;
     }
     
     .timeline-item:first-child {
         margin-top: 0;
     }
+    
+    /* Animation d'entrée pour les éléments de la timeline */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .timeline-item:nth-child(1) { animation-delay: 0.1s; }
+    .timeline-item:nth-child(2) { animation-delay: 0.2s; }
+    .timeline-item:nth-child(3) { animation-delay: 0.3s; }
+    .timeline-item:nth-child(4) { animation-delay: 0.4s; }
+    .timeline-item:nth-child(5) { animation-delay: 0.5s; }
     
     .timeline-item:before {
         content: ' ';
@@ -249,94 +366,53 @@
         width: 16px;
         height: 16px;
         z-index: 2;
-        border: 2px solid #4e73df;
+        border: 2px solid var(--primary-blue);
+        box-shadow: 0 0 0 4px rgba(78, 115, 223, 0.1);
+        transition: box-shadow 0.3s ease;
     }
     
-    /* Nouveaux styles pour les cartes d'actions */
-    .quick-action-card {
-        border: none;
-        border-radius: 12px;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+    .timeline-item:hover:before {
+        box-shadow: 0 0 0 6px rgba(78, 115, 223, 0.2);
     }
     
-    .quick-action-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 15px rgba(0,0,0,0.08);
+    /* Optimisation des animations pour le quick actions panel */
+    .quick-actions-floating {
+        will-change: transform, box-shadow;
     }
     
-    /* Section des statistiques visuelles */
-    .stats-visual {
-        background: #fff;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        margin-bottom: 1.5rem;
-    }
-    
-    .progress-bar-container {
-        height: 8px;
-        background-color: #e9ecef;
-        border-radius: 4px;
-        margin-bottom: 0.5rem;
-    }
-    
-    .progress-bar-fill {
-        height: 100%;
-        border-radius: 4px;
-    }
-    
-    /* Tableau des congés amélioré */
-    .leave-table {
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-    
-    .leave-table th {
-        background-color: #f8f9fc;
-        font-weight: 600;
-        padding: 12px 15px;
-    }
-    
-    .leave-table td {
-        padding: 12px 15px;
-        vertical-align: middle;
-    }
-    
-    .leave-table tbody tr {
-        transition: all 0.2s;
-    }
-    
-    .leave-table tbody tr:hover {
+    /* Accessibilité pour le focus dans le tableau */
+    .table-hover tr:focus-within {
         background-color: rgba(78, 115, 223, 0.05);
     }
     
-    /* Badge avec animation */
-    .badge-animated {
-        position: relative;
-        overflow: hidden;
+    /* Lazy-loading pour les images et contenus */
+    img.lazy-load {
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
     
-    .badge-animated:after {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(60deg, transparent, rgba(255,255,255,0.3), transparent);
-        transform: rotate(30deg);
-        animation: shimmer 2s infinite;
+    img.lazy-load.loaded {
+        opacity: 1;
     }
     
-    @keyframes shimmer {
-        0% {
-            transform: translateX(-100%) rotate(30deg);
+    /* Amélioration de l'affichage des tables pour les petits écrans */
+    @media (max-width: 575.98px) {
+        .table-responsive {
+            border-radius: var(--card-border-radius);
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
         }
-        100% {
-            transform: translateX(100%) rotate(30deg);
+        
+        /* Indication qu'on peut scroller */
+        .table-responsive:after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 30px;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%);
+            pointer-events: none;
+            opacity: 0.8;
         }
     }
 </style>
@@ -344,44 +420,43 @@
 
 {% block content %}
 <div class="container dashboard-container">
-    <!-- Message de bienvenue personnalisé -->
-    <div class="welcome-section mb-4">
+    <div class="welcome-section">
         <div class="row align-items-center">
-            <div class="col-auto">
-                <div class="avatar-wrapper">
-                    {% if request.user.userprofile.profile_picture %}
-                        <img src="{{ request.user.userprofile.profile_picture.url }}" alt="Photo de profil" 
-                             class="rounded-circle shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
-                    {% else %}
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow-sm" 
-                             style="width: 60px; height: 60px; font-size: 1.5rem;">
-                            {{ request.user.username.0|upper }}
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="col">
-                <h2 class="h4 mb-1">Bienvenue, {{ request.user.get_full_name|default:request.user.username }}</h2>
+            <div class="col-md-7">
+                <h4 class="mb-1">Bonjour, {{ request.user.first_name|default:request.user.username }} !</h4>
                 <p class="text-muted mb-0">
-                    <span class="activity-indicator active"></span>
-                    Connecté en tant que 
-                    {% if request.user.is_superuser %}
-                        <span class="badge bg-danger">Administrateur</span>
-                    {% elif is_rh %}
-                        <span class="badge bg-warning text-dark">RH</span>
-                    {% elif is_encadrant %}
-                        <span class="badge bg-info">Encadrant</span>
-                    {% elif is_stp %}
-                        <span class="badge bg-success">STP</span>
+                    <i class="fas fa-calendar-alt me-2"></i>{{ today|date:"l j F Y" }}
+                    <span class="mx-2">•</span>
+                    <i class="fas fa-clock me-1"></i><span id="current-time">{{ now|time:"H:i:s" }}</span>
+                </p>
+                <hr class="my-3">                <p class="mb-0">
+                    {% if pending_tasks_count > 0 %}
+                        <span class="badge bg-warning text-dark me-2 badge-animated" data-badge-type="tasks">{{ pending_tasks_count }}</span>
+                        <span class="text-dark">tâche{{ pending_tasks_count|pluralize }} en attente aujourd'hui</span>
+                        {% if next_event %}
+                        <span class="mx-2">•</span>
+                        <i class="far fa-calendar-check me-1 text-primary"></i>
+                        <span class="text-primary">{{ next_event }}</span>
+                        {% endif %}
                     {% else %}
-                        <span class="badge bg-primary">Employé</span>
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span class="text-dark">Votre journée est à jour</span>
+                        {% if next_event %}
+                        <span class="mx-2">•</span>
+                        <i class="far fa-calendar-check me-1 text-primary"></i>
+                        <span class="text-primary">{{ next_event }}</span>
+                        {% endif %}
                     {% endif %}
                 </p>
             </div>
-            <div class="col-auto">
-                <div class="current-date text-end">
-                    <div class="h5 mb-0">{{ current_date|date:"l j F Y" }}</div>
-                    <div class="small text-muted" id="current-time">{{ current_date|time:"H:i:s" }}</div>
+            <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                <div class="d-flex justify-content-md-end flex-wrap gap-2">
+                    <a href="{% url 'leave_request' %}" class="btn btn-sm btn-primary me-2 mb-2 mb-md-0">
+                        <i class="fas fa-plus-circle me-1"></i> Demander un congé
+                    </a>
+                    <a href="{% url 'submit_expense' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-receipt me-1"></i> Note de frais
+                    </a>
                 </div>
             </div>
         </div>
@@ -420,8 +495,7 @@
             </a>
         </div>
         
-        <div class="col-lg-3 col-md-6 mb-4">
-            <a href="{% url 'my_leaves' %}" class="action-link">
+        <div class="col-lg-3 col-md-6 mb-4">            <a href="{% url 'my_leaves' %}" class="action-link">
                 <div class="card action-card">
                     <div class="card-body">
                         <div class="icon-container bg-success bg-opacity-10 text-success">
@@ -429,10 +503,13 @@
                         </div>
                         <h5 class="card-title">Mes congés</h5>
                         <p class="card-text">Consultez l'historique de vos congés et le solde de jours disponibles.</p>
-                        <div class="d-grid">
-                            <button class="btn btn-success">
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'my_leaves' %}" class="btn btn-success flex-grow-1">
                                 <i class="fas fa-list-ul me-1"></i> Voir mes congés
-                            </button>
+                            </a>
+                            <a href="{% url 'leave_history' %}" class="btn btn-info">
+                                <i class="fas fa-history me-1"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -458,8 +535,7 @@
             </a>
         </div>
         
-        <div class="col-lg-3 col-md-6 mb-4">
-            <a href="{% url 'my_expenses' %}" class="action-link">
+        <div class="col-lg-3 col-md-6 mb-4">            <a href="{% url 'my_expenses' %}" class="action-link">
                 <div class="card action-card">
                     <div class="card-body">
                         <div class="icon-container bg-info bg-opacity-10 text-info">
@@ -467,10 +543,13 @@
                         </div>
                         <h5 class="card-title">Mes notes de frais</h5>
                         <p class="card-text">Consultez vos notes de frais existantes et leur statut actuel.</p>
-                        <div class="d-grid">
-                            <button class="btn btn-info">
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'my_expenses' %}" class="btn btn-info flex-grow-1">
                                 <i class="fas fa-list-ul me-1"></i> Voir mes notes
-                            </button>
+                            </a>
+                            <a href="{% url 'expense_history' %}" class="btn btn-primary">
+                                <i class="fas fa-history me-1"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -740,34 +819,7 @@
             transition: all 0.3s ease;
             padding: 1.5rem;
         }
-    </style>
-
-    <!-- JavaScript for counter animation -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Animate counters
-            const counterElements = document.querySelectorAll('.counter-value');
-            counterElements.forEach(counter => {
-                const target = parseInt(counter.textContent, 10);
-                let count = 0;
-                const increment = target / 20;
-                
-                const updateCount = () => {
-                    if (count < target) {
-                        count += increment;
-                        counter.textContent = Math.ceil(count);
-                        setTimeout(updateCount, 50);
-                    } else {
-                        counter.textContent = target;
-                    }
-                };
-                
-                updateCount();
-            });
-        });
-    </script>
-
-    <!-- Section pour les demandes de congés en attente (pour les RH et admins) -->
+    </style>    <!-- Section pour les demandes de congés en attente (pour les RH et admins) -->
     {% if is_hr or is_admin %}
     <div class="row mb-4">
         <div class="col-12">
@@ -778,14 +830,13 @@
                     </h6>
                     <a href="{% url 'manage_leaves' %}" class="btn btn-sm btn-outline-primary">Voir tout</a>
                 </div>
-                <div class="card-body">
-                    <!-- Onglets -->
+                <div class="card-body">                    <!-- Onglets -->
                     <ul class="nav nav-tabs mb-3" id="pendingTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="leaves-tab" data-bs-toggle="tab" data-bs-target="#leaves" type="button" role="tab">
                                 Congés 
                                 {% if pending_leaves_count > 0 %}
-                                <span class="badge bg-danger ms-1 badge-animated">{{ pending_leaves_count }}</span>
+                                <span class="badge bg-danger ms-1 badge-animated" data-badge-type="leave">{{ pending_leaves_count }}</span>
                                 {% endif %}
                             </button>
                         </li>
@@ -793,7 +844,7 @@
                             <button class="nav-link" id="expenses-tab" data-bs-toggle="tab" data-bs-target="#expenses" type="button" role="tab">
                                 Frais 
                                 {% if pending_expenses_count > 0 %}
-                                <span class="badge bg-danger ms-1 badge-animated">{{ pending_expenses_count }}</span>
+                                <span class="badge bg-danger ms-1 badge-animated" data-badge-type="expense">{{ pending_expenses_count }}</span>
                                 {% endif %}
                             </button>
                         </li>
@@ -801,7 +852,7 @@
                             <button class="nav-link" id="kilometrics-tab" data-bs-toggle="tab" data-bs-target="#kilometrics" type="button" role="tab">
                                 Kilométrique 
                                 {% if pending_kilometrics_count > 0 %}
-                                <span class="badge bg-danger ms-1 badge-animated">{{ pending_kilometrics_count }}</span>
+                                <span class="badge bg-danger ms-1 badge-animated" data-badge-type="kilometric">{{ pending_kilometrics_count }}</span>
                                 {% endif %}
                             </button>
                         </li>
@@ -971,573 +1022,398 @@
                         </div>
                     </div>
                 </div>
+            </div>        </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions rapides (draggable) avec animations et sauvegarde de position -->
+    <div class="card mb-4 quick-actions-floating" id="quickActionsCard" style="position: fixed; bottom: 20px; right: 20px; z-index: 100; width: 320px; transition: all 0.3s ease; border-radius: var(--card-border-radius); box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center" style="cursor: move; border-radius: var(--card-border-radius) var(--card-border-radius) 0 0; background: linear-gradient(135deg, var(--primary-blue), #224abe);">
+            <h6 class="m-0 font-weight-bold text-white">Actions rapides</h6>
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-light" id="pinQuickActions" title="Épingler">
+                    <i class="fas fa-thumbtack"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-light ms-2" id="minimizeQuickActions" title="Réduire">
+                    <i class="fas fa-minus"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-2" id="quickActionsBody">
+            <div class="row g-2">
+                <div class="col-6">
+                    <a href="{% url 'leave_request' %}" class="btn btn-outline-primary w-100 py-2">
+                        <i class="fas fa-plane-departure me-1"></i>
+                        Congé
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="{% url 'submit_expense' %}" class="btn btn-outline-warning w-100 py-2">
+                        <i class="fas fa-receipt me-1"></i>
+                        Frais
+                    </a>
+                </div>
+                <div class="col-6 mt-2">
+                    <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-outline-info w-100 py-2">
+                        <i class="fas fa-route me-1"></i>
+                        Trajet
+                    </a>
+                </div>
+                <div class="col-6 mt-2">
+                    <a href="{% url 'profile' %}" class="btn btn-outline-secondary w-100 py-2">
+                        <i class="fas fa-user-cog me-1"></i>
+                        Profil
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer p-1 text-center" id="quickActionsMinimized" style="display: none; background-color: rgba(255,255,255,0.95);">
+            <button type="button" class="btn btn-sm btn-primary py-1 px-3" id="expandQuickActions">
+                <i class="fas fa-expand-alt me-1"></i> Actions rapides
+            </button>
+        </div>
+    </div>
+      <!-- Le script des actions rapides est maintenant dans le bloc extra_scripts -->
+    
+    <!-- Notifications récentes -->
+    {% if notifications %}
+    <div class="card stats-card">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Notifications récentes</h6>
+            <a href="{% url 'notifications' %}" class="btn btn-sm btn-primary">Tout voir</a>
+        </div>
+        <div class="card-body">            {% csrf_token %}
+            <div class="timeline">
+                {% for notification in notifications %}
+                <div class="timeline-item" data-notification-id="{{ notification.id }}">
+                    <small class="text-muted">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
+                    <p class="mb-0 {% if not notification.read %}fw-bold{% endif %}">
+                        <i class="fas {{ notification.icon }} text-{{ notification.color }} me-2"></i>
+                        {{ notification.title }}
+                    </p>
+                    {% if notification.content %}
+                    <div class="notification-content mt-1 ps-4 text-muted small">
+                        {{ notification.content|truncatechars:100 }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
     {% endif %}
-
-    <div class="row">
-        <!-- Colonne des statistiques et notifications -->
-        <div class="col-lg-4 mb-4">
-            <div class="card stats-card mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Mon résumé</h6>
-                </div>
-                <div class="card-body">
-                    {% if leave_balance %}
-                    <div class="stat-item">
-                        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
-                            <i class="fas fa-calendar-day"></i>
-                        </div>
-                        <div class="stat-text">
-                            <div class="stat-title">Solde de congés</div>
-                            <div class="stat-value {% if leave_balance.available > 5 %}text-success{% elif leave_balance.available > 0 %}text-warning{% else %}text-danger{% endif %}">
-                                {{ leave_balance.available }} jour(s)
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    <div class="stat-item">
-                        <div class="stat-icon bg-success bg-opacity-10 text-success">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="stat-text">
-                            <div class="stat-title">Congés approuvés</div>
-                            <div class="stat-value">{{ approved_leaves_count }}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-item">
-                        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="stat-text">
-                            <div class="stat-title">Demandes en attente</div>
-                            <div class="stat-value">{{ pending_leaves_count }}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-item">
-                        <div class="stat-icon bg-info bg-opacity-10 text-info">
-                            <i class="fas fa-receipt"></i>
-                        </div>
-                        <div class="stat-text">
-                            <div class="stat-title">Notes de frais soumises</div>
-                            <div class="stat-value">{{ expenses_count }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Actions rapides (draggable) -->
-            <div class="card mb-4 quick-actions-floating" id="quickActionsCard" style="position: fixed; bottom: 20px; right: 20px; z-index: 100; max-width: 320px;">
-                <div class="card-header py-2 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Actions rapides</h6>
-                    <div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="minimizeQuickActions" title="Réduire">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-2" id="quickActionsBody">
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <a href="{% url 'leave_request' %}" class="btn btn-outline-primary w-100 py-2">
-                                <i class="fas fa-plane-departure me-1"></i>
-                                Congé
-                            </a>
-                        </div>
-                        <div class="col-6">
-                            <a href="{% url 'submit_expense' %}" class="btn btn-outline-warning w-100 py-2">
-                                <i class="fas fa-receipt me-1"></i>
-                                Frais
-                            </a>
-                        </div>
-                        <div class="col-6 mt-2">
-                            <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-outline-info w-100 py-2">
-                                <i class="fas fa-route me-1"></i>
-                                Trajet
-                            </a>
-                        </div>
-                        <div class="col-6 mt-2">
-                            <a href="{% url 'profile' %}" class="btn btn-outline-secondary w-100 py-2">
-                                <i class="fas fa-user-cog me-1"></i>
-                                Profil
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer p-1 text-center" id="quickActionsMinimized" style="display: none;">
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="expandQuickActions">
-                        <i class="fas fa-expand-alt me-1"></i> Actions
-                    </button>
-                </div>
-            </div>
-
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const quickActionsCard = document.getElementById('quickActionsCard');
-                    const minimizeBtn = document.getElementById('minimizeQuickActions');
-                    const expandBtn = document.getElementById('expandQuickActions');
-                    const quickActionsBody = document.getElementById('quickActionsBody');
-                    const quickActionsMinimized = document.getElementById('quickActionsMinimized');
-                    const cardHeader = quickActionsCard.querySelector('.card-header');
-                    
-                    // Variables for dragging
-                    let isDragging = false;
-                    let startX, startY, initialLeft, initialTop;
-                    
-                    // Functions for responsiveness
-                    function checkScreenSize() {
-                        // On small screens, lock to bottom
-                        if (window.innerWidth < 768) {
-                            quickActionsCard.style.position = 'fixed';
-                            quickActionsCard.style.left = 'auto';
-                            quickActionsCard.style.right = '10px';
-                            quickActionsCard.style.top = 'auto';
-                            quickActionsCard.style.bottom = '10px';
-                            quickActionsCard.style.maxWidth = '160px';
-                            cardHeader.style.cursor = 'default'; // Remove drag cursor on mobile
-                            
-                            // Auto-minimize on small screens
-                            if (window.innerWidth < 480) {
-                                quickActionsBody.style.display = 'none';
-                                quickActionsMinimized.style.display = 'block';
-                            }
-                        } else {
-                            quickActionsCard.style.maxWidth = '320px';
-                            cardHeader.style.cursor = 'move';
-                            
-                            // Restore saved position on larger screens
-                            restorePosition();
-                        }
-                    }
-                    
-                    // Initialize position based on screen size
-                    checkScreenSize();
-                    
-                    // Check screen size on resize
-                    window.addEventListener('resize', checkScreenSize);
-                    
-                    // Handle mouse events for dragging (desktop)
-                    cardHeader.addEventListener('mousedown', function(e) {
-                        if (window.innerWidth >= 768 && !e.target.closest('button')) {
-                            isDragging = true;
-                            startX = e.clientX;
-                            startY = e.clientY;
-                            initialLeft = quickActionsCard.offsetLeft;
-                            initialTop = quickActionsCard.offsetTop;
-                            quickActionsCard.style.position = 'absolute';
-                        }
-                    });
-                    
-                    document.addEventListener('mousemove', function(e) {
-                        if (isDragging) {
-                            const newLeft = initialLeft + (e.clientX - startX);
-                            const newTop = initialTop + (e.clientY - startY);
-                            
-                            // Keep within viewport bounds
-                            const maxX = window.innerWidth - quickActionsCard.offsetWidth;
-                            const maxY = window.innerHeight - quickActionsCard.offsetHeight;
-                            
-                            quickActionsCard.style.left = Math.min(Math.max(0, newLeft), maxX) + 'px';
-                            quickActionsCard.style.top = Math.min(Math.max(0, newTop), maxY) + 'px';
-                            quickActionsCard.style.right = 'auto';
-                            quickActionsCard.style.bottom = 'auto';
-                        }
-                    });
-                    
-                    document.addEventListener('mouseup', function() {
-                        if (isDragging) {
-                            isDragging = false;
-                            savePosition();
-                        }
-                    });
-                    
-                    // Handle touch events for dragging (mobile)
-                    cardHeader.addEventListener('touchstart', function(e) {
-                        if (window.innerWidth >= 768 && !e.target.closest('button')) {
-                            const touch = e.touches[0];
-                            isDragging = true;
-                            startX = touch.clientX;
-                            startY = touch.clientY;
-                            initialLeft = quickActionsCard.offsetLeft;
-                            initialTop = quickActionsCard.offsetTop;
-                            quickActionsCard.style.position = 'absolute';
-                            
-                            // Prevent scrolling when dragging
-                            e.preventDefault();
-                        }
-                    }, { passive: false });
-                    
-                    document.addEventListener('touchmove', function(e) {
-                        if (isDragging) {
-                            const touch = e.touches[0];
-                            const newLeft = initialLeft + (touch.clientX - startX);
-                            const newTop = initialTop + (touch.clientY - startY);
-                            
-                            // Keep within viewport bounds
-                            const maxX = window.innerWidth - quickActionsCard.offsetWidth;
-                            const maxY = window.innerHeight - quickActionsCard.offsetHeight;
-                            
-                            quickActionsCard.style.left = Math.min(Math.max(0, newLeft), maxX) + 'px';
-                            quickActionsCard.style.top = Math.min(Math.max(0, newTop), maxY) + 'px';
-                            quickActionsCard.style.right = 'auto';
-                            quickActionsCard.style.bottom = 'auto';
-                            
-                            // Prevent scrolling when dragging
-                            e.preventDefault();
-                        }
-                    }, { passive: false });
-                    
-                    document.addEventListener('touchend', function() {
-                        if (isDragging) {
-                            isDragging = false;
-                            savePosition();
-                        }
-                    });
-                    
-                    // Minimize/Expand functionality
-                    minimizeBtn.addEventListener('click', function() {
-                        quickActionsBody.style.display = 'none';
-                        quickActionsMinimized.style.display = 'block';
-                        saveMinimizedState(true);
-                    });
-                    
-                    expandBtn.addEventListener('click', function() {
-                        quickActionsBody.style.display = 'block';
-                        quickActionsMinimized.style.display = 'none';
-                        saveMinimizedState(false);
-                    });
-                    
-                    // Save position in localStorage
-                    function savePosition() {
-                        if (window.innerWidth >= 768) {
-                            const position = {
-                                left: quickActionsCard.style.left,
-                                top: quickActionsCard.style.top
-                            };
-                            localStorage.setItem('quickActionsPosition', JSON.stringify(position));
-                        }
-                    }
-                    
-                    // Restore position from localStorage
-                    function restorePosition() {
-                        const savedPosition = localStorage.getItem('quickActionsPosition');
-                        if (savedPosition && window.innerWidth >= 768) {
-                            const position = JSON.parse(savedPosition);
-                            quickActionsCard.style.position = 'absolute';
-                            quickActionsCard.style.left = position.left || '20px';
-                            quickActionsCard.style.top = position.top || '20px';
-                            quickActionsCard.style.right = 'auto';
-                            quickActionsCard.style.bottom = 'auto';
-                        }
-                    }
-                    
-                    // Save minimized state
-                    function saveMinimizedState(isMinimized) {
-                        localStorage.setItem('quickActionsMinimized', isMinimized);
-                    }
-                    
-                    // Restore minimized state
-                    function restoreMinimizedState() {
-                        const isMinimized = localStorage.getItem('quickActionsMinimized') === 'true';
-                        if (isMinimized && window.innerWidth >= 480) {
-                            quickActionsBody.style.display = 'none';
-                            quickActionsMinimized.style.display = 'block';
-                        }
-                    }
-                    
-                    // Restore minimized state on page load
-                    restoreMinimizedState();
-                });
-            </script>
-            
-            <!-- Notifications récentes -->
-            {% if notifications %}
-            <div class="card stats-card">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Notifications récentes</h6>
-                    <a href="{% url 'notifications' %}" class="btn btn-sm btn-primary">Tout voir</a>
-                </div>
-                <div class="card-body">
-                    <div class="timeline">
-                        {% for notification in notifications %}
-                        <div class="timeline-item">
-                            <small class="text-muted">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
-                            <p class="mb-0 {% if not notification.read %}fw-bold{% endif %}">
-                                <i class="fas {{ notification.icon }} text-{{ notification.color }} me-2"></i>
-                                {{ notification.title }}
-                            </p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-        
-        <!-- Colonne des actions administratives et approbations -->
-        <div class="col-lg-8">
-            <!-- Actions pour les administrateurs / RH / encadrants -->
-            {% if is_admin or is_rh or is_encadrant %}
-            <div class="card mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Actions d'administration</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        {% if is_admin or is_rh or is_encadrant %}
-                        <div class="col-md-6 mb-3">
-                            <a href="{% url 'manage_leaves' %}" class="card action-link h-100">
-                                <div class="card-body d-flex flex-column">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
-                                            <i class="fas fa-tasks text-primary"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0">Gestion des congés</h6>
-                                            <small class="text-muted">Approuver ou refuser des demandes</small>
-                                        </div>
-                                    </div>
-                                    {% if pending_leave_requests_count > 0 %}
-                                    <div class="badge bg-warning text-dark mt-auto">
-                                        <i class="fas fa-bell me-1"></i> {{ pending_leave_requests_count }} demande(s) en attente
-                                    </div>
-                                    {% else %}
-                                    <div class="badge bg-success mt-auto">
-                                        <i class="fas fa-check me-1"></i> Aucune demande en attente
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </a>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <a href="{% url 'manage_expenses' %}" class="card action-link h-100">
-                                <div class="card-body d-flex flex-column">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
-                                            <i class="fas fa-file-invoice text-warning"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0">Gestion des notes de frais</h6>
-                                            <small class="text-muted">Valider ou refuser des notes</small>
-                                        </div>
-                                    </div>
-                                    {% if pending_expense_reports_count > 0 %}
-                                    <div class="badge bg-warning text-dark mt-auto">
-                                        <i class="fas fa-bell me-1"></i> {{ pending_expense_reports_count }} note(s) en attente
-                                    </div>
-                                    {% else %}
-                                    <div class="badge bg-success mt-auto">
-                                        <i class="fas fa-check me-1"></i> Aucune note en attente
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        
-                        {% if is_admin or is_rh %}
-                        <div class="col-md-6 mb-3">
-                            <a href="{% url 'manage_leave_balances' %}" class="card action-link h-100">
-                                <div class="card-body d-flex flex-column">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-                                            <i class="fas fa-balance-scale text-success"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0">Soldes de congés</h6>
-                                            <small class="text-muted">Gérer les soldes des employés</small>
-                                        </div>
-                                    </div>
-                                    <div class="badge bg-info mt-auto">
-                                        <i class="fas fa-users me-1"></i> {{ leave_balance_count|default:"0" }} soldes à gérer
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <a href="{% url 'manage_kilometric_expenses' %}" class="card action-link h-100">
-                                <div class="card-body d-flex flex-column">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
-                                            <i class="fas fa-route text-info"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0">Frais kilométriques</h6>
-                                            <small class="text-muted">Valider les trajets</small>
-                                        </div>
-                                    </div>
-                                    {% if pending_km_expense_count > 0 %}
-                                    <div class="badge bg-warning text-dark mt-auto">
-                                        <i class="fas fa-bell me-1"></i> {{ pending_km_expense_count }} trajet(s) en attente
-                                    </div>
-                                    {% else %}
-                                    <div class="badge bg-success mt-auto">
-                                        <i class="fas fa-check me-1"></i> Aucun trajet en attente
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        
-                        {% if is_admin %}
-                        <div class="col-md-6 mb-3">
-                            <a href="{% url 'manage_users' %}" class="card action-link h-100">
-                                <div class="card-body d-flex flex-column">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3">
-                                            <i class="fas fa-users-cog text-danger"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0">Gestion des utilisateurs</h6>
-                                            <small class="text-muted">Créer, modifier ou désactiver des comptes</small>
-                                        </div>
-                                    </div>
-                                    <div class="badge bg-info mt-auto">
-                                        <i class="fas fa-users me-1"></i> {{ user_count|default:"0" }} utilisateurs
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <a href="{% url 'manage_roles' %}" class="card action-link h-100">
-                                <div class="card-body d-flex flex-column">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="rounded-circle bg-purple bg-opacity-10 p-3 me-3" style="background-color: rgba(128, 0, 128, 0.1);">
-                                            <i class="fas fa-user-tag" style="color: purple;"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0">Gestion des rôles</h6>
-                                            <small class="text-muted">Gérer les rôles et permissions</small>
-                                        </div>
-                                    </div>
-                                    <div class="badge bg-info mt-auto">
-                                        <i class="fas fa-shield-alt me-1"></i> Configurer les accès
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                    </div>
-                    
-                    {% if is_admin %}
-                    <div class="text-end mt-2">
-                        <a href="/admin/" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-cogs me-1"></i> Interface d'administration Django
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-            
-            <!-- Congés à venir -->
-            <div class="card">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Calendrier de mes congés</h6>
-                    <a href="{% url 'my_leaves' %}" class="btn btn-sm btn-outline-primary">Voir tout</a>
-                </div>
-                <div class="card-body">
-                    {% if upcoming_leaves %}
-                    <div class="table-responsive">
-                        <table class="table table-hover leave-table">
-                            <thead>
-                                <tr>
-                                    <th>Date de début</th>
-                                    <th>Date de fin</th>
-                                    <th>Type</th>
-                                    <th>Durée</th>
-                                    <th>Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for leave in upcoming_leaves %}
-                                <tr>
-                                    <td>{{ leave.start_date|date:"d/m/Y" }}</td>
-                                    <td>{{ leave.end_date|date:"d/m/Y" }}</td>
-                                    <td>{{ leave.get_leave_type_display }}</td>
-                                    <td>{{ leave.days_requested }} jour(s)</td>
-                                    <td>
-                                        <span class="badge {% if leave.status == 'pending' %}bg-warning
-                                            {% elif leave.status == 'approved' %}bg-success
-                                            {% elif leave.status == 'rejected' %}bg-danger{% endif %}">
-                                            {{ leave.get_status_display }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-calendar-day fa-3x mb-3 text-muted"></i>
-                        <p class="mb-0">Vous n'avez pas de congés à venir.</p>
-                        <a href="{% url 'leave_request' %}" class="btn btn-primary mt-3">
-                            <i class="fas fa-plus-circle me-1"></i> Demander un congé
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
+{% endblock %}
 
 {% block extra_scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Mettre à jour l'heure en temps réel
+        /**
+         * SECTION 1: FONCTIONS UTILITAIRES ET INITIALISATION
+         * --------------------------------------------------
+         */
+        
+        // Mettre à jour l'horloge en temps réel avec optimisation de performance
         function updateClock() {
             const now = new Date();
             const timeElement = document.getElementById('current-time');
             if (timeElement) {
                 timeElement.textContent = now.toLocaleTimeString('fr-FR');
-                setTimeout(updateClock, 1000);
+                // Utilisation de requestAnimationFrame pour des performances optimales
+                if (document.visibilityState === 'visible') {
+                    requestAnimationFrame(() => setTimeout(updateClock, 1000));
+                } else {
+                    setTimeout(updateClock, 10000); // mise à jour moins fréquente quand l'onglet est inactif
+                }
             }
         }
-        updateClock();
         
-        // Animation au survol pour les cartes d'action
-        const actionCards = document.querySelectorAll('.action-card');
-        actionCards.forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-8px)';
-                this.style.boxShadow = '0 15px 30px rgba(0,0,0,0.1)';
-            });
+        // Animation de valeur numérique avec performance optimisée
+        const animateValue = (element, start, end, duration) => {
+            if (!element) return;
             
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = '';
-                this.style.boxShadow = '';
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const value = Math.floor(progress * (end - start) + start);
+                element.textContent = value;
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        };
+        
+        // Initialiser les tooltips Bootstrap de manière optimisée
+        const initTooltips = () => {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
             });
-        });
+        };
         
-        // Initialiser les tooltips Bootstrap
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
-        });
+        /**
+         * SECTION 2: GESTION DES ANIMATIONS ET INTERACTIONS
+         * ------------------------------------------------
+         */
         
-        // Animation pour les badges avec notification
+        // Animation des badges de notification
+        let badgeAnimationActive = true; // Variable pour contrôler l'animation
+        const badgeAnimationQueue = new Set(); // Éviter les animations simultanées des mêmes badges
+        
         const animateBadges = () => {
+            // Vérifier si l'animation est active et si l'onglet est visible
+            if (!badgeAnimationActive || document.visibilityState !== 'visible') return;
+            
             document.querySelectorAll('.badge-animated').forEach(badge => {
+                // Éviter d'animer le même badge plusieurs fois
+                if (badgeAnimationQueue.has(badge)) return;
+                
+                badgeAnimationQueue.add(badge);
                 badge.classList.add('pulse');
+                
                 setTimeout(() => {
                     badge.classList.remove('pulse');
+                    badgeAnimationQueue.delete(badge);
                 }, 1000);
             });
         };
         
-        // Animer les badges toutes les 5 secondes
-        setInterval(animateBadges, 5000);
+        // Gestion des animations au survol pour les cartes d'action
+        const setupActionCardAnimations = () => {
+            const actionCards = document.querySelectorAll('.action-card');
+            actionCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.willChange = 'transform, box-shadow';
+                    this.style.transform = 'translateY(-8px)';
+                    this.style.boxShadow = '0 15px 30px rgba(0,0,0,0.1)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                    setTimeout(() => {
+                        this.style.willChange = 'auto';
+                    }, 300);
+                });
+            });
+        };
+        
+        // Animation des statistiques avec Intersection Observer
+        const setupStatCounters = () => {
+            const statValues = document.querySelectorAll('.stat-value[data-value]');
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            };
+            
+            const statObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const element = entry.target;
+                        const value = parseInt(element.dataset.value, 10);
+                        animateValue(element, 0, value, 800);
+                        statObserver.unobserve(element);
+                    }
+                });
+            }, observerOptions);
+            
+            statValues.forEach(stat => {
+                statObserver.observe(stat);
+            });
+        };
+        
+        /**
+         * SECTION 3: GESTION DES ACTIONS RAPIDES (PANNEAU FLOTTANT)
+         * --------------------------------------------------------
+         */
+        const setupQuickActions = () => {
+            const quickActionsCard = document.getElementById('quickActionsCard');
+            const quickActionsBody = document.getElementById('quickActionsBody');
+            const quickActionsMinimized = document.getElementById('quickActionsMinimized');
+            const minimizeButton = document.getElementById('minimizeQuickActions');
+            const expandButton = document.getElementById('expandQuickActions');
+            const pinButton = document.getElementById('pinQuickActions');
+            
+            // État du panneau
+            let isPinned = localStorage.getItem('quickActionsPinned') === 'true';
+            let isMinimized = localStorage.getItem('quickActionsMinimized') === 'true';
+            let cardPosition = JSON.parse(localStorage.getItem('quickActionsPosition')) || { right: '20px', bottom: '20px' };
+            
+            // Appliquer la position et l'état enregistrés
+            if (isPinned) {
+                pinButton.classList.add('active');
+                pinButton.querySelector('i').classList.add('text-warning');
+            }
+            
+            Object.assign(quickActionsCard.style, {
+                right: cardPosition.right,
+                bottom: cardPosition.bottom
+            });
+            
+            if (isMinimized) {
+                quickActionsBody.style.display = 'none';
+                quickActionsMinimized.style.display = 'block';
+            }
+            
+            // Gestionnaires d'événements
+            minimizeButton.addEventListener('click', function() {
+                quickActionsBody.style.display = 'none';
+                quickActionsMinimized.style.display = 'block';
+                localStorage.setItem('quickActionsMinimized', 'true');
+            });
+            
+            expandButton.addEventListener('click', function() {
+                quickActionsBody.style.display = 'block';
+                quickActionsMinimized.style.display = 'none';
+                localStorage.setItem('quickActionsMinimized', 'false');
+            });
+            
+            pinButton.addEventListener('click', function() {
+                isPinned = !isPinned;
+                localStorage.setItem('quickActionsPinned', isPinned);
+                
+                if (isPinned) {
+                    this.classList.add('active');
+                    this.querySelector('i').classList.add('text-warning');
+                } else {
+                    this.classList.remove('active');
+                    this.querySelector('i').classList.remove('text-warning');
+                }
+            });
+            
+            // Fonctionnalité de déplacement avec Drag & Drop
+            const header = quickActionsCard.querySelector('.card-header');
+            let isDragging = false;
+            let dragOffset = { x: 0, y: 0 };
+            
+            header.addEventListener('mousedown', function(e) {
+                if (isPinned) return; // Ne pas déplacer si épinglé
+                
+                isDragging = true;
+                dragOffset.x = e.clientX - quickActionsCard.offsetLeft;
+                dragOffset.y = e.clientY - quickActionsCard.offsetTop;
+                
+                quickActionsCard.classList.add('dragging');
+                
+                // Désactiver la sélection de texte pendant le déplacement
+                document.body.style.userSelect = 'none';
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                
+                const x = e.clientX - dragOffset.x;
+                const y = e.clientY - dragOffset.y;
+                
+                // Calculer position en tant que distance depuis les bords de l'écran
+                const right = window.innerWidth - (x + quickActionsCard.offsetWidth);
+                const bottom = window.innerHeight - (y + quickActionsCard.offsetHeight);
+                
+                // Limiter aux bords de l'écran
+                const clampedRight = Math.max(10, Math.min(window.innerWidth - 100, right));
+                const clampedBottom = Math.max(10, Math.min(window.innerHeight - 100, bottom));
+                
+                quickActionsCard.style.right = `${clampedRight}px`;
+                quickActionsCard.style.bottom = `${clampedBottom}px`;
+            });
+            
+            document.addEventListener('mouseup', function() {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                quickActionsCard.classList.remove('dragging');
+                document.body.style.userSelect = '';
+                
+                // Sauvegarder la position
+                cardPosition = {
+                    right: quickActionsCard.style.right,
+                    bottom: quickActionsCard.style.bottom
+                };
+                localStorage.setItem('quickActionsPosition', JSON.stringify(cardPosition));
+            });
+        };
+        
+        /**
+         * SECTION 4: GESTION DES NOTIFICATIONS
+         * -----------------------------------
+         */
+        const setupNotifications = () => {
+            // Gestion de l'affichage des notifications et marquage comme lues
+            const notificationItems = document.querySelectorAll('.timeline-item');
+            
+            notificationItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const notificationId = this.dataset.notificationId;                    if (notificationId) {
+                        // Marquer comme lu visuellement
+                        const notifText = this.querySelector('p');
+                        if (notifText && notifText.classList.contains('fw-bold')) {
+                            notifText.classList.remove('fw-bold');
+                        }
+                          
+                        // Envoyer requête pour marquer comme lu côté serveur (AJAX)
+                        fetch(`/notifications/mark-read/${notificationId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Erreur réseau');
+                            }
+                            return response.json();
+                        })
+                        .catch(error => {
+                            console.error('Erreur lors du marquage de la notification:', error);
+                            // Remettre en gras si l'opération échoue
+                            if (notifText) notifText.classList.add('fw-bold');
+                        });
+                    }
+                });
+            });
+        };
+        
+        /**
+         * SECTION 5: INITIALISATION ET DÉMARRAGE
+         * -------------------------------------
+         */
+        // Démarrer l'horloge
+        updateClock();
+        
+        // Configurer les animations et interactions
+        setupActionCardAnimations();
+        setupStatCounters();
+        setupQuickActions();
+        setupNotifications(); 
+        
+        // Initialiser les tooltips
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(initTooltips);
+        } else {
+            setTimeout(initTooltips, 200);
+        }
+        
+        // Configuration de l'animation des badges
+        animateBadges(); // Animation initiale
+        let badgeInterval = setInterval(animateBadges, 5000);
+        
+        // Gestion de la visibilité de la page pour économiser les ressources
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                clearInterval(badgeInterval);
+                badgeAnimationActive = false;
+            } else {
+                badgeAnimationActive = true;
+                clearInterval(badgeInterval);
+                badgeInterval = setInterval(animateBadges, 5000);
+                animateBadges(); // Anime immédiatement quand la page redevient visible
+            }
+        });
     });
 </script>
-{% endblock %}
 {% endblock %}
