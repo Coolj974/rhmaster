@@ -5,60 +5,58 @@ from django.conf.urls.static import static
 from django.shortcuts import render
 from django.contrib.auth.views import LogoutView  # Ajout de l'import manquant
 
-# Import all views directly to ensure they're available
+# Import général des vues depuis le package views
 from rh_management.views import (
-    home_view, login_view, register_view, logout_view, dashboard_view,
+    # Vues d'authentification
+    home_view, login_view, register_view, logout_view,
+    
+    # Vues du tableau de bord
+    dashboard_view, dashboard_filtered, dashboard_stats_api,
+    
+    # Vues de gestion des congés
     leave_request_view, manage_leaves_view, approve_leave, reject_leave, cancel_leave,
+    delete_leave, leave_action, export_leaves, my_leaves, approve_all_leaves,
+    manage_leave_balances, update_leave_balance, export_leave_balances, 
+    get_leave_balance_history, adjust_leave_balance, adjust_collective_leave_balance,
+    
+    # Vues de gestion des notes de frais
     submit_expense, manage_expenses_view, approve_expense, reject_expense, cancel_expense,
-    profile_view, update_profile, change_password, edit_preferences,
-    manage_users_view, edit_user, delete_user, toggle_user_status, mass_action, 
-    reset_password,
+    delete_expense, expense_action, export_expenses, export_expenses_excel, 
+    export_expenses_pdf, my_expenses_view, approve_all_expenses,
+    
+    # Vues de gestion des frais kilométriques
     submit_kilometric_expense, my_kilometric_expenses, manage_kilometric_expenses,
     approve_kilometric_expense, reject_kilometric_expense, edit_kilometric_expense,
-    cancel_kilometric_expense, approve_all_kilometric_expenses,
-    export_expenses, export_expenses_excel, export_expenses_pdf, export_leaves,
-    delete_leave, delete_expense, delete_kilometric_expense,
-    dashboard_filtered, my_leaves, my_expenses_view, approve_all_expenses,
-    # Important - explicitly import these two views
-    manage_roles_view, delete_role,
-    # Password Manager views
+    cancel_kilometric_expense, delete_kilometric_expense, kilometric_expense_action,
+    approve_all_kilometric_expenses, export_kilometric_expenses,
+    
+    # Vues de gestion des profils
+    profile_view, update_profile, change_password, edit_preferences,
+    
+    # Vues de gestion des utilisateurs
+    manage_users_view, edit_user, delete_user, toggle_user_status, mass_action, 
+    reset_password, manage_roles_view, create_role, edit_role, 
+    assign_permissions, assign_users, delete_role,
+    
+    # Vues du gestionnaire de mots de passe
     password_manager_list, password_manager_add, password_manager_edit, 
     password_manager_delete, password_manager_view, password_share, password_share_remove,
-    api_leaves,
     password_manager, password_add, password_view, password_edit, password_delete,
-    leave_action, expense_action, kilometric_expense_action, manage_leave_balances,
-    update_leave_balance, dashboard_stats_api,
-    export_leave_balances, get_leave_balance_history, adjust_leave_balance, adjust_collective_leave_balance
+    
+    # Vues API
+    api_leaves
 )
 
-# Import les nouvelles vues d'historique
+# Import des vues d'historique
 from rh_management.views.expense_views import expense_history, admin_expense_history
 from rh_management.views.leave_views import leave_history, admin_leave_history
 
-# Import les nouvelles vues de notification
+# Import des vues de notification
 from rh_management.views.notification_views import (
     notifications_view, mark_notification_read, mark_all_read,
     delete_notification, delete_all_read, get_notifications_count,
-    get_notifications_dropdown,
-    get_notifications, mark_notification_as_read, mark_all_as_read, notifications_page
+    get_notifications_count_api, get_notifications_dropdown
 )
-
-# Import pour la nouvelle vue
-from rh_management.views.leave_views import (
-    leave_request_view, cancel_leave, manage_leaves_view, 
-    approve_leave, reject_leave, delete_leave, leave_action, 
-    export_leaves, manage_leave_balances, update_leave_balance, 
-    my_leaves, approve_all_leaves
-)
-
-# Import pour la gestion des rôles et utilisateurs
-from rh_management.views.user_management_views import (
-    manage_roles_view, create_role, edit_role, 
-    assign_permissions, assign_users, delete_role
-)
-
-# Import pour les vues de frais kilométriques
-from rh_management.views.kilometric_expense_views import export_kilometric_expenses
 
 # Error handlers
 def error_404(request, exception):
@@ -86,16 +84,14 @@ admin.site.site_header = "CybeRH Administration"
 admin.site.site_title = "CybeRH Admin"
 admin.site.index_title = "Tableau de bord d'administration"
 
-urlpatterns = [
-    # Admin standard
+urlpatterns = [    # Admin standard
     path("admin/", admin.site.urls),
     
-    # Tableau de bord admin personnalisé - utiliser un chemin différent que celui sous /admin/
+    # Tableau de bord admin personnalisé
     path("admin-dashboard/", admin_views.admin_dashboard, name='admin_dashboard'),
     
-    # Utilisation directe de la vue sans passer par admin.site.admin_view
-    path("admin/dashboard/", admin_views.admin_dashboard, name='admin_dashboard'),
-    # Version sans slash final pour la compatibilité
+    # Alias pour compatibilité avec les anciennes URLs
+    path("admin/dashboard/", admin_views.admin_dashboard),
     path("admin/dashboard", admin_views.admin_dashboard),
     
     # Authentication
@@ -180,8 +176,8 @@ urlpatterns = [
     path('kilometric-expense-action/<int:expense_id>/', kilometric_expense_action, name='kilometric_expense_action'),
     path('approve-all-kilometric-expenses/', approve_all_kilometric_expenses, name='approve_all_kilometric_expenses'),  # Approuver tous les frais kilométriques
     path('export-kilometric-expenses/', export_kilometric_expenses, name='export_kilometric_expenses'),  # Nouvelle URL pour exporter les frais kilométriques
-    
-    # Password Manager
+      # Password Manager
+    # Nouveau gestionnaire de mots de passe avec préfixe 'password-manager'
     path("password-manager/", password_manager_list, name="password_manager_list"),
     path("password-manager/add/", password_manager_add, name="password_manager_add"),
     path("password-manager/<int:pk>/edit/", password_manager_edit, name="password_manager_edit"),
@@ -189,27 +185,22 @@ urlpatterns = [
     path("password-manager/<int:pk>/view/", password_manager_view, name="password_manager_view"),
     path("password-manager/<int:pk>/share/", password_share, name="password_share"),
     path("password-manager/share/<int:share_id>/remove/", password_share_remove, name="password_share_remove"),
-    path('password-manager/', password_manager_list, name='password_manager'),  # Alias pour compatibilité
+    
+    # Interface simplifiée avec préfixe 'passwords' (pour rétrocompatibilité)
     path('passwords/', password_manager, name='password_manager'),
     path('passwords/add/', password_add, name='password_add'),
     path('passwords/view/<int:pk>/', password_view, name='password_view'),
     path('passwords/edit/<int:pk>/', password_edit, name='password_edit'),
     path('passwords/delete/<int:pk>/', password_delete, name='password_delete'),
-    path('passwords/share/<int:pk>/', password_share, name='password_share'),
-    
-    # Notifications
-    path("notifications/", notifications_view, name="notifications"),
+    path('passwords/share/<int:pk>/', password_share, name='password_share'),      # Notifications
+    path("notifications/", notifications_view, name="notifications_page"),  # Nom principal pour les templates
     path("notifications/mark-read/<int:notification_id>/", mark_notification_read, name="mark_notification_read"),
     path("notifications/mark-all-read/", mark_all_read, name="mark_all_read"),
     path("notifications/delete/<int:notification_id>/", delete_notification, name="delete_notification"),
     path("notifications/delete-all-read/", delete_all_read, name="delete_all_read"),
-    path("api/notifications/count/", get_notifications_count, name="get_notifications_count"),
+      # API pour les notifications
+    path("api/notifications/count/", get_notifications_count_api, name="get_notifications_count_api"),
     path("api/notifications/dropdown/", get_notifications_dropdown, name="get_notifications_dropdown"),
-    path('notifications/get/', get_notifications, name='get_notifications'),
-    path('notifications/count/', get_notifications_count, name='get_notifications_count'),
-    path('notifications/mark-read/<int:notification_id>/', mark_notification_as_read, name='mark_notification_as_read'),
-    path('notifications/mark-all-read/', mark_all_as_read, name='mark_all_as_read'),
-    path('notifications/', notifications_page, name='notifications_page'),
 
     # API
     path("api/leaves/", api_leaves, name="api_leaves"),

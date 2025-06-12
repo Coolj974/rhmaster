@@ -96,25 +96,10 @@ def get_notifications_dropdown(request):
     })
 
 @login_required
-def mark_notification_as_read(request, notification_id):
-    """
-    Marque une notification spécifique comme lue
-    """
-    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
-    
-    if not notification.read:
-        notification.read = True
-        notification.save()
-    
-    # Rediriger vers l'URL associée à la notification ou vers le tableau de bord
-    redirect_url = notification.url if notification.url else 'dashboard'
-    return redirect(redirect_url)
-
-@login_required
 def mark_notification_read(request, notification_id):
     """
-    Marque une notification spécifique comme lue pour les requêtes AJAX
-    avec une réponse JSON appropriée
+    Marque une notification spécifique comme lue
+    Gère à la fois les requêtes AJAX et standard
     """
     notification = get_object_or_404(Notification, id=notification_id, user=request.user)
     
@@ -133,41 +118,17 @@ def mark_notification_read(request, notification_id):
     redirect_url = notification.url if notification.url else 'dashboard'
     return redirect(redirect_url)
 
-@login_required
-def mark_all_as_read(request):
-    """
-    Marque toutes les notifications non lues de l'utilisateur comme lues
-    """
-    unread_notifications = Notification.objects.filter(
-        user=request.user,
-        read=False
-    )
-    
-    for notification in unread_notifications:
-        notification.read = True
-        notification.save()
-    
-    # Si la requête est AJAX, renvoyer une réponse JSON
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'status': 'success', 'message': 'Toutes les notifications ont été marquées comme lues'})
-    
-    # Sinon, rediriger vers la page précédente
-    return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
+# Alias pour compatibilité avec les anciens appels
+mark_notification_as_read = mark_notification_read
 
 @login_required
 def mark_all_read(request):
     """
     Fonction pour marquer toutes les notifications non lues comme lues
-    avec prise en charge spécifique des requêtes AJAX
+    avec prise en charge des requêtes AJAX et standard
     """
-    unread_notifications = Notification.objects.filter(
-        user=request.user,
-        read=False
-    )
-    
-    for notification in unread_notifications:
-        notification.read = True
-        notification.save()
+    # Marquer toutes les notifications comme lues en une seule requête
+    Notification.objects.filter(user=request.user, read=False).update(read=True)
     
     # Si la requête est AJAX, renvoyer une réponse JSON
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -179,30 +140,31 @@ def mark_all_read(request):
     # Sinon, rediriger vers la page précédente
     return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
 
+# Alias pour compatibilité avec les anciens appels
+mark_all_as_read = mark_all_read
+
 @login_required
-def notifications_page(request):
+def notifications_view(request):
     """
     Affiche toutes les notifications de l'utilisateur sur une page dédiée
     """
     # Filtrage des notifications
     filter_type = request.GET.get('filter', 'all')
     
-    if filter_type == 'unread':
-        notifications = Notification.objects.filter(
-            user=request.user, 
-            read=False
-        ).order_by('-created_at')
-    else:  # 'all' par défaut
-        notifications = Notification.objects.filter(
-            user=request.user
-        ).order_by('-created_at')
+    # Optimisation de la requête en utilisant une seule requête de base
+    notifications_query = Notification.objects.filter(user=request.user)
     
-    # Calcul des statistiques pour le template
-    all_notifications = Notification.objects.filter(user=request.user)
+    if filter_type == 'unread':
+        notifications = notifications_query.filter(read=False).order_by('-created_at')
+    else:  # 'all' par défaut
+        notifications = notifications_query.order_by('-created_at')
+    
+    # Calcul des statistiques pour le template - optimisé avec des annotate et des agrégats
+    from django.db.models import Count
     stats = {
-        'total': all_notifications.count(),
-        'unread': all_notifications.filter(read=False).count(),
-        'read': all_notifications.filter(read=True).count()
+        'total': notifications_query.count(),
+        'unread': notifications_query.filter(read=False).count(),
+        'read': notifications_query.filter(read=True).count()
     }
     
     context = {
@@ -213,13 +175,8 @@ def notifications_page(request):
     
     return render(request, 'rh_management/notifications.html', context)
 
-@login_required
-def notifications_view(request):
-    """
-    Vue principale pour afficher la page des notifications
-    Alias de notifications_page pour maintenir la compatibilité
-    """
-    return notifications_page(request)
+# Alias pour compatibilité avec les anciens appels
+notifications_page = notifications_view
 
 @login_required
 def delete_notification(request, notification_id):
@@ -269,11 +226,14 @@ def delete_all_read(request):
 @login_required
 def get_notifications_count(request):
     """
-    Retourne uniquement le nombre de notifications non lues
-    Plus léger que get_notifications pour un chargement rapide
+    Vue API pour récupérer uniquement le nombre de notifications non lues
+    Utile pour les mises à jour AJAX
     """
     unread_count = Notification.objects.filter(user=request.user, read=False).count()
-    return JsonResponse({'count': unread_count})
+    return JsonResponse({
+        'success': True,
+        'unread_count': unread_count
+    })
 
 def _get_time_since(timestamp):
     """
@@ -326,3 +286,22 @@ def get_notifications_count(user):
     Fonction utilitaire utilisée par d'autres vues
     """
     return Notification.objects.filter(user=user, read=False).count()
+
+def _get_notifications_count_for_user(user):
+    """
+    Retourne le nombre de notifications non lues pour un utilisateur donné
+    Fonction utilitaire interne utilisée par d'autres vues
+    """
+    return Notification.objects.filter(user=user, read=False).count()
+
+def get_notifications_count_api(request):
+    """
+    API Vue qui retourne le nombre de notifications non lues pour l'utilisateur connecté
+    """
+    from django.http import JsonResponse
+    
+    if not request.user.is_authenticated:
+        return JsonResponse({"count": 0}, status=401)
+    
+    count = get_notifications_count(request.user)
+    return JsonResponse({"count": count})

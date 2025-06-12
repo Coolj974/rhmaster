@@ -347,6 +347,27 @@ class Profile(models.Model):
     date_of_birth = models.DateField(blank=True, null=True, verbose_name="Date de naissance")
     hire_date = models.DateField(blank=True, null=True, verbose_name="Date d'embauche")
     manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="subordinates", verbose_name="Responsable")
+    
+    # Champs de préférences
+    theme_preference = models.CharField(max_length=20, default='light', choices=[
+        ('light', 'Clair'),
+        ('dark', 'Sombre'),
+        ('system', 'Système')
+    ], verbose_name="Thème préféré")
+    
+    language_preference = models.CharField(max_length=10, default='fr', choices=[
+        ('fr', 'Français'),
+        ('en', 'English')
+    ], verbose_name="Langue préférée")
+    
+    # Champs de notifications
+    notifications_enabled = models.BooleanField(default=True, verbose_name="Notifications activées")
+    email_notifications = models.BooleanField(default=True, verbose_name="Notifications par email")
+    
+    # Champs de rôles
+    is_encadrant = models.BooleanField(default=False, verbose_name="Est encadrant")
+    is_stp = models.BooleanField(default=False, verbose_name="Est STP")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

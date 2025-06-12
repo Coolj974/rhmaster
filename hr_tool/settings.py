@@ -11,25 +11,18 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-import os  # ✅ Ajoute cet import
-from pathlib import Path
-LOGOUT_REDIRECT_URL = "/login/"
+import os
 
-# Définition de BASE_DIR
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ... autres configurations ...
+# Static files configuration
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# ... autres configurations ...
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

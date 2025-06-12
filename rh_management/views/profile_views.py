@@ -14,15 +14,14 @@ def profile(request):
     """
     # Récupérer ou créer le profil de l'utilisateur
     user_profile, created = Profile.objects.get_or_create(user=request.user)
-    
-    # Récupérer le solde de congés
+      # Récupérer le solde de congés
     leave_balance = LeaveBalance.objects.filter(user=request.user).first()
     
     # Récupérer les départements pour le formulaire de mise à jour
     departments = Department.objects.filter(is_active=True).order_by('name')
     
     context = {
-        'user_profile': user_profile,
+        'profile': user_profile,
         'leave_balance': leave_balance,
         'departments': departments
     }
@@ -32,12 +31,8 @@ def profile(request):
 @login_required
 def profile_view(request):
     """Affiche la page de profil de l'utilisateur."""
-    # S'assurer que l'utilisateur a un profil
-    try:
-        profile = request.user.userprofile
-    except UserProfile.DoesNotExist:
-        profile = UserProfile(user=request.user)
-        profile.save()
+    # S'assurer que l'utilisateur a un profil (utiliser le modèle Profile)
+    profile, created = Profile.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
         if 'update_picture' in request.POST and request.FILES.get('profile_picture'):
@@ -80,8 +75,12 @@ def profile_view(request):
             new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
             new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
     
+    # Récupérer les départements pour le formulaire de mise à jour
+    departments = Department.objects.filter(is_active=True).order_by('name')
+    
     context = {
         'profile': profile,
+        'departments': departments,
         'is_admin': is_admin_flag,
         'is_rh': is_rh_flag,
         'is_encadrant': is_encadrant_flag,
@@ -104,23 +103,32 @@ def update_profile(request):
         request.user.last_name = request.POST.get('last_name', '')
         request.user.email = request.POST.get('email', '')
         request.user.save()
-        
-        # Récupérer ou créer le profil
+          # Récupérer ou créer le profil
         profile, created = Profile.objects.get_or_create(user=request.user)
         
         # Mettre à jour les informations du profil
-        profile.phone_number = request.POST.get('phone_number', '')
+        profile.phone_number = request.POST.get('phone', '')
         profile.address = request.POST.get('address', '')
         profile.position = request.POST.get('position', '')
-        
-        # Gérer le département s'il est spécifié
-        department_id = request.POST.get('department')
+          # Gérer le département (le template envoie maintenant l'ID)
+        department_id = request.POST.get('department', '').strip()
         if department_id and department_id.isdigit():
             try:
                 department = Department.objects.get(id=department_id)
                 profile.department = department
             except Department.DoesNotExist:
                 pass
+        elif not department_id:
+            # Si aucun département n'est sélectionné, on met à None
+            profile.department = None
+        
+        # Gérer les préférences si c'est le bon type de formulaire
+        form_type = request.POST.get('form_type', 'profile')
+        if form_type == 'preferences':
+            profile.theme_preference = request.POST.get('theme', 'light')
+            profile.language_preference = request.POST.get('language', 'fr')
+            profile.notifications_enabled = 'notifications_enabled' in request.POST
+            profile.email_notifications = 'email_notifications' in request.POST
         
         # Gérer l'upload de photo de profil
         if 'profile_picture' in request.FILES:
@@ -201,11 +209,10 @@ def view_user_profile(request, user_id):
         return redirect('dashboard')
     
     target_user = get_object_or_404(User, id=user_id)
-    
-    # Récupérer le profil utilisateur
+      # Récupérer le profil utilisateur
     try:
-        user_profile = target_user.userprofile
-    except UserProfile.DoesNotExist:
+        user_profile = target_user.profile
+    except Profile.DoesNotExist:
         user_profile = None
     
     # Récupérer des statistiques pertinentes
@@ -252,12 +259,8 @@ def edit_preferences(request):
         notifications_enabled = request.POST.get('notifications_enabled') == 'on'
         email_notifications = request.POST.get('email_notifications') == 'on'
         language = request.POST.get('language', 'fr')
-        
-        # Récupérer ou créer le profil utilisateur
-        try:
-            profile = request.user.userprofile
-        except UserProfile.DoesNotExist:
-            profile = UserProfile(user=request.user)
+          # Récupérer ou créer le profil utilisateur
+        profile, created = Profile.objects.get_or_create(user=request.user)
         
         # Mettre à jour les préférences
         profile.theme_preference = theme
@@ -268,13 +271,8 @@ def edit_preferences(request):
         
         messages.success(request, "Vos préférences ont été mises à jour avec succès.")
         return redirect('profile')
-    
-    # Récupérer les préférences actuelles
-    try:
-        profile = request.user.userprofile
-    except UserProfile.DoesNotExist:
-        profile = UserProfile(user=request.user)
-        profile.save()
+      # Récupérer les préférences actuelles
+    profile, created = Profile.objects.get_or_create(user=request.user)
     
     context = {
         'profile': profile,

@@ -1,12 +1,12 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
+<head>    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="CybeRH - Application de gestion des ressources humaines">
     <meta name="theme-color" content="#3b7ddd">
-    <title>CybeRH</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}CybeRH{% endblock %}</title>
     
     <!-- Préchargement des ressources critiques -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -565,10 +565,9 @@
             
             <ul class="navbar-nav">                <!-- Notifications -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link position-relative" href="#" data-bs-toggle="dropdown" id="notificationsDropdown" title="Notifications">
-                        <i class="fas fa-bell"></i>
+                    <a class="nav-link position-relative" href="#" data-bs-toggle="dropdown" id="notificationsDropdown" title="Notifications">                        <i class="fas fa-bell"></i>
                         {% if notifications_count > 0 %}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge" id="notifications-badge">
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge" id="notifications-badge" data-badge-type="notification">
                             <span id="notifications-count">{{ notifications_count }}</span>
                         </span>
                         {% endif %}
@@ -583,12 +582,11 @@
                             </div>
                         </li>
                     </ul>
-                </li>
-                                  <!-- Profil utilisateur -->
+                </li>                <!-- Profil utilisateur -->
                 <li class="nav-item dropdown user-menu">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown" title="Mon compte">
-                        {% if request.user.userprofile.profile_picture %}
-                            <img src="{{ request.user.userprofile.profile_picture.url }}" 
+                        {% if user.profile.profile_picture %}
+                            <img src="{{ user.profile.profile_picture.url }}" 
                                  alt="Photo de profil"
                                  class="rounded-circle me-2"
                                  style="width: 36px; height: 36px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -603,8 +601,8 @@
                     <ul class="dropdown-menu dropdown-menu-end user-dropdown" style="min-width: 280px;">
                         <div class="p-3 border-bottom">
                             <div class="d-flex align-items-center">
-                                {% if request.user.userprofile.profile_picture %}
-                                    <img src="{{ request.user.userprofile.profile_picture.url }}" 
+                                {% if user.profile.profile_picture %}
+                                    <img src="{{ user.profile.profile_picture.url }}" 
                                         alt="Photo de profil"
                                         class="rounded-circle me-3"
                                         style="width: 48px; height: 48px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
@@ -631,18 +629,16 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>                        <li>
+                        </div><li>
                             <a class="dropdown-item d-flex align-items-center" href="{% url 'profile' %}">
                                 <i class="fas fa-user-circle fs-5 me-3 text-primary"></i> 
                                 <span>Mon profil</span>
                             </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item d-flex align-items-center" href="{% url 'notifications' %}">
-                                <i class="fas fa-bell fs-5 me-3 text-warning"></i> 
-                                <div class="d-flex justify-content-between align-items-center w-100">
+                        </li>                        <li>
+                            <a class="dropdown-item d-flex align-items-center" href="{% url 'notifications_page' %}">
+                                <i class="fas fa-bell fs-5 me-3 text-warning"></i>                                <div class="d-flex justify-content-between align-items-center w-100">
                                     <span>Mes notifications</span>
-                                    <span class="badge bg-danger rounded-pill" id="dropdown-notif-count">0</span>
+                                    <span class="badge bg-danger rounded-pill" id="dropdown-notif-count" data-badge-type="notification">0</span>
                                 </div>
                             </a>
                         </li>
@@ -714,6 +710,11 @@
 {% block extra_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Variables globales pour le système de notifications
+    let notificationCache = null;
+    let notificationLastFetch = 0;
+    let lastRefreshTime = 0;
+
     // Fonction pour améliorer les alertes
     function setupAlertDismiss() {
         const alerts = document.querySelectorAll('.alert');
@@ -805,18 +806,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (parts.length === 2) return parts.pop().split(';').shift();
         return '';
     }
-      // Obtenir le token CSRF
+
+    // Obtenir le token CSRF
     const csrfValue = getCsrfToken();
     
+    // Fonction principale pour charger les notifications (avec cache)
     function loadNotifications() {
-        // Récupérer le conteneur de notifications
         const container = document.getElementById('notificationsContainer');
         if (!container) return;
+        
+        // Vérifier la validité du cache (30 secondes)
+        const now = Date.now();
+        if (notificationCache && now - notificationLastFetch < 30000) {
+            updateNotifications(notificationCache);
+            return;
+        }
         
         // Vérifier si le chargement est déjà en cours pour éviter les appels multiples
         if (container.dataset.loading === 'true') return;
         container.dataset.loading = 'true';
-          // Afficher l'indicateur de chargement avec animation
+          
+        // Afficher l'indicateur de chargement avec animation
         container.innerHTML = `
             <li class="dropdown-item text-center p-3">
                 <div class="d-flex justify-content-center align-items-center">
@@ -846,9 +856,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
+            // Mettre en cache les données
+            notificationCache = data;
+            notificationLastFetch = now;
+            
             // Simuler un petit délai pour permettre à l'utilisateur de voir le chargement
-            // (améliore la perception de "fraîcheur" des données)
-            setTimeout(() => {                // Mise à jour complète une fois les données reçues
+            setTimeout(() => {
+                // Mise à jour complète une fois les données reçues
                 updateNotifications(data);
                 
                 // Réinitialiser l'état de chargement
@@ -873,6 +887,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Permettre à l'utilisateur de réessayer en cliquant sur le bouton
             container.querySelector('.reload-notifications').addEventListener('click', () => {
+                // Invalider le cache et recharger
+                notificationCache = null;
                 loadNotifications();
             });
             
@@ -889,30 +905,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const dropdownCount = document.getElementById('dropdown-notif-count');
         
         if (data.count > 0) {
-            countElement.textContent = data.count > 99 ? '99+' : data.count;
+            if (countElement) countElement.textContent = data.count > 99 ? '99+' : data.count;
             if (dropdownCount) dropdownCount.textContent = data.count > 99 ? '99+' : data.count;
-            badgeElement.classList.remove('d-none');
-            
-            // Ajouter une animation de pulse
-            badgeElement.classList.add('pulse');
-            
-            // Réinitialiser l'animation après un court délai
-            setTimeout(() => {
-                badgeElement.classList.remove('pulse');
-            }, 1000);
+            if (badgeElement) {
+                badgeElement.classList.remove('d-none');
+                
+                // Ajouter une animation de pulse
+                badgeElement.classList.add('pulse');
+                
+                // Réinitialiser l'animation après un court délai
+                setTimeout(() => {
+                    badgeElement.classList.remove('pulse');
+                }, 1000);
+            }
         } else {
-            badgeElement.classList.add('d-none');
-            badgeElement.classList.remove('pulse');
+            if (badgeElement) {
+                badgeElement.classList.add('d-none');
+                badgeElement.classList.remove('pulse');
+            }
             if (dropdownCount) dropdownCount.textContent = '0';
         }
         
         // Vider le conteneur actuel
         const container = document.getElementById('notificationsContainer');
         
-        // Créer un élément temporaire pour faciliter les transitions
-        const tempContainer = document.createElement('div');
-        tempContainer.innerHTML = data.html;
-          // Appliquer une transition douce au contenu
+        // Appliquer une transition douce au contenu
         container.style.opacity = '0';
         
         // Mettre à jour le contenu après une courte transition
@@ -940,13 +957,15 @@ document.addEventListener('DOMContentLoaded', function() {
             unreadItems.forEach(item => {
                 const parent = item.closest('.notification-item');
                 if (parent) {
-                    parent.style.borderLeftColor = '#dc3545';                    setTimeout(() => {
+                    parent.style.borderLeftColor = '#dc3545';
+                    setTimeout(() => {
                         parent.style.borderLeftColor = '';
                     }, 5000);
                 }
             });
         }, 200);
     }
+
     // Configuration des écouteurs d'événements pour les notifications
     function setupNotificationListeners() {
         // Marquage d'une notification comme lue
@@ -978,6 +997,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        // Invalider le cache
+                        notificationCache = null;
+                        
                         // Ajouter une animation de sortie avant de recharger
                         this.style.opacity = '0';
                         this.style.transform = 'translateX(10px)';
@@ -1032,6 +1054,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        // Invalider le cache
+                        notificationCache = null;
+                        
                         // Attendre que l'animation soit terminée
                         setTimeout(() => {
                             loadNotifications();
@@ -1042,31 +1067,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
-      // Système de cache pour les notifications
-    let notificationCache = null;
-    let notificationLastFetch = 0;
-    
-    // Charger les notifications avec gestion de cache
-    function loadNotifications() {
-        const container = document.getElementById('notificationsContainer');
-        if (!container) return;
-        
-        // Vérifier la validité du cache (30 secondes)
-        const now = Date.now();
-        if (notificationCache && now - notificationLastFetch < 30000) {
-            updateNotifications(notificationCache);
-            return;
-        }
-        
-        if (container.dataset.loading === 'true') return;
-        container.dataset.loading = 'true';
-        
-        // Continuer avec la requête si pas de cache valide
-        setTimeout(() => {
-            loadNotifications();
-        }, 500);
-    }
-    
+
     // Configurer l'ouverture du dropdown pour charger les notifications
     const notificationsDropdown = document.getElementById('notificationsDropdown');
     if (notificationsDropdown) {
@@ -1091,13 +1092,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Ne rafraîchir que si assez de temps s'est écoulé
                 if (now - lastRefreshTime >= refreshTime) {
                     if (document.getElementById('notificationsContainer')) {
+                        // Invalider le cache pour forcer le rechargement
+                        notificationCache = null;
                         loadNotifications();
                         lastRefreshTime = now;
                     } else {
                         clearInterval(refreshInterval);
                     }
                 }
-            }, 30000); // Vérifier toutes les 30 secondes, mais ne rafraîchir que selon les conditions ci-dessus
+            }, 30000); // Vérifier toutes les 30 secondes
         }
         
         // Démarrer le rafraîchissement
@@ -1111,6 +1114,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isPageActive) {
                 const now = Date.now();
                 if (now - lastRefreshTime >= 60000) { // Si ça fait plus d'une minute
+                    notificationCache = null;
                     loadNotifications();
                     lastRefreshTime = now;
                 }
@@ -1120,7 +1124,8 @@ document.addEventListener('DOMContentLoaded', function() {
             manageRefresh();
         });
     }
-      // Ajouter des transitions fluides aux menus déroulants
+
+    // Ajouter des transitions fluides aux menus déroulants
     const dropdowns = document.querySelectorAll('.dropdown');
     dropdowns.forEach(dropdown => {
         dropdown.addEventListener('show.bs.dropdown', function() {
@@ -1158,10 +1163,20 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Fermer le dropdown après l'animation
             setTimeout(() => {
-                bootstrap.Dropdown.getInstance(this.querySelector('[data-bs-toggle="dropdown"]')).hide();
+                const dropdownInstance = bootstrap.Dropdown.getInstance(this.querySelector('[data-bs-toggle="dropdown"]'));
+                if (dropdownInstance) {
+                    dropdownInstance.hide();
+                }
             }, 200);
         });
     });
+
+    // Performance : Charger les notifications initiales avec un délai
+    setTimeout(() => {
+        if (document.getElementById('notificationsContainer')) {
+            loadNotifications();
+        }
+    }, 1000);
 });
 </script>
 {% endblock %}

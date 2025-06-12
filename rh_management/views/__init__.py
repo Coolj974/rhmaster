@@ -17,9 +17,8 @@ from .dashboard_views import (
     some_view,
     dashboard_filtered,
     dashboard_stats_api,
-    index as dashboard,  # Correction de l'import
-    dashboard as index,  # Importer dashboard sous le nom index
-    dashboard  # Importer dashboard directement aussi
+    dashboard,
+    index
 )
 
 # Importation des vues de gestion des congés
@@ -102,8 +101,7 @@ from .profile_views import (
     update_profile,
     change_password,
     view_user_profile,
-    edit_preferences,
-    profile  # Ajout de profile
+    edit_preferences
 )
 
 # Importation des vues du gestionnaire de mots de passe
@@ -131,4 +129,15 @@ from .api_views import (
     api_notifications,
     generate_password_api,
     search_api
+)
+
+# Importation des vues de notification
+from .notification_views import (
+    notifications_view,
+    mark_notification_read,
+    mark_all_read,
+    delete_notification,
+    delete_all_read,
+    get_notifications_count, 
+    get_notifications_dropdown
 )
