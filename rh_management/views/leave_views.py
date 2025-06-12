@@ -639,67 +639,101 @@ def reject_leave(request, leave_id):
 
 @login_required
 def leave_action(request, leave_id):
-    """Vue pour gérer les actions sur les demandes de congés."""
-    if not request.user.is_authenticated:
-        return redirect('login')
+    """
+    Vue pour approuver ou rejeter une demande de congé
+    """
+    # Utiliser LeaveRequest au lieu de Leave
+    leave = get_object_or_404(LeaveRequest, id=leave_id)
     
-    # Récupérer la demande de congé
-    try:
-        leave_request = LeaveRequest.objects.get(id=leave_id)
-        
-        # Vérifier les permissions selon les rôles
-        from .permissions import can_approve_leave, is_admin
-        if not (is_admin(request.user) or can_approve_leave(request.user, leave_request)):
-            messages.error(request, "Vous n'avez pas les droits pour approuver cette demande. Les RH peuvent approuver les demandes des employés et les encadrants celles des STP.")
-            return redirect('dashboard')
-        
-        # Calculer days_requested si non défini
-        if not leave_request.days_requested:
-            leave_request.days_requested = calculate_working_days(
-                leave_request.start_date, 
-                leave_request.end_date,
-                leave_request.half_day
-            )
-            leave_request.save()
-    except LeaveRequest.DoesNotExist:
-        messages.error(request, "La demande de congé n'existe pas.")
+    # CORRECTION: Empêcher l'auto-validation/rejet des congés
+    if leave.user == request.user:
+        messages.error(request, "Vous ne pouvez pas traiter votre propre demande de congé.")
         return redirect('manage_leaves')
     
-    # Traiter la demande si c'est un POST
+    # Vérifier que la demande est encore en attente
+    if leave.status != 'pending':
+        messages.error(request, "Cette demande de congé a déjà été traitée.")
+        return redirect('manage_leaves')
+    
     if request.method == 'POST':
         action = request.POST.get('action')
         comment = request.POST.get('comment', '')
         
         if action == 'approve':
-            # Approuver la demande
-            leave_request.status = 'approved'
-            leave_request.comment = comment
-            leave_request.save()
-              # Mettre à jour le solde de congés de l'utilisateur
-            balance, created = LeaveBalance.objects.get_or_create(user=leave_request.user)
-            # Convertir days_requested en Decimal pour éviter l'erreur de type
-            from decimal import Decimal
-            balance.taken += Decimal(str(leave_request.days_requested))
-            balance.save()
+            leave.status = 'approved'
+            if hasattr(leave, 'comment'):
+                leave.comment = comment
+            leave.save()
             
-            messages.success(request, "La demande de congé a été approuvée.")
+            # Notifier l'utilisateur
+            Notification.objects.create(
+                user=leave.user,
+                title="Demande de congé approuvée",
+                message=f"Votre demande de congé du {leave.start_date.strftime('%d/%m/%Y')} au {leave.end_date.strftime('%d/%m/%Y')} a été approuvée.",
+                url="/my-leaves/",
+                icon="fa-calendar-check"
+            )
+            
+            messages.success(request, f"La demande de congé de {leave.user.get_full_name()} a été approuvée.")
+            
         elif action == 'reject':
-            # Rejeter la demande
-            leave_request.status = 'rejected'
-            leave_request.comment = comment
-            leave_request.save()
-            messages.success(request, "La demande de congé a été rejetée.")
-        else:
-            messages.error(request, "Action non reconnue.")
+            if not comment:
+                messages.error(request, "Un motif de rejet est requis.")
+                return redirect('manage_leaves')
+                
+            leave.status = 'rejected'
+            if hasattr(leave, 'comment'):
+                leave.comment = comment
+            elif hasattr(leave, 'rejection_reason'):
+                leave.rejection_reason = comment
+            leave.save()
             
+            # Notifier l'utilisateur
+            Notification.objects.create(
+                user=leave.user,
+                title="Demande de congé rejetée",
+                message=f"Votre demande de congé du {leave.start_date.strftime('%d/%m/%Y')} au {leave.end_date.strftime('%d/%m/%Y')} a été rejetée. Motif: {comment}",
+                url="/my-leaves/",
+                icon="fa-calendar-times"
+            )
+            
+            messages.success(request, f"La demande de congé de {leave.user.get_full_name()} a été rejetée.")
+    
     return redirect('manage_leaves')
 
 @login_required
-def delete_leave(request, id):
-    leave = get_object_or_404(LeaveRequest, id=id)
-    if request.user.is_superuser:
-        leave.delete()
-    return redirect('dashboard')
+@user_is_hr_or_admin
+def approve_all_leaves(request):
+    """
+    Approuve toutes les demandes de congé en attente
+    """
+    # Utiliser LeaveRequest au lieu de Leave
+    pending_leaves = LeaveRequest.objects.filter(status='pending')
+    
+    # CORRECTION: Exclure les propres demandes de l'utilisateur
+    pending_leaves = pending_leaves.exclude(user=request.user)
+    
+    count = pending_leaves.count()
+    
+    for leave in pending_leaves:
+        leave.status = 'approved'
+        leave.save()
+        
+        # Notifier l'utilisateur
+        Notification.objects.create(
+            user=leave.user,
+            title="Demande de congé approuvée",
+            message=f"Votre demande de congé du {leave.start_date.strftime('%d/%m/%Y')} au {leave.end_date.strftime('%d/%m/%Y')} a été approuvée.",
+            url="/my-leaves/",
+            icon="fa-calendar-check"
+        )
+    
+    if count > 0:
+        messages.success(request, f"{count} demande(s) de congé ont été approuvées avec succès (vos propres demandes ont été exclues).")
+    else:
+        messages.info(request, "Aucune demande de congé à approuver.")
+    
+    return redirect('manage_leaves')
 
 @login_required
 @user_passes_test(is_admin_or_hr)
@@ -733,97 +767,99 @@ def export_leaves(request):
 
 @login_required
 def my_leaves(request):
-    leave_requests = LeaveRequest.objects.filter(user=request.user)
+    """
+    Vue pour afficher les congés de l'utilisateur connecté
+    """
+    # Créer automatiquement un solde de congés s'il n'existe pas
+    leave_balance, created = LeaveBalance.objects.get_or_create(
+        user=request.user,
+        defaults={
+            'acquired': 25.0,  # 25 jours par défaut (ajustable selon votre politique)
+            'taken': 0.0,
+            'available': 25.0
+        }
+    )
     
-    # Ajouter les compteurs de notifications au contexte
-    is_admin = request.user.is_superuser
-    is_rh = request.user.is_staff
-    is_encadrant = request.user.groups.filter(name='Encadrant').exists()
+    if created:
+        # Notifier l'utilisateur de la création du solde
+        messages.info(request, f"Votre solde de congés a été initialisé avec {leave_balance.acquired} jours.")
     
-    # Initialiser les compteurs
-    new_leave_requests_count = 0
-    new_expense_reports_count = 0
-    new_kilometric_expenses_count = 0
+    # Récupérer les demandes de congé de l'utilisateur
+    leaves = LeaveRequest.objects.filter(user=request.user).order_by('-created_at')
     
-    if is_admin or is_rh or is_encadrant:
-        if is_admin or is_rh:
-            new_leave_requests_count = LeaveRequest.objects.filter(status='pending').count()
-            new_expense_reports_count = ExpenseReport.objects.filter(status='pending').count()
-            new_kilometric_expenses_count = KilometricExpense.objects.filter(status='pending').count()
-        elif is_encadrant:
-            team_members = User.objects.filter(team_leader=request.user)
-            new_leave_requests_count = LeaveRequest.objects.filter(user__in=team_members, status='pending').count()
-            new_expense_reports_count = ExpenseReport.objects.filter(user__in=team_members, status='pending').count()
-            new_kilometric_expenses_count = KilometricExpense.objects.filter(user__in=team_members, status='pending').count()
-
+    # Calculer les statistiques
+    stats = {
+        'total_requests': leaves.count(),
+        'pending_requests': leaves.filter(status='pending').count(),
+        'approved_requests': leaves.filter(status='approved').count(),
+        'rejected_requests': leaves.filter(status='rejected').count(),
+        'days_taken_this_year': leaves.filter(
+            status='approved',
+            start_date__year=datetime.now().year
+        ).aggregate(total=Sum('days_requested'))['total'] or 0
+    }
+    
     context = {
-        'leave_requests': leave_requests,
-        'is_admin': is_admin,
-        'is_rh': is_rh,
-        'is_encadrant': is_encadrant,
-        'new_leave_requests_count': new_leave_requests_count,
-        'new_expense_reports_count': new_expense_reports_count,
-        'new_kilometric_expenses_count': new_kilometric_expenses_count,
+        'leaves': leaves,
+        'leave_balance': leave_balance,
+        'stats': stats
     }
     
     return render(request, 'rh_management/my_leaves.html', context)
 
 @login_required
-def cancel_leave(request, id):
-    """Annule une demande de congé."""
-    try:
-        leave = get_object_or_404(LeaveRequest, id=id)
+@user_is_hr_or_admin
+def initialize_leave_balances(request):
+    """
+    Vue pour initialiser les soldes de congés pour tous les utilisateurs qui n'en ont pas
+    """
+    if request.method == 'POST':
+        default_days = float(request.POST.get('default_days', 25))
         
-        # Vérifier que l'utilisateur est le propriétaire de la demande
-        if leave.user != request.user:
-            messages.error(request, "Vous n'êtes pas autorisé à annuler cette demande.")
-            return redirect('my_leaves')
-            
-        # Vérifier que la demande est en attente
-        if leave.status != 'pending':
-            messages.error(request, "Seules les demandes en attente peuvent être annulées.")
-            return redirect('my_leaves')
-            
-        leave.delete()
-        messages.success(request, "Votre demande de congé a été annulée.")
+        # Récupérer tous les utilisateurs actifs sans solde de congés
+        users_without_balance = User.objects.filter(
+            is_active=True
+        ).exclude(
+            leavebalance__isnull=False
+        )
         
-    except LeaveRequest.DoesNotExist:
-        messages.error(request, "La demande de congé n'existe pas ou a déjà été supprimée.")
-    except Exception as e:
-        messages.error(request, f"Une erreur s'est produite lors de l'annulation: {str(e)}")
-        
-    # Rediriger vers la page précédente si disponible, sinon vers my_leaves
-    return redirect(request.META.get('HTTP_REFERER', 'my_leaves'))
-
-@login_required
-@user_passes_test(is_admin_hr_or_encadrant)
-def approve_all_leaves(request):
-    """Approuve toutes les demandes de congé en attente."""
-    # Compter les congés approuvés pour le message
-    pending_leaves = LeaveRequest.objects.filter(status='pending')
-    count = pending_leaves.count()
-    
-    # Mettre à jour tous les congés en attente
-    pending_leaves.update(status='approved')
-    
-    # Créer des notifications pour chaque utilisateur concerné
-    for leave in pending_leaves:
-        try:
-            from ..models import Notification
-            Notification.create_leave_notification(
-                leave.user,
-                leave,
-                f"Votre demande de congé du {leave.start_date.strftime('%d/%m/%Y')} au {leave.end_date.strftime('%d/%m/%Y')} a été approuvée."
+        created_count = 0
+        for user in users_without_balance:
+            leave_balance, created = LeaveBalance.objects.get_or_create(
+                user=user,
+                defaults={
+                    'acquired': default_days,
+                    'taken': 0.0,
+                    'available': default_days
+                }
             )
-        except Exception as e:
-            # Gérer silencieusement les erreurs de notification
-            print(f"Erreur lors de la création de notification: {str(e)}")
+            if created:
+                created_count += 1
+                
+                # Créer une notification pour l'utilisateur
+                Notification.objects.create(
+                    user=user,
+                    title="Solde de congés initialisé",
+                    message=f"Votre solde de congés a été initialisé avec {default_days} jours.",
+                    url="/my-leaves/",
+                    icon="fa-calendar-day"
+                )
+        
+        messages.success(request, f"{created_count} solde(s) de congés ont été initialisés.")
+        return redirect('manage_leave_balances')
     
-    # Message de succès
-    messages.success(request, f"{count} demande(s) de congé approuvée(s) avec succès.")
+    # Compter les utilisateurs sans solde
+    users_without_balance_count = User.objects.filter(
+        is_active=True
+    ).exclude(
+        leavebalance__isnull=False
+    ).count()
     
-    # Rediriger vers la page de gestion des congés
-    return redirect('manage_leaves')
+    context = {
+        'users_without_balance_count': users_without_balance_count
+    }
+    
+    return render(request, 'rh_management/initialize_leave_balances.html', context)
 
 @login_required
 @user_passes_test(is_admin_or_hr)
@@ -1111,3 +1147,54 @@ def admin_leave_history(request):
     }
     
     return render(request, 'rh_management/admin_leave_history.html', context)
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def delete_leave(request, leave_id):
+    """
+    Vue pour supprimer une demande de congé (pour les admins uniquement)
+    """
+    # Seuls les super-utilisateurs peuvent supprimer des demandes
+    if not request.user.is_superuser:
+        messages.error(request, "Vous n'avez pas les permissions nécessaires pour supprimer une demande de congé.")
+        return redirect('manage_leaves')
+    
+    # Utiliser LeaveRequest au lieu de Leave
+    leave = get_object_or_404(LeaveRequest, id=leave_id)
+    
+    if request.method == 'POST':
+        user_name = leave.user.get_full_name() or leave.user.username
+        leave_period = f"{leave.start_date.strftime('%d/%m/%Y')} au {leave.end_date.strftime('%d/%m/%Y')}"
+        
+        # Notifier l'utilisateur de la suppression
+        Notification.objects.create(
+            user=leave.user,
+            title="Demande de congé supprimée",
+            message=f"Votre demande de congé du {leave_period} a été supprimée par l'administration.",
+            url="/my-leaves/",
+            icon="fa-trash"
+        )
+        
+        leave.delete()
+        messages.success(request, f"La demande de congé de {user_name} pour la période du {leave_period} a été supprimée.")
+        
+    return redirect('manage_leaves')
+
+@login_required
+def cancel_leave(request, leave_id):
+    """
+    Annule une demande de congé (seul l'utilisateur peut annuler sa propre demande en attente)
+    """
+    leave = get_object_or_404(LeaveRequest, id=leave_id, user=request.user)
+    
+    # Vérifier que la demande est encore en attente
+    if leave.status != 'pending':
+        messages.error(request, "Vous ne pouvez annuler que les demandes de congé en attente.")
+        return redirect('my_leaves')
+    
+    if request.method == 'POST':
+        leave.delete()
+        messages.success(request, "Votre demande de congé a été annulée avec succès.")
+        return redirect('my_leaves')
+    
+    return render(request, 'rh_management/cancel_leave.html', {'leave': leave})

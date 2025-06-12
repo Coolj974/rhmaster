@@ -306,61 +306,97 @@ def delete_kilometric_expense(request, id):
     return redirect('dashboard')
 
 @login_required
+@user_passes_test(is_admin_or_hr)
 def kilometric_expense_action(request, expense_id):
     """
-    Vue pour gérer les actions sur les frais kilométriques (approbation/rejet avec commentaire).
-    Permet d'ajouter un commentaire lors de l'approbation ou du rejet d'une demande.
+    Vue pour approuver ou rejeter un frais kilométrique
     """
-    if not request.user.is_authenticated:
-        return redirect('login')
+    expense = get_object_or_404(KilometricExpense, id=expense_id)
     
-    # Vérifier les permissions
-    if not (request.user.is_superuser or request.user.is_staff or request.user.groups.filter(name='Encadrant').exists()):
-        messages.error(request, "Vous n'avez pas les droits nécessaires pour effectuer cette action.")
-        return redirect('dashboard')
-    
-    # Récupérer la demande de frais kilométriques
-    try:
-        expense = KilometricExpense.objects.get(id=expense_id)
-    except KilometricExpense.DoesNotExist:
-        messages.error(request, "La demande de frais kilométriques n'existe pas.")
+    # CORRECTION: Empêcher l'auto-validation des frais kilométriques
+    if expense.user == request.user:
+        messages.error(request, "Vous ne pouvez pas traiter votre propre frais kilométrique.")
         return redirect('manage_kilometric_expenses')
     
-    # Traiter la demande si c'est un POST
+    # Vérifier que la demande est encore en attente
+    if expense.status != 'pending':
+        messages.error(request, "Ce frais kilométrique a déjà été traité.")
+        return redirect('manage_kilometric_expenses')
+    
     if request.method == 'POST':
         action = request.POST.get('action')
         comment = request.POST.get('comment', '')
         
         if action == 'approve':
-            # Approuver la demande
             expense.status = 'approved'
             expense.comment = comment
             expense.save()
             
-            messages.success(request, "La demande de frais kilométriques a été approuvée.")
+            # Notifier l'utilisateur
+            Notification.objects.create(
+                user=expense.user,
+                title="Frais kilométrique approuvé",
+                message=f"Votre trajet de {expense.distance} km entre {expense.departure} et {expense.arrival} a été approuvé pour un montant de {expense.amount} €.",
+                url="/my-kilometric-expenses/",
+                icon="fa-route"
+            )
+            
+            messages.success(request, f"Le frais kilométrique de {expense.user.get_full_name()} a été approuvé.")
+            
         elif action == 'reject':
-            # Rejeter la demande
+            if not comment:
+                messages.error(request, "Un motif de rejet est requis.")
+                return redirect('manage_kilometric_expenses')
+                
             expense.status = 'rejected'
             expense.comment = comment
             expense.save()
-            messages.success(request, "La demande de frais kilométriques a été rejetée.")
-        else:
-            messages.error(request, "Action non reconnue.")
             
+            # Notifier l'utilisateur
+            Notification.objects.create(
+                user=expense.user,
+                title="Frais kilométrique rejeté",
+                message=f"Votre trajet de {expense.distance} km entre {expense.departure} et {expense.arrival} a été rejeté.",
+                url="/my-kilometric-expenses/",
+                icon="fa-route"
+            )
+            
+            messages.success(request, f"Le frais kilométrique de {expense.user.get_full_name()} a été rejeté.")
+    
     return redirect('manage_kilometric_expenses')
 
 @login_required
-def cancel_kilometric_expense(request, expense_id):
-    """Annule une demande de frais kilométriques."""
-    expense = get_object_or_404(KilometricExpense, id=expense_id, user=request.user)
+@user_passes_test(is_admin_or_hr)
+def approve_all_kilometric_expenses(request):
+    """
+    Approuve tous les frais kilométriques en attente
+    """
+    pending_expenses = KilometricExpense.objects.filter(status='pending')
     
-    if expense.status == 'pending':
-        expense.delete()
-        messages.success(request, "Vos frais kilométriques ont été annulés avec succès.")
+    # CORRECTION: Exclure les propres frais kilométriques de l'utilisateur
+    pending_expenses = pending_expenses.exclude(user=request.user)
+    
+    count = pending_expenses.count()
+    
+    for expense in pending_expenses:
+        expense.status = 'approved'
+        expense.save()
+        
+        # Notifier l'utilisateur
+        Notification.objects.create(
+            user=expense.user,
+            title="Frais kilométrique approuvé",
+            message=f"Votre trajet de {expense.distance} km entre {expense.departure} et {expense.arrival} a été approuvé pour un montant de {expense.amount} €.",
+            url="/my-kilometric-expenses/",
+            icon="fa-route"
+        )
+    
+    if count > 0:
+        messages.success(request, f"{count} frais kilométrique(s) ont été approuvés avec succès (vos propres frais ont été exclus).")
     else:
-        messages.error(request, "Vous ne pouvez annuler que des frais en attente de validation.")
+        messages.info(request, "Aucun frais kilométrique à approuver.")
     
-    return redirect('dashboard')
+    return redirect('manage_kilometric_expenses')
 
 @login_required
 @user_passes_test(is_admin_or_hr)
@@ -373,7 +409,7 @@ def export_kilometric_expenses(request):
     
     writer = csv.writer(response, delimiter=';')
     writer.writerow(['Employé', 'Email', 'Date', 'Description', 'Départ', 'Arrivée', 'Distance (km)', 
-                    'Type de véhicule', 'Puissance fiscale', 'Montant (€)', 'Projet', 'Statut'])
+                    'Type de véhicule', 'Puissance fiscale', 'Montant (€)', 'Projet', 'Statut', 'Date de création'])
     
     expenses = KilometricExpense.objects.all().select_related('user')
     
@@ -390,32 +426,27 @@ def export_kilometric_expenses(request):
             expense.get_fiscal_power_display(),
             expense.amount,
             expense.project or 'N/A',
-            expense.get_status_display()
+            expense.get_status_display(),
+            expense.created_at.strftime('%d/%m/%Y %H:%M')
         ])
     
     return response
 
 @login_required
-@user_passes_test(is_admin_or_hr)
-def approve_all_kilometric_expenses(request):
+def cancel_kilometric_expense(request, expense_id):
     """
-    Approuve tous les frais kilométriques en attente
+    Annule un frais kilométrique (seul l'utilisateur peut annuler sa propre demande en attente)
     """
-    pending_expenses = KilometricExpense.objects.filter(status='pending')
-    count = pending_expenses.count()
+    expense = get_object_or_404(KilometricExpense, id=expense_id, user=request.user)
     
-    for expense in pending_expenses:
-        expense.status = 'approved'
-        expense.save()
-        
-        # Notifier l'utilisateur
-        Notification.objects.create(
-            user=expense.user,
-            title="Frais kilométrique approuvé",
-            message=f"Votre trajet de {expense.distance} km entre {expense.departure} et {expense.arrival} a été approuvé pour un montant de {expense.amount} €.",
-            url="/my-kilometric-expenses/",
-            icon="fa-route"
-        )
+    # Vérifier que la demande est encore en attente
+    if expense.status != 'pending':
+        messages.error(request, "Vous ne pouvez annuler que les frais kilométriques en attente.")
+        return redirect('my_kilometric_expenses')
     
-    messages.success(request, f"{count} frais kilométrique(s) ont été approuvés avec succès.")
-    return redirect('manage_kilometric_expenses')
+    if request.method == 'POST':
+        expense.delete()
+        messages.success(request, "Votre frais kilométrique a été annulé avec succès.")
+        return redirect('my_kilometric_expenses')
+    
+    return render(request, 'rh_management/cancel_kilometric_expense.html', {'expense': expense})

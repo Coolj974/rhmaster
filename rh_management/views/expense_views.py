@@ -197,7 +197,7 @@ def my_expenses(request):
     Vue pour afficher les notes de frais de l'utilisateur connecté
     """
     # Récupérer les notes de frais de l'utilisateur connecté
-    expenses = Expense.objects.filter(user=request.user).order_by('-date')
+    expenses = ExpenseReport.objects.filter(user=request.user).order_by('-date')
     
     # Calculer les statistiques
     stats = {
@@ -396,6 +396,9 @@ def manage_expenses(request):
     """
     Vue pour gérer les notes de frais (pour RH et admins)
     """
+    # Utiliser ExpenseReport au lieu de Expense
+    queryset = ExpenseReport.objects.all()
+
     # Récupérer les filtres de la requête
     status = request.GET.get('status', '')
     expense_type = request.GET.get('expense_type', '')
@@ -403,10 +406,8 @@ def manage_expenses(request):
     project = request.GET.get('project', '')
     start_date = request.GET.get('start_date', '')
     end_date = request.GET.get('end_date', '')
-    refacturable = request.GET.get('refacturable', '')
     sort_by = request.GET.get('sort_by', 'date')
-    sort_order = request.GET.get('sort_order', 'desc')    # Construire la requête de base
-    queryset = ExpenseReport.objects.all()
+    sort_order = request.GET.get('sort_order', 'desc')
 
     # Appliquer les filtres
     if status:
@@ -421,9 +422,6 @@ def manage_expenses(request):
         queryset = queryset.filter(date__gte=start_date)
     if end_date:
         queryset = queryset.filter(date__lte=end_date)
-    if refacturable:
-        refacturable_bool = refacturable == '1'
-        queryset = queryset.filter(refacturable=refacturable_bool)
 
     # Construire la chaîne de requête pour la pagination
     query_params = []
@@ -439,8 +437,6 @@ def manage_expenses(request):
         query_params.append(f'start_date={start_date}')
     if end_date:
         query_params.append(f'end_date={end_date}')
-    if refacturable:
-        query_params.append(f'refacturable={refacturable}')
     if sort_by:
         query_params.append(f'sort_by={sort_by}')
     if sort_order:
@@ -462,7 +458,9 @@ def manage_expenses(request):
     # Paginer les résultats
     paginator = Paginator(queryset, 10)  # 10 items par page
     page_number = request.GET.get('page', 1)
-    all_expenses = paginator.get_page(page_number)    # Calculer les statistiques
+    all_expenses = paginator.get_page(page_number)
+
+    # Calculer les statistiques
     stats = {
         'total_count': ExpenseReport.objects.count(),
         'pending_count': ExpenseReport.objects.filter(status='pending').count(),
@@ -487,7 +485,6 @@ def manage_expenses(request):
             'project': project,
             'start_date': start_date,
             'end_date': end_date,
-            'refacturable': refacturable,
             'sort_by': sort_by,
             'sort_order': sort_order,
             'query_string': query_string
@@ -505,24 +502,22 @@ def export_expenses(request):
     """
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="expenses.csv"'
+    
     writer = csv.writer(response, delimiter=';')
-    writer.writerow(['Employé', 'Email', 'Date', 'Description', 'Type', 'Montant', 'TVA', 'Montant TTC', 'Projet', 'Lieu', 'Refacturable', 'Statut', 'Date de création'])
+    writer.writerow(['Employé', 'Email', 'Date', 'Description', 'Type', 'Montant', 'Projet', 'Statut', 'Date de création'])
+    
+    # Utiliser ExpenseReport au lieu de Expense
     expenses = ExpenseReport.objects.all().select_related('user')
     
     for expense in expenses:
-        montant_ttc = expense.amount * (1 + expense.vat/100) if expense.vat else expense.amount
         writer.writerow([
             expense.user.get_full_name() or expense.user.username,
             expense.user.email,
             expense.date.strftime('%d/%m/%Y'),
             expense.description,
-            expense.get_expense_type_display(),
+            expense.get_expense_type_display() if hasattr(expense, 'get_expense_type_display') else expense.expense_type,
             expense.amount,
-            f"{expense.vat}%" if expense.vat else "N/A",
-            montant_ttc,
             expense.project or 'N/A',
-            expense.location or 'N/A',
-            'Oui' if expense.refacturable else 'Non',
             expense.get_status_display(),
             expense.created_at.strftime('%d/%m/%Y %H:%M')
         ])
@@ -535,7 +530,18 @@ def expense_action(request, expense_id):
     """
     Vue pour approuver ou rejeter une note de frais
     """
+    # Utiliser ExpenseReport au lieu de Expense
     expense = get_object_or_404(ExpenseReport, id=expense_id)
+    
+    # CORRECTION: Empêcher l'auto-validation des notes de frais
+    if expense.user == request.user:
+        messages.error(request, "Vous ne pouvez pas traiter votre propre note de frais.")
+        return redirect('manage_expenses')
+    
+    # Vérifier que la demande est encore en attente
+    if expense.status != 'pending':
+        messages.error(request, "Cette note de frais a déjà été traitée.")
+        return redirect('manage_expenses')
     
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -543,7 +549,8 @@ def expense_action(request, expense_id):
         
         if action == 'approve':
             expense.status = 'approved'
-            expense.comment = comment
+            if hasattr(expense, 'comment'):
+                expense.comment = comment
             expense.save()
             
             # Notifier l'utilisateur
@@ -563,7 +570,10 @@ def expense_action(request, expense_id):
                 return redirect('manage_expenses')
                 
             expense.status = 'rejected'
-            expense.comment = comment
+            if hasattr(expense, 'comment'):
+                expense.comment = comment
+            elif hasattr(expense, 'rejection_reason'):
+                expense.rejection_reason = comment
             expense.save()
             
             # Notifier l'utilisateur
@@ -585,7 +595,12 @@ def approve_all_expenses(request):
     """
     Approuve toutes les notes de frais en attente
     """
+    # Utiliser ExpenseReport au lieu de Expense
     pending_expenses = ExpenseReport.objects.filter(status='pending')
+    
+    # CORRECTION: Exclure les propres notes de frais de l'utilisateur
+    pending_expenses = pending_expenses.exclude(user=request.user)
+    
     count = pending_expenses.count()
     
     for expense in pending_expenses:
@@ -601,7 +616,11 @@ def approve_all_expenses(request):
             icon="fa-receipt"
         )
     
-    messages.success(request, f"{count} note(s) de frais ont été approuvées avec succès.")
+    if count > 0:
+        messages.success(request, f"{count} note(s) de frais ont été approuvées avec succès (vos propres notes ont été exclues).")
+    else:
+        messages.info(request, "Aucune note de frais à approuver.")
+    
     return redirect('manage_expenses')
 
 @login_required

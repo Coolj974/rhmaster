@@ -49,7 +49,7 @@ from rh_management.views import (
 
 # Import des vues d'historique
 from rh_management.views.expense_views import expense_history, admin_expense_history
-from rh_management.views.leave_views import leave_history, admin_leave_history
+from rh_management.views.leave_views import leave_history, admin_leave_history, initialize_leave_balances
 
 # Import des vues de notification
 from rh_management.views.notification_views import (
@@ -144,6 +144,7 @@ urlpatterns = [    # Admin standard
     path('leave-balance/', manage_leave_balances, name='manage_leave_balances'),
     path('update-leave-balance/<int:user_id>/', update_leave_balance, name='update_leave_balance'),
     path('my-leaves/', my_leaves, name='my_leaves'),
+    path('initialize-leave-balances/', initialize_leave_balances, name='initialize_leave_balances'),
     path('approve-all-leaves/', approve_all_leaves, name='approve_all_leaves'),  # Nouvelle URL
     path('export-leave-balances/', export_leave_balances, name='export_leave_balances'),
     path('leave-balance-history/<int:user_id>/', get_leave_balance_history, name='leave_balance_history'),

@@ -1,0 +1,72 @@
+@login_required
+@user_passes_test(is_admin_or_hr)
+def approve_leave(request, leave_id):
+    """Approuver une demande de congé"""
+    leave_request = get_object_or_404(LeaveRequest, id=leave_id)
+    
+    # CORRECTION: Empêcher l'auto-validation des congés
+    if leave_request.user == request.user:
+        messages.error(request, "Vous ne pouvez pas valider votre propre demande de congé.")
+        return redirect('manage_leaves')
+    
+    # Vérifier que la demande est encore en attente
+    if leave_request.status != 'pending':
+        messages.error(request, "Cette demande de congé a déjà été traitée.")
+        return redirect('manage_leaves')
+    
+    leave_request.status = 'approved'
+    leave_request.approved_by = request.user
+    leave_request.approved_at = timezone.now()
+    leave_request.save()
+    
+    # Créer une notification pour l'utilisateur
+    Notification.objects.create(
+        user=leave_request.user,
+        title="Demande de congé approuvée",
+        message=f"Votre demande de congé du {leave_request.start_date} au {leave_request.end_date} a été approuvée.",
+        url=reverse('leave_history'),
+        icon='fas fa-check-circle',
+        color='success'
+    )
+    
+    messages.success(request, f"Demande de congé de {leave_request.user.get_full_name()} approuvée avec succès.")
+    return redirect('manage_leaves')
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def reject_leave(request, leave_id):
+    """Rejeter une demande de congé"""
+    leave_request = get_object_or_404(LeaveRequest, id=leave_id)
+    
+    # CORRECTION: Empêcher l'auto-rejet des congés
+    if leave_request.user == request.user:
+        messages.error(request, "Vous ne pouvez pas traiter votre propre demande de congé.")
+        return redirect('manage_leaves')
+    
+    # Vérifier que la demande est encore en attente
+    if leave_request.status != 'pending':
+        messages.error(request, "Cette demande de congé a déjà été traitée.")
+        return redirect('manage_leaves')
+    
+    if request.method == 'POST':
+        rejection_reason = request.POST.get('rejection_reason', '')
+        leave_request.status = 'rejected'
+        leave_request.rejection_reason = rejection_reason
+        leave_request.approved_by = request.user
+        leave_request.approved_at = timezone.now()
+        leave_request.save()
+        
+        # Créer une notification pour l'utilisateur
+        Notification.objects.create(
+            user=leave_request.user,
+            title="Demande de congé rejetée",
+            message=f"Votre demande de congé du {leave_request.start_date} au {leave_request.end_date} a été rejetée.",
+            url=reverse('leave_history'),
+            icon='fas fa-times-circle',
+            color='danger'
+        )
+        
+        messages.success(request, f"Demande de congé de {leave_request.user.get_full_name()} rejetée.")
+        return redirect('manage_leaves')
+    
+    return render(request, 'rh_management/reject_leave.html', {'leave_request': leave_request})
