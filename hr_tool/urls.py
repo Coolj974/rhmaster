@@ -48,7 +48,7 @@ from rh_management.views import (
 )
 
 # Import des vues d'historique
-from rh_management.views.expense_views import expense_history, admin_expense_history
+from rh_management.views.expense_views import expense_history, admin_expense_history, submit_expense_report
 from rh_management.views.leave_views import leave_history, admin_leave_history, initialize_leave_balances
 
 # Import des vues de notification
@@ -153,6 +153,7 @@ urlpatterns = [    # Admin standard
 
     # Expense Management
     path("submit-expense/", submit_expense, name="submit_expense"),  # Submit expense
+    path("submit-expense-report/", submit_expense_report, name="submit_expense_report"),  # Submit expense report
     path("my-expenses/", my_expenses_view, name="my_expenses"),  # Modification de l'URL name
     path("manage-expenses/", manage_expenses_view, name="manage_expenses"),  # Manage expenses
     path("approve-expense/<int:expense_id>/", approve_expense, name="approve_expense"),  # Approve expense
@@ -164,6 +165,7 @@ urlpatterns = [    # Admin standard
     path('delete_expense/<int:id>/', delete_expense, name='delete_expense'),
     path('expense-action/<int:expense_id>/', expense_action, name='expense_action'),
     path('approve-all-expenses/', approve_all_expenses, name='approve_all_expenses'),  # Approuver toutes les notes de frais
+    
 
     # Kilometric Expense Management
     path("submit-kilometric-expense/", submit_kilometric_expense, name="submit_kilometric_expense"),  # Submit kilometric expense
@@ -211,7 +213,7 @@ urlpatterns = [    # Admin standard
     path("admin-leave-history/", admin_leave_history, name="admin_leave_history"),  # Historique admin des congés
     path("admin-expense-history/", admin_expense_history, name="admin_expense_history"),  # Historique admin des notes de frais
 ]
-
 # Add static and media URL patterns
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

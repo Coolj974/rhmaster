@@ -796,3 +796,60 @@ def admin_expense_history(request):
     }
     
     return render(request, 'rh_management/admin_expense_history.html', context)
+
+@login_required
+def submit_expense_report(request):
+    """
+    Vue pour soumettre une nouvelle note de frais
+    """
+    if request.method == 'POST':
+        try:
+            description = request.POST.get('description', '')
+            amount = request.POST.get('amount', '')
+            date = request.POST.get('date', '')
+            category = request.POST.get('category', '')
+            comments = request.POST.get('comments', '')
+            
+            if description and amount and date and category:
+                # Convertir les données
+                from datetime import datetime
+                from decimal import Decimal
+                
+                date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+                amount_decimal = Decimal(str(amount).replace(',', '.'))
+                
+                # Créer une nouvelle note de frais
+                expense = ExpenseReport.objects.create(
+                    user=request.user,
+                    description=description,
+                    amount=amount_decimal,
+                    date=date_obj,
+                    expense_type=category,  # Mapper category à expense_type
+                    comment=comments,
+                    status='pending'
+                )
+                
+                # Créer une notification pour les RH
+                for hr_user in User.objects.filter(is_staff=True):
+                    Notification.objects.create(
+                        user=hr_user,
+                        title="Nouvelle note de frais",
+                        message=f"{request.user.get_full_name() or request.user.username} a soumis une note de frais de {amount_decimal} €.",
+                        notification_type='expense',
+                        object_id=expense.id,
+                        icon="fa-file-invoice-dollar",
+                        color="warning",
+                        url="/manage-expenses/"
+                    )
+                
+                messages.success(request, 'Votre note de frais a été soumise avec succès.')
+                return redirect('my_expenses')
+            else:
+                messages.error(request, 'Veuillez remplir tous les champs requis.')
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la soumission: {str(e)}')
+    
+    context = {
+        'page_title': 'Nouvelle note de frais'
+    }
+    return render(request, 'rh_management/submit_expense.html', context)

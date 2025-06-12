@@ -2,213 +2,42 @@
 
 {% block extra_css %}
 <style>
-    /* Styles pour la page des frais kilométriques */
-    .expense-header {
+    /* Styles pour la page Mes frais kilométriques */
+    .page-header {
         padding: 1rem 0;
         margin-bottom: 1.5rem;
     }
     
-    .stats-card {
+    .balance-card {
         border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: none;
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
         height: 100%;
-        border: none;
-        overflow: hidden;
     }
     
-    .stats-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-    }
-    
-    .stats-card .card-body {
-        padding: 1.5rem;
-    }
-    
-    .stats-header {
-        margin-bottom: 1rem;
-        color: #5a5c69;
-        font-size: 0.8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-    
-    .stats-value {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        line-height: 1;
-    }
-    
-    .stats-icon {
-        width: 3rem;
-        height: 3rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-    }
-    
-    .trip-card {
-        border-radius: 10px;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 0.15rem 1.25rem rgba(0,0,0,0.075);
-        border: none;
-    }
-    
-    .trip-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
-    }
-    
-    .trip-card .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #fff;
-        border-bottom: 1px solid rgba(0,0,0,0.05);
+    .balance-header {
         padding: 1.25rem;
-    }
-    
-    .trip-card .status-badge {
-        padding: 0.35rem 0.85rem;
-        border-radius: 50px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .trip-card .card-body {
-        padding: 1.25rem;
-    }
-    
-    .trip-details {
-        margin-bottom: 1rem;
-    }
-    
-    .trip-details .detail-label {
-        color: #6c757d;
-        font-size: 0.85rem;
-        margin-bottom: 0.25rem;
-    }
-    
-    .trip-details .detail-value {
-        font-weight: 600;
-    }
-    
-    .trip-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(0,0,0,0.05);
-    }
-    
-    .trip-actions .created-date {
-        color: #6c757d;
-        font-size: 0.85rem;
-    }
-    
-    .trip-route {
-        position: relative;
-        padding-left: 25px;
-        margin-bottom: 0.5rem;
-    }
-    
-    .trip-route:before {
-        content: '';
-        position: absolute;
-        left: 5px;
-        top: 24px;
-        bottom: 0;
-        width: 2px;
-        background-color: #e3e6f0;
-    }
-    
-    .trip-route:last-child:before {
-        display: none;
-    }
-    
-    .route-icon {
-        position: absolute;
-        left: 0;
-        top: 3px;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-    }
-    
-    .route-start {
-        background-color: #1cc88a;
-    }
-    
-    .route-end {
-        background-color: #e74a3b;
-    }
-    
-    .table-trips {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 0.15rem 1.25rem rgba(0,0,0,0.075);
-    }
-    
-    .table-trips thead {
-        background-color: #f8f9fc;
-    }
-    
-    .table-trips th {
-        font-weight: 600;
-        padding: 1rem;
-        border-top: none;
-    }
-    
-    .status-pending {
-        background-color: rgba(246, 194, 62, 0.15);
-        color: #f6c23e;
-    }
-    
-    .status-approved {
-        background-color: rgba(28, 200, 138, 0.15);
-        color: #1cc88a;
-    }
-    
-    .status-rejected {
-        background-color: rgba(231, 74, 59, 0.15);
-        color: #e74a3b;
-    }
-    
-    /* Styles pour les onglets */
-    .nav-tabs {
-        border-bottom: none;
-        margin-bottom: 1rem;
-    }
-    
-    .nav-tabs .nav-link {
-        border: none;
-        padding: 0.75rem 1.25rem;
-        border-radius: 8px;
-        margin-right: 0.5rem;
-        font-weight: 500;
-        color: #6e707e;
-        transition: all 0.2s ease;
-    }
-    
-    .nav-tabs .nav-link:hover {
-        background-color: rgba(78, 115, 223, 0.05);
-        color: #4e73df;
-    }
-    
-    .nav-tabs .nav-link.active {
-        background-color: #4e73df;
+        background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);
         color: white;
     }
     
-    /* États vides */
+    .balance-body {
+        padding: 1.5rem;
+    }
+    
+    .kilometric-card {
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .kilometric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
     .empty-state {
         text-align: center;
         padding: 3rem 1rem;
@@ -216,75 +45,33 @@
     
     .empty-icon {
         font-size: 4rem;
-        color: #dddfeb;
+        color: #e3e6f0;
         margin-bottom: 1.5rem;
     }
     
-    /* Animations */
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    
-    .fade-in {
-        animation: fadeIn 0.5s ease forwards;
-    }
-    
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .slide-up {
-        animation: slideUp 0.5s ease forwards;
-    }
-    
-    /* Carte dans la modal */
-    #trip-map {
-        height: 300px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin-top: 1rem;
-    }
-    
-    /* Distance et montant */
-    .distance-badge {
-        background-color: #eaecf4;
-        padding: 0.35rem 0.75rem;
-        border-radius: 30px;
-        font-weight: 600;
-        font-size: 0.8rem;
-        color: #5a5c69;
-    }
-    
-    .amount-badge {
-        background-color: #e9fbf4;
-        padding: 0.35rem 0.75rem;
-        border-radius: 30px;
-        font-weight: 600;
-        font-size: 0.8rem;
-        color: #1cc88a;
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <!-- En-tête de la page -->
-    <div class="d-sm-flex align-items-center justify-content-between expense-header">
+    <div class="page-header d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-route me-2"></i>Mes frais kilométriques</h1>
-        <div>
+        <div class="d-none d-sm-block">
             <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-primary shadow-sm me-2">
-                <i class="fas fa-plus-circle me-1"></i> Nouveau trajet
+                <i class="fas fa-plus-circle fa-sm me-1"></i> Nouveau frais kilométrique
             </a>
             <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm">
-                <i class="fas fa-arrow-left me-1"></i> Tableau de bord
+                <i class="fas fa-arrow-left fa-sm me-1"></i> Tableau de bord
             </a>
         </div>
     </div>
 
     {% if messages %}
-    <div class="mb-4 fade-in">
         {% for message in messages %}
             <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
                 <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
@@ -292,266 +79,206 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         {% endfor %}
-    </div>
     {% endif %}
 
-    <!-- Statistiques des frais kilométriques -->
+    <!-- Aperçu des statistiques -->
     <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stats-card">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="stats-header text-primary">TOTAL TRAJETS</div>
-                            <div class="stats-value">{{ stats.total_count|default:"0" }}</div>
-                            <div class="text-xs text-muted">trajets déclarés</div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="stats-icon bg-primary bg-opacity-10 text-primary">
-                                <i class="fas fa-route"></i>
-                            </div>
-                        </div>
+        <div class="col-lg-12">
+            <div class="balance-card">
+                <div class="balance-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="m-0"><i class="fas fa-tachometer-alt me-2"></i>Mes statistiques kilométriques</h5>
+                        <span class="badge bg-white text-warning">{% now "Y" %}</span>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stats-card">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="stats-header text-warning">EN ATTENTE</div>
-                            <div class="stats-value">{{ stats.pending_count|default:"0" }}</div>
-                            <div class="text-xs text-muted">trajets à valider</div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="stats-icon bg-warning bg-opacity-10 text-warning">
-                                <i class="fas fa-clock"></i>
+                <div class="balance-body">
+                    {% if stats %}
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="p-3 rounded bg-light">
+                                    <h6 class="text-muted mb-1">Total</h6>
+                                    <h3 class="mb-0 text-primary">{{ stats.total_count }}</h3>
+                                    <small class="text-muted">frais</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 rounded bg-light">
+                                    <h6 class="text-muted mb-1">En attente</h6>
+                                    <h3 class="mb-0 text-warning">{{ stats.pending_count }}</h3>
+                                    <small class="text-muted">frais</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 rounded bg-light">
+                                    <h6 class="text-muted mb-1">Approuvés</h6>
+                                    <h3 class="mb-0 text-success">{{ stats.approved_count }}</h3>
+                                    <small class="text-muted">frais</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 rounded bg-light">
+                                    <h6 class="text-muted mb-1">Distance totale</h6>
+                                    <h3 class="mb-0 text-info">{{ stats.total_distance|floatformat:0 }}</h3>
+                                    <small class="text-muted">km</small>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stats-card">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="stats-header text-success">DISTANCE TOTALE</div>
-                            <div class="stats-value">{{ stats.total_distance|default:"0" }} <span class="small">km</span></div>
-                            <div class="text-xs text-muted">parcourus</div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-tachometer-alt fa-3x text-muted mb-3"></i>
+                            <h5>Aucune statistique disponible</h5>
+                            <p class="text-muted mb-0">Commencez par soumettre votre premier frais kilométrique.</p>
                         </div>
-                        <div class="col-auto">
-                            <div class="stats-icon bg-success bg-opacity-10 text-success">
-                                <i class="fas fa-map-marked-alt"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stats-card">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="stats-header text-danger">MONTANT TOTAL</div>
-                            <div class="stats-value">{{ stats.total_amount|default:"0.00"|floatformat:2 }}€</div>
-                            <div class="text-xs text-muted">{{ stats.approved_amount|default:"0.00"|floatformat:2 }}€ remboursés</div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="stats-icon bg-danger bg-opacity-10 text-danger">
-                                <i class="fas fa-euro-sign"></i>
-                            </div>
-                        </div>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Onglets de navigation -->
-    <ul class="nav nav-tabs" id="tripsTab" role="tablist">
+    <!-- Navigation par onglets -->
+    <ul class="nav nav-tabs" id="kilometricTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <a class="nav-link active" id="card-view-tab" data-bs-toggle="tab" href="#card-view" role="tab" aria-selected="true">
-                <i class="fas fa-th-large me-1"></i> Vue en cartes
+            <a class="nav-link active" id="pending-tab" data-bs-toggle="tab" href="#pending" role="tab" aria-selected="true">
+                <i class="fas fa-clock me-1"></i> En attente
+                {% if expenses %}
+                    {% with pending_count=0 %}
+                        {% for expense in expenses %}
+                            {% if expense.status == 'pending' %}
+                                {% with pending_count=pending_count|add:1 %}{% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if pending_count > 0 %}
+                            <span class="badge bg-warning rounded-pill ms-2">{{ pending_count }}</span>
+                        {% endif %}
+                    {% endwith %}
+                {% endif %}
             </a>
         </li>
         <li class="nav-item" role="presentation">
-            <a class="nav-link" id="table-view-tab" data-bs-toggle="tab" href="#table-view" role="tab" aria-selected="false">
-                <i class="fas fa-table me-1"></i> Vue en tableau
+            <a class="nav-link" id="historique-tab" data-bs-toggle="tab" href="#historique" role="tab" aria-selected="false">
+                <i class="fas fa-history me-1"></i> Historique complet
+                {% if expenses %}
+                    <span class="badge bg-secondary rounded-pill ms-2">{{ expenses|length }}</span>
+                {% endif %}
             </a>
         </li>
     </ul>
 
-    <!-- Contenu des onglets -->
-    <div class="tab-content" id="tripsTabContent">
-        <!-- Vue en cartes -->
-        <div class="tab-pane fade show active" id="card-view" role="tabpanel" aria-labelledby="card-view-tab">
+    <div class="tab-content" id="kilometricTabContent">
+        <!-- Frais en attente -->
+        <div class="tab-pane fade show active" id="pending" role="tabpanel" aria-labelledby="pending-tab">
             {% if expenses %}
                 <div class="row">
                     {% for expense in expenses %}
-                        <div class="col-lg-6 slide-up" style="animation-delay: {{ forloop.counter0|divisibleby:2 }}0ms">
-                            <div class="trip-card">
-                                <div class="card-header">
-                                    <div>
-                                        <h5 class="card-title mb-0">{{ expense.description }}</h5>
-                                        <span class="text-muted small">{{ expense.get_vehicle_type_display }}</span>
-                                    </div>
-                                    <span class="status-badge status-{{ expense.status }}">{{ expense.get_status_display }}</span>
-                                </div>
-                                <div class="card-body">
-                                    <div class="trip-route-info mb-3">
-                                        <div class="trip-route">
-                                            <div class="route-icon route-start"></div>
-                                            <div class="detail-label">Départ</div>
-                                            <div class="detail-value">{{ expense.departure }}</div>
-                                        </div>
-                                        <div class="trip-route">
-                                            <div class="route-icon route-end"></div>
-                                            <div class="detail-label">Arrivée</div>
-                                            <div class="detail-value">{{ expense.arrival }}</div>
+                        {% if expense.status == 'pending' %}
+                            <div class="col-lg-6 mb-4">
+                                <div class="kilometric-card card shadow-sm">
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">{{ expense.departure }} → {{ expense.arrival }}</h6>
+                                            <span class="badge bg-warning text-dark">En attente</span>
                                         </div>
                                     </div>
-                                    
-                                    <div class="d-flex justify-content-between mb-3">
-                                        <div class="distance-badge">
-                                            <i class="fas fa-road me-1"></i> {{ expense.distance }} km
+                                    <div class="card-body">
+                                        <div class="mb-2">
+                                            <strong>Distance:</strong> {{ expense.distance }} km
                                         </div>
-                                        <div class="amount-badge">
-                                            <i class="fas fa-euro-sign me-1"></i> {{ expense.amount|floatformat:2 }} €
+                                        <div class="mb-2">
+                                            <strong>Montant:</strong> {{ expense.amount }}€
                                         </div>
-                                    </div>
-                                    
-                                    {% if expense.project %}
-                                    <div class="project-info mb-3">
-                                        <div class="detail-label">Projet</div>
-                                        <div class="detail-value">{{ expense.project }}</div>
-                                    </div>
-                                    {% endif %}
-                                    
-                                    <div class="trip-actions">
-                                        <span class="created-date">
-                                            <i class="far fa-calendar-alt me-1"></i> {{ expense.date|date:"d/m/Y" }}
-                                        </span>
-                                        <div>
-                                            <button type="button" class="btn btn-sm btn-outline-primary view-trip"
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#viewTripModal"
-                                                    data-id="{{ expense.id }}"
-                                                    data-description="{{ expense.description }}"
-                                                    data-departure="{{ expense.departure }}"
-                                                    data-arrival="{{ expense.arrival }}"
-                                                    data-distance="{{ expense.distance }}"
-                                                    data-amount="{{ expense.amount|floatformat:2 }}"
-                                                    data-date="{{ expense.date|date:'d/m/Y' }}"
-                                                    data-vehicle="{{ expense.get_vehicle_type_display }}"
-                                                    data-status="{{ expense.get_status_display }}"
-                                                    data-status-code="{{ expense.status }}"
-                                                    data-project="{{ expense.project|default:'Non spécifié' }}"
-                                                    data-comment="{{ expense.comment|default:'' }}"
-                                                    data-lat1="{{ expense.departure_lat }}"
-                                                    data-lng1="{{ expense.departure_lng }}"
-                                                    data-lat2="{{ expense.arrival_lat }}"
-                                                    data-lng2="{{ expense.arrival_lng }}">
-                                                <i class="fas fa-eye me-1"></i> Détails
-                                            </button>
-                                            
-                                            {% if expense.status == 'pending' %}
-                                                <a href="{% url 'cancel_kilometric_expense' expense.id %}" class="btn btn-sm btn-outline-danger"
-                                                   onclick="return confirm('Êtes-vous sûr de vouloir annuler ce trajet ?')">
-                                                    <i class="fas fa-times me-1"></i> Annuler
-                                                </a>
-                                            {% endif %}
+                                        <div class="mb-2">
+                                            <strong>Date:</strong> {{ expense.date|date:"d/m/Y" }}
                                         </div>
+                                        {% if expense.description %}
+                                        <div class="mb-2">
+                                            <strong>Description:</strong> {{ expense.description|truncatechars:50 }}
+                                        </div>
+                                        {% endif %}
+                                        <small class="text-muted">Soumis le {{ expense.created_at|date:"d/m/Y" }}</small>
                                     </div>
                                 </div>
                             </div>
+                        {% endif %}
+                    {% empty %}
+                        <div class="empty-state">
+                            <i class="fas fa-route empty-icon"></i>
+                            <h5>Aucun frais kilométrique enregistré</h5>
+                            <p class="mb-4 text-muted">Vous n'avez pas encore fait de demande de remboursement kilométrique.</p>
+                            <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-1"></i> Faire votre première demande
+                            </a>
                         </div>
                     {% endfor %}
                 </div>
+
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const pendingTab = document.getElementById('pending');
+                    const kilometricCards = pendingTab.querySelectorAll('.kilometric-card');
+                    
+                    if (kilometricCards.length === 0 && !pendingTab.querySelector('.empty-state')) {
+                        pendingTab.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-route empty-icon"></i>
+                                <h5>Aucun frais kilométrique en attente</h5>
+                                <p class="mb-4 text-muted">Vous n'avez pas de frais kilométriques en attente de validation.</p>
+                                <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle me-1"></i> Soumettre un nouveau frais
+                                </a>
+                            </div>
+                        `;
+                    }
+                });
+                </script>
             {% else %}
-                <div class="empty-state fade-in">
-                    <div class="empty-icon">
-                        <i class="fas fa-route"></i>
-                    </div>
-                    <h4 class="mb-3">Aucun frais kilométrique</h4>
-                    <p class="text-muted mb-4">Vous n'avez pas encore soumis de frais kilométriques.</p>
+                <div class="empty-state">
+                    <i class="fas fa-route empty-icon"></i>
+                    <h5>Aucun frais kilométrique</h5>
+                    <p class="mb-4 text-muted">Vous n'avez pas encore soumis de frais kilométrique.</p>
                     <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-primary">
-                        <i class="fas fa-plus-circle me-1"></i> Déclarer mon premier trajet
+                        <i class="fas fa-plus-circle me-1"></i> Créer mon premier frais
                     </a>
                 </div>
             {% endif %}
         </div>
-        
-        <!-- Vue en tableau -->
-        <div class="tab-pane fade" id="table-view" role="tabpanel" aria-labelledby="table-view-tab">
+
+        <!-- Historique complet -->
+        <div class="tab-pane fade" id="historique" role="tabpanel" aria-labelledby="historique-tab">
             {% if expenses %}
-                <div class="card shadow table-trips">
+                <div class="card shadow">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-history mr-1"></i> Historique des frais kilométriques
+                        </h6>
+                    </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table mb-0" id="kilometricExpensesTable">
+                            <table class="table table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Date</th>
-                                        <th>Départ</th>
-                                        <th>Arrivée</th>
+                                        <th>Trajet</th>
                                         <th>Distance</th>
-                                        <th>Véhicule</th>
                                         <th>Montant</th>
+                                        <th>Date</th>
                                         <th>Statut</th>
-                                        <th>Actions</th>
+                                        <th>Soumis le</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for expense in expenses %}
                                     <tr>
+                                        <td>{{ expense.departure }} → {{ expense.arrival }}</td>
+                                        <td><strong>{{ expense.distance }} km</strong></td>
+                                        <td><strong>{{ expense.amount }}€</strong></td>
                                         <td>{{ expense.date|date:"d/m/Y" }}</td>
-                                        <td title="{{ expense.departure }}">{{ expense.departure|truncatechars:20 }}</td>
-                                        <td title="{{ expense.arrival }}">{{ expense.arrival|truncatechars:20 }}</td>
-                                        <td>{{ expense.distance }} km</td>
-                                        <td>{{ expense.get_vehicle_type_display }}</td>
-                                        <td>{{ expense.amount|floatformat:2 }} €</td>
                                         <td>
-                                            <span class="badge status-{{ expense.status }} px-2 py-1">
-                                                {{ expense.get_status_display }}
-                                            </span>
+                                            <span class="badge bg-success
+                                                {% if expense.status == 'pending' %}bg-warning text-dark
+                                                {% elif expense.status == 'approved' %}bg-success
+                                                {% elif expense.status == 'rejected' %}bg-danger
+                                                {% endif %}">{{ expense.get_status_display }}</span>
                                         </td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-outline-primary view-trip"
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#viewTripModal"
-                                                    data-id="{{ expense.id }}"
-                                                    data-description="{{ expense.description }}"
-                                                    data-departure="{{ expense.departure }}"
-                                                    data-arrival="{{ expense.arrival }}"
-                                                    data-distance="{{ expense.distance }}"
-                                                    data-amount="{{ expense.amount|floatformat:2 }}"
-                                                    data-date="{{ expense.date|date:'d/m/Y' }}"
-                                                    data-vehicle="{{ expense.get_vehicle_type_display }}"
-                                                    data-status="{{ expense.get_status_display }}"
-                                                    data-status-code="{{ expense.status }}"
-                                                    data-project="{{ expense.project|default:'Non spécifié' }}"
-                                                    data-comment="{{ expense.comment|default:'' }}"
-                                                    data-lat1="{{ expense.departure_lat }}"
-                                                    data-lng1="{{ expense.departure_lng }}"
-                                                    data-lat2="{{ expense.arrival_lat }}"
-                                                    data-lng2="{{ expense.arrival_lng }}">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            
-                                            {% if expense.status == 'pending' %}
-                                                <a href="{% url 'cancel_kilometric_expense' expense.id %}" 
-                                                   class="btn btn-sm btn-outline-danger"
-                                                   onclick="return confirm('Êtes-vous sûr de vouloir annuler ce trajet ?')">
-                                                    <i class="fas fa-times"></i>
-                                                </a>
-                                            {% endif %}
-                                        </td>
+                                        <td>{{ expense.created_at|date:"d/m/Y" }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -560,234 +287,40 @@
                     </div>
                 </div>
             {% else %}
-                <div class="empty-state fade-in">
-                    <div class="empty-icon">
-                        <i class="fas fa-route"></i>
-                    </div>
-                    <h4 class="mb-3">Aucun frais kilométrique</h4>
-                    <p class="text-muted mb-4">Vous n'avez pas encore soumis de frais kilométriques.</p>
+                <div class="empty-state">
+                    <i class="fas fa-history empty-icon"></i>
+                    <h5>Aucun historique de frais kilométrique</h5>
+                    <p class="mb-4 text-muted">Vous n'avez pas encore fait de demande de remboursement kilométrique.</p>
                     <a href="{% url 'submit_kilometric_expense' %}" class="btn btn-primary">
-                        <i class="fas fa-plus-circle me-1"></i> Déclarer mon premier trajet
+                        <i class="fas fa-plus-circle me-1"></i> Faire votre première demande
                     </a>
                 </div>
             {% endif %}
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- Modal pour voir le trajet sur la carte -->
-<div class="modal fade" id="viewTripModal" tabindex="-1" aria-labelledby="viewTripModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="viewTripModalLabel">Détails du trajet</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <div id="trip-map" style="height: 400px; border-radius: 8px;"></div>
-                    </div>
-                </div>
-                <div class="trip-details">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><i class="fas fa-route me-2 text-primary"></i> <strong>Distance:</strong> <span id="trip-distance"></span> km</p>
-                            <p><i class="fas fa-calendar-day me-2 text-primary"></i> <strong>Date:</strong> <span id="trip-date"></span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><i class="fas fa-euro-sign me-2 text-primary"></i> <strong>Montant:</strong> <span id="trip-amount"></span> €</p>
-                            <p><i class="fas fa-car me-2 text-primary"></i> <strong>Véhicule:</strong> <span id="trip-vehicle"></span></p>
-                        </div>
-                    </div>
-                    <div id="trip-description-container">
-                        <p><i class="fas fa-align-left me-2 text-primary"></i> <strong>Description:</strong></p>
-                        <div class="trip-description p-3 bg-light rounded" id="trip-description"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Scripts pour la carte OpenStreetMap -->
+{% block extra_scripts %}
 <script>
-let map, routingControl;
-
-// Fonction pour afficher un trajet sur la carte
-function viewTripOnMap(tripId) {
-    // Récupérer les données du trajet
-    const tripData = trips.find(trip => trip.id === tripId);
-    if (!tripData) return;
-    
-    // Mettre à jour les informations du modal
-    document.getElementById('viewTripModalLabel').textContent = 'Trajet du ' + tripData.date;
-    document.getElementById('trip-date').textContent = tripData.date;
-    document.getElementById('trip-distance').textContent = tripData.distance;
-    document.getElementById('trip-amount').textContent = tripData.amount;
-    document.getElementById('trip-vehicle').textContent = getVehicleTypeName(tripData.vehicle_type, tripData.fiscal_power);
-    
-    // Ajouter la description si disponible
-    const descriptionContainer = document.getElementById('trip-description-container');
-    const descriptionElement = document.getElementById('trip-description');
-    
-    if (tripData.description && tripData.description.trim() !== '') {
-        descriptionElement.textContent = tripData.description;
-        descriptionContainer.style.display = 'block';
-    } else {
-        descriptionContainer.style.display = 'none';
-    }
-    
-    // Initialiser la carte lors de l'ouverture du modal
-    $('#viewTripModal').on('shown.bs.modal', function () {
-        initMap(tripData);
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des onglets
+    const tabs = document.querySelectorAll('a[data-bs-toggle="tab"]');
+    tabs.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            localStorage.setItem('activeKilometricTab', '#' + e.target.id);
+        });
     });
     
-    // Afficher le modal
-    $('#viewTripModal').modal('show');
-}
-
-function initMap(tripData) {
-    // Initialiser la carte ou la réinitialiser si elle existe déjà
-    if (map) {
-        map.remove();
-    }
-    
-    // Créer une nouvelle carte
-    map = L.map('trip-map').setView([46.603354, 1.888334], 5); // Vue centrée sur la France
-    
-    // Ajouter le layer OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19
-    }).addTo(map);
-    
-    // S'assurer que les coordonnées sont des nombres
-    const departureLat = parseFloat(tripData.departure_lat);
-    const departureLng = parseFloat(tripData.departure_lng);
-    const arrivalLat = parseFloat(tripData.arrival_lat);
-    const arrivalLng = parseFloat(tripData.arrival_lng);
-    
-    // Vérifier si les coordonnées sont valides
-    const validDepartureCoords = !isNaN(departureLat) && !isNaN(departureLng);
-    const validArrivalCoords = !isNaN(arrivalLat) && !isNaN(arrivalLng);
-    
-    // Utiliser des coordonnées par défaut si nécessaire
-    const departurePoint = validDepartureCoords 
-        ? L.latLng(departureLat, departureLng) 
-        : L.latLng(48.864716, 2.349014); // Paris par défaut
-    
-    const arrivalPoint = validArrivalCoords 
-        ? L.latLng(arrivalLat, arrivalLng) 
-        : L.latLng(45.764043, 4.835659); // Lyon par défaut
-    
-    console.log("Departure coordinates:", departurePoint);
-    console.log("Arrival coordinates:", arrivalPoint);
-    
-    // Créer une icône personnalisée pour le point de départ
-    const departureIcon = L.divIcon({
-        html: '<i class="fas fa-circle text-success" style="font-size: 14px;"></i>',
-        className: 'map-custom-icon',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
-    });
-    
-    // Créer une icône personnalisée pour le point d'arrivée
-    const arrivalIcon = L.divIcon({
-        html: '<i class="fas fa-circle text-danger" style="font-size: 14px;"></i>',
-        className: 'map-custom-icon',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
-    });
-    
-    // Ajouter les marqueurs
-    const departureMarker = L.marker(departurePoint, {
-        icon: departureIcon
-    }).addTo(map);
-    
-    const arrivalMarker = L.marker(arrivalPoint, {
-        icon: arrivalIcon
-    }).addTo(map);
-    
-    // Ajouter des popups pour les marqueurs
-    departureMarker.bindPopup('<strong>Départ</strong><br>' + tripData.departure);
-    arrivalMarker.bindPopup('<strong>Arrivée</strong><br>' + tripData.arrival);
-    
-    // Calculer et afficher l'itinéraire
-    routingControl = L.Routing.control({
-        waypoints: [
-            departurePoint,
-            arrivalPoint
-        ],
-        routeWhileDragging: false,
-        lineOptions: {
-            styles: [{ color: '#3388ff', weight: 6 }]
-        },
-        createMarker: function() { return null; }, // Pas de marqueurs par défaut, on utilise les nôtres
-        router: L.Routing.osrmv1({
-            serviceUrl: 'https://router.project-osrm.org/route/v1',
-            profile: 'driving',
-            language: 'fr'
-        }),
-        showAlternatives: false,
-        fitSelectedRoutes: true
-    }).addTo(map);
-    
-    // Masquer le panneau d'instructions de l'itinéraire
-    routingControl.hide();
-    
-    // Ajuster la vue pour inclure tout l'itinéraire
-    const bounds = L.latLngBounds([departurePoint, arrivalPoint]);
-    map.fitBounds(bounds, { padding: [50, 50] });
-}
-
-// Fonction pour obtenir le nom du type de véhicule
-function getVehicleTypeName(vehicleType, fiscalPower) {
-    if (vehicleType === 'car') {
-        if (fiscalPower === 'small') {
-            return 'Voiture 3CV et moins';
-        } else if (fiscalPower === 'medium') {
-            return 'Voiture 4 à 5CV';
-        } else if (fiscalPower === 'large') {
-            return 'Voiture 6 à 7CV';
-        } else if (fiscalPower === 'xlarge') {
-            return 'Voiture 8CV et plus';
-        } else if (fiscalPower === 'normal') { // Pour la compatibilité avec les anciennes données
-            return 'Voiture 5CV et moins';
-        } else if (fiscalPower === 'high') { // Pour la compatibilité avec les anciennes données
-            return 'Voiture 6CV et plus';
+    // Restaurer l'onglet actif
+    const activeTabId = localStorage.getItem('activeKilometricTab');
+    if (activeTabId) {
+        const tab = document.querySelector(activeTabId);
+        if (tab) {
+            const tabInstance = new bootstrap.Tab(tab);
+            tabInstance.show();
         }
-    } else if (vehicleType === 'electric_car') {
-        return 'Voiture électrique';
-    } else if (vehicleType === 'motorbike') {
-        return 'Moto/Scooter';
     }
-    return 'Véhicule inconnu';
-}
-
-// Liste des trajets (à remplir dynamiquement avec les données réelles)
-const trips = [
-{% for expense in kilometric_expenses %}
-    {
-        id: {{ expense.id }},
-        date: '{{ expense.date|date:"d/m/Y" }}',
-        description: '{{ expense.description|escapejs }}',
-        departure: '{{ expense.departure|escapejs }}',
-        arrival: '{{ expense.arrival|escapejs }}',
-        departure_lat: {{ expense.departure_lat|default:"48.864716" }},
-        departure_lng: {{ expense.departure_lng|default:"2.349014" }},
-        arrival_lat: {{ expense.arrival_lat|default:"45.764043" }},
-        arrival_lng: {{ expense.arrival_lng|default:"4.835659" }},
-        distance: {{ expense.distance }},
-        amount: {{ expense.amount }},
-        vehicle_type: '{{ expense.vehicle_type }}',
-        fiscal_power: '{{ expense.fiscal_power }}',
-        status: '{{ expense.status }}'
-    }{% if not forloop.last %},{% endif %}
-{% endfor %}
-];
+});
 </script>
 {% endblock %}

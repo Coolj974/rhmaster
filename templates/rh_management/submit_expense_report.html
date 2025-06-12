@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 10px;
+        padding: 2rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-section h5 {
+        color: #1cc88a;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #1cc88a;
+        padding-bottom: 0.5rem;
+    }
+    
+    .required {
+        color: #e74a3b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="page-header d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-receipt me-2"></i>Nouvelle note de frais
+        </h1>
+        <div class="d-none d-sm-block">
+            <a href="{% url 'my_expenses' %}" class="btn btn-outline-secondary shadow-sm">
+                <i class="fas fa-arrow-left fa-sm me-1"></i> Retour à mes notes de frais
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-section">
+            <h5><i class="fas fa-info-circle me-2"></i>Informations générales</h5>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="description" class="form-label">
+                        Description <span class="required">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="description" name="description" required>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="amount" class="form-label">
+                        Montant (€) <span class="required">*</span>
+                    </label>
+                    <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="date" class="form-label">
+                        Date de la dépense <span class="required">*</span>
+                    </label>
+                    <input type="date" class="form-control" id="date" name="date" required>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="category" class="form-label">
+                        Catégorie <span class="required">*</span>
+                    </label>
+                    <select class="form-control" id="category" name="category" required>
+                        <option value="">Sélectionner une catégorie</option>
+                        <option value="transport">Transport</option>
+                        <option value="restaurant">Restauration</option>
+                        <option value="hebergement">Hébergement</option>
+                        <option value="fournitures">Fournitures</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h5><i class="fas fa-paperclip me-2"></i>Justificatifs</h5>
+            
+            <div class="mb-3">
+                <label for="receipt" class="form-label">
+                    Pièce jointe (reçu, facture...)
+                </label>
+                <input type="file" class="form-control" id="receipt" name="receipt" accept=".pdf,.jpg,.jpeg,.png">
+                <div class="form-text">Formats acceptés : PDF, JPG, PNG (max 5MB)</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="comments" class="form-label">Commentaires</label>
+                <textarea class="form-control" id="comments" name="comments" rows="3"></textarea>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <a href="{% url 'my_expenses' %}" class="btn btn-secondary">
+                <i class="fas fa-times me-1"></i> Annuler
+            </a>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-paper-plane me-1"></i> Soumettre la note de frais
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Définir la date maximale à aujourd'hui
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+        dateInput.max = new Date().toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}

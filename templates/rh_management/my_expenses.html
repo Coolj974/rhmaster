@@ -2,176 +2,42 @@
 
 {% block extra_css %}
 <style>
-    /* Styles pour la page des notes de frais */
-    .expense-header {
+    /* Styles pour la page Mes notes de frais */
+    .page-header {
         padding: 1rem 0;
         margin-bottom: 1.5rem;
     }
     
-    .stats-card {
+    .balance-card {
         border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
-        height: 100%;
-        border: none;
         overflow: hidden;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        height: 100%;
     }
     
-    .stats-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    .balance-header {
+        padding: 1.25rem;
+        background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+        color: white;
     }
     
-    .stats-card .card-body {
+    .balance-body {
         padding: 1.5rem;
-    }
-    
-    .stats-header {
-        margin-bottom: 1rem;
-        color: #5a5c69;
-        font-size: 0.8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-    
-    .stats-value {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        line-height: 1;
-    }
-    
-    .stats-icon {
-        width: 3rem;
-        height: 3rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
     }
     
     .expense-card {
         border-radius: 10px;
-        overflow: hidden;
         transition: all 0.3s ease;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 0.15rem 1.25rem rgba(0,0,0,0.075);
-        border: none;
-    }
-    
-    .expense-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
-    }
-    
-    .expense-card .card-header {
-        padding: 1.25rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #fff;
-        border-bottom: 1px solid rgba(0,0,0,0.05);
-    }
-    
-    .expense-card .status-badge {
-        padding: 0.35rem 0.85rem;
-        border-radius: 50px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .expense-card .card-body {
-        padding: 1.25rem;
-    }
-    
-    .expense-details {
-        margin-bottom: 1.25rem;
-    }
-    
-    .expense-details .detail-label {
-        color: #6c757d;
-        font-size: 0.85rem;
-        margin-bottom: 0.25rem;
-    }
-    
-    .expense-details .detail-value {
-        font-weight: 600;
-    }
-    
-    .expense-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(0,0,0,0.05);
-    }
-    
-    .expense-actions .created-date {
-        color: #6c757d;
-        font-size: 0.85rem;
-    }
-    
-    .table-expenses {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 0.15rem 1.25rem rgba(0,0,0,0.075);
-    }
-    
-    .table-expenses thead {
-        background-color: #f8f9fc;
-    }
-    
-    .table-expenses th {
-        font-weight: 600;
-        padding: 1rem;
-        border-top: none;
-    }
-    
-    .status-pending {
-        background-color: rgba(246, 194, 62, 0.15);
-        color: #f6c23e;
-    }
-    
-    .status-approved {
-        background-color: rgba(28, 200, 138, 0.15);
-        color: #1cc88a;
-    }
-    
-    .status-rejected {
-        background-color: rgba(231, 74, 59, 0.15);
-        color: #e74a3b;
-    }
-    
-    /* Styles pour les onglets */
-    .nav-tabs {
-        border-bottom: none;
         margin-bottom: 1rem;
     }
     
-    .nav-tabs .nav-link {
-        border: none;
-        padding: 0.75rem 1.25rem;
-        border-radius: 8px;
-        margin-right: 0.5rem;
-        font-weight: 500;
-        color: #6e707e;
-        transition: all 0.2s ease;
+    .expense-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
     
-    .nav-tabs .nav-link:hover {
-        background-color: rgba(78, 115, 223, 0.05);
-        color: #4e73df;
-    }
-    
-    .nav-tabs .nav-link.active {
-        background-color: #4e73df;
-        color: white;
-    }
-    
-    /* États vides */
     .empty-state {
         text-align: center;
         padding: 3rem 1rem;
@@ -179,599 +45,235 @@
     
     .empty-icon {
         font-size: 4rem;
-        color: #dddfeb;
+        color: #e3e6f0;
         margin-bottom: 1.5rem;
     }
     
-    /* Animations */
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    
-    .fade-in {
-        animation: fadeIn 0.5s ease forwards;
-    }
-    
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .slide-up {
-        animation: slideUp 0.5s ease forwards;
-    }
-      /* Carte de résumé pour la vue détaillée */
-    .expense-summary-card {
-        border-left: 4px solid;
-        border-radius: 10px;
-        margin-bottom: 1.5rem;
-    }
-    
-    .expense-summary-card.approved {
-        border-left-color: #1cc88a;
-    }
-    
-    .expense-summary-card.pending {
-        border-left-color: #f6c23e;
-    }
-    
-    .expense-summary-card.rejected {
-        border-left-color: #e74a3b;
-    }
-    
-    /* Styles responsifs et optimisations */
-    .expense-icon-small {
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        font-size: 0.8rem;
-    }
-    
-    /* Loader pour les tableaux */
-    .spinner-border {
-        vertical-align: middle;
-    }
-    
-    /* Skeletons pour le chargement */
-    .skeleton {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: skeleton-loading 1.5s infinite;
-        border-radius: 4px;
-        height: 10px;
-        margin-bottom: 10px;
-    }
-    
-    .skeleton-circle {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-    }
-    
-    .skeleton-text-sm {
-        height: 8px;
-        width: 30%;
-    }
-    
-    .skeleton-text-md {
-        height: 10px;
-        width: 50%;
-    }
-    
-    .skeleton-text-lg {
-        height: 14px;
-        width: 70%;
-    }
-    
-    @keyframes skeleton-loading {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
-    }
-    
-    /* Styles pour les boutons d'exportation */
-    .export-buttons {
-        display: flex;
-        gap: 8px;
-    }
-    
-    .export-button {
-        border: 1px solid #e3e6f0;
-        background-color: #f8f9fc;
-        color: #6e707e;
-        border-radius: 4px;
-        padding: 4px 10px;
-        font-size: 0.8rem;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-    }
-    
-    .export-button i {
-        margin-right: 5px;
-    }
-    
-    .export-button:hover {
-        background-color: #eaecf4;
-        color: #4e73df;
-    }
-    
-    /* Styles pour le datatable responsive */
-    .dataTable thead th {
-        white-space: nowrap;
-    }
-    
-    .dataTable .no-sort {
-        pointer-events: none;
-    }
-    
-    /* Animation de transition pour les tableaux */
-    .dataTable tbody tr {
-        transition: background-color 0.2s ease;
-    }
-    
-    .dataTable tbody tr:hover {
-        background-color: rgba(78, 115, 223, 0.05) !important;
-    }
-    
-    /* Améliorations pour les appareils mobiles */
-    @media (max-width: 767.98px) {
-        .stats-value {
-            font-size: 1.75rem;
-        }
-        
-        .card-header {
-            padding: 0.75rem;
-        }
-        
-        .stats-card .card-body {
-            padding: 1rem;
-        }
-        
-        .dataTables_wrapper .dataTables_filter {
-            text-align: left;
-            margin-top: 10px;
-        }
-        
-        .dataTables_wrapper .dataTables_filter input {
-            width: 100%;
-            margin-left: 0;
-        }
-        
-        .dataTable tbody td {
-            padding: 0.5rem 0.75rem;
-        }
-        
-        .modal-dialog {
-            margin: 0.5rem;
-        }
-        
-        .expense-header h1 {
-            font-size: 1.5rem;
-        }
-        
-        .nav-tabs .nav-link {
-            padding: 0.5rem 0.75rem;
-        }
-        
-        .expense-card .card-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .expense-card .status-badge {
-            margin-top: 0.5rem;
-            align-self: flex-start;
-        }
-        
-        .expense-actions {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .expense-actions .created-date {
-            margin-bottom: 0.5rem;
-        }
-    }
-    
-    /* Optimisations pour les tablettes */
-    @media (min-width: 768px) and (max-width: 991.98px) {
-        .stats-card .row {
-            flex-direction: column;
-        }
-    }
-    
-    /* Bouton flottant pour nouvelle note (visible seulement sur mobile) */
-    .floating-action-button {
-        display: none;
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background-color: #4e73df;
-        color: white !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        text-align: center;
-        line-height: 56px;
-        z-index: 1000;
-        transition: all 0.3s ease;
-    }
-    
-    .floating-action-button:hover,
-    .floating-action-button:focus {
-        background-color: #2e59d9;
-        transform: scale(1.05);
-        color: white !important;
-        text-decoration: none;
-    }
-    
-    @media (max-width: 767.98px) {
-        .floating-action-button {
-            display: block;
-        }
-    }
-    
-    /* Animations améliorées */
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes scaleIn {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
-    }
-    
-    .fade-in {
-        animation: fadeIn 0.5s ease forwards;
-    }
-    
-    .slide-up {
-        animation: slideUp 0.5s ease forwards;
-    }
-    
-    .scale-in {
-        animation: scaleIn 0.3s ease forwards;
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
     }
 </style>
-{% endblock extra_css %}
+{% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <!-- En-tête de la page -->    <div class="d-sm-flex align-items-center justify-content-between expense-header">
+    <div class="page-header d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-receipt me-2"></i>Mes notes de frais</h1>
         <div class="d-none d-sm-block">
             <a href="{% url 'submit_expense' %}" class="btn btn-primary shadow-sm me-2">
-                <i class="fas fa-plus-circle me-1"></i> Nouvelle note
-            </a>
-            <a href="{% url 'expense_history' %}" class="btn btn-info shadow-sm me-2">
-                <i class="fas fa-history me-1"></i> Historique
+                <i class="fas fa-plus-circle fa-sm me-1"></i> Nouvelle note de frais
             </a>
             <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm">
-                <i class="fas fa-arrow-left me-1"></i> Tableau de bord
+                <i class="fas fa-arrow-left fa-sm me-1"></i> Tableau de bord
             </a>
         </div>
     </div>
 
-    <!-- Message flottant pour les notifications -->
     {% if messages %}
-    <div class="messages-container mb-4">
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm scale-in" role="alert">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
                 <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         {% endfor %}
-    </div>
     {% endif %}
-      <!-- Boutons flottants pour mobile -->
-    <div class="d-flex flex-column gap-3">
-        <a href="{% url 'submit_expense' %}" class="floating-action-button" style="bottom: 90px;">
-            <i class="fas fa-plus"></i>
-        </a>
-        <a href="{% url 'expense_history' %}" class="floating-action-button" style="background-color: #36b9cc;">
-            <i class="fas fa-history"></i>
-        </a>
-    </div>
 
-    <!-- Statistiques des notes de frais -->
+    <!-- Aperçu des statistiques -->
     <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stats-card">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="stats-header text-primary">TOTAL NOTES</div>
-                            <div class="stats-value">{{ stats.total_count }}</div>
-                            <div class="text-xs text-muted">notes soumises</div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="stats-icon bg-primary bg-opacity-10 text-primary">
-                                <i class="fas fa-file-invoice"></i>
-                            </div>
-                        </div>
+        <div class="col-lg-12">
+            <div class="balance-card">
+                <div class="balance-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="m-0"><i class="fas fa-chart-bar me-2"></i>Mes statistiques de frais</h5>
+                        <span class="badge bg-white text-success">{% now "Y" %}</span>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stats-card">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="stats-header text-warning">EN ATTENTE</div>
-                            <div class="stats-value">{{ stats.pending_count }}</div>
-                            <div class="text-xs text-muted">notes à valider</div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="stats-icon bg-warning bg-opacity-10 text-warning">
-                                <i class="fas fa-clock"></i>
+                <div class="balance-body">
+                    {% if stats %}
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="p-3 rounded bg-light">
+                                    <h6 class="text-muted mb-1">Total</h6>
+                                    <h3 class="mb-0 text-primary">{{ stats.total_count }}</h3>
+                                    <small class="text-muted">note(s)</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 rounded bg-light">
+                                    <h6 class="text-muted mb-1">En attente</h6>
+                                    <h3 class="mb-0 text-warning">{{ stats.pending_count }}</h3>
+                                    <small class="text-muted">note(s)</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 rounded bg-light">
+                                    <h6 class="text-muted mb-1">Approuvées</h6>
+                                    <h3 class="mb-0 text-success">{{ stats.approved_count }}</h3>
+                                    <small class="text-muted">note(s)</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 rounded bg-light">
+                                    <h6 class="text-muted mb-1">Montant total</h6>
+                                    <h3 class="mb-0 text-info">{{ stats.total_amount|floatformat:2 }}€</h3>
+                                    <small class="text-muted">remboursé</small>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stats-card">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="stats-header text-success">APPROUVÉES</div>
-                            <div class="stats-value">{{ stats.approved_count }}</div>
-                            <div class="text-xs text-muted">notes validées</div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                            <h5>Aucune statistique disponible</h5>
+                            <p class="text-muted mb-0">Commencez par soumettre votre première note de frais.</p>
                         </div>
-                        <div class="col-auto">
-                            <div class="stats-icon bg-success bg-opacity-10 text-success">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stats-card">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="stats-header text-danger">MONTANT TOTAL</div>
-                            <div class="stats-value">{{ stats.total_amount|floatformat:2 }}€</div>
-                            <div class="text-xs text-muted">{{ stats.approved_amount|default:"0.00" }}€ remboursés</div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="stats-icon bg-danger bg-opacity-10 text-danger">
-                                <i class="fas fa-euro-sign"></i>
-                            </div>
-                        </div>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Onglets de navigation -->
+    <!-- Navigation par onglets -->
     <ul class="nav nav-tabs" id="expensesTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <a class="nav-link active" id="card-view-tab" data-bs-toggle="tab" href="#card-view" role="tab" aria-selected="true">
-                <i class="fas fa-th-large me-1"></i> Vue en cartes
+            <a class="nav-link active" id="pending-tab" data-bs-toggle="tab" href="#pending" role="tab" aria-selected="true">
+                <i class="fas fa-clock me-1"></i> En attente
+                {% if expenses %}
+                    {% with pending_count=0 %}
+                        {% for expense in expenses %}
+                            {% if expense.status == 'pending' %}
+                                {% with pending_count=pending_count|add:1 %}{% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if pending_count > 0 %}
+                            <span class="badge bg-warning rounded-pill ms-2">{{ pending_count }}</span>
+                        {% endif %}
+                    {% endwith %}
+                {% endif %}
             </a>
         </li>
         <li class="nav-item" role="presentation">
-            <a class="nav-link" id="table-view-tab" data-bs-toggle="tab" href="#table-view" role="tab" aria-selected="false">
-                <i class="fas fa-table me-1"></i> Vue en tableau
+            <a class="nav-link" id="historique-tab" data-bs-toggle="tab" href="#historique" role="tab" aria-selected="false">
+                <i class="fas fa-history me-1"></i> Historique complet
+                {% if expenses %}
+                    <span class="badge bg-secondary rounded-pill ms-2">{{ expenses|length }}</span>
+                {% endif %}
             </a>
         </li>
     </ul>
 
-    <!-- Contenu des onglets -->
     <div class="tab-content" id="expensesTabContent">
-        <!-- Vue en cartes -->
-        <div class="tab-pane fade show active" id="card-view" role="tabpanel" aria-labelledby="card-view-tab">
+        <!-- Notes en attente -->
+        <div class="tab-pane fade show active" id="pending" role="tabpanel" aria-labelledby="pending-tab">
             {% if expenses %}
                 <div class="row">
                     {% for expense in expenses %}
-                        <div class="col-lg-6 slide-up" style="animation-delay: {{ forloop.counter0|divisibleby:2 }}0ms">
-                            <div class="expense-card">
-                                <div class="card-header">
-                                    <div>
-                                        <h5 class="card-title mb-0">{{ expense.description }}</h5>
-                                        <span class="text-muted small">{{ expense.get_expense_type_display }}</span>
-                                    </div>
-                                    <span class="status-badge status-{{ expense.status }}">{{ expense.get_status_display }}</span>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="expense-details">
-                                                <div class="detail-label">Date</div>
-                                                <div class="detail-value">{{ expense.date|date:"d/m/Y" }}</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="expense-details">
-                                                <div class="detail-label">Montant</div>
-                                                <div class="detail-value text-primary">{{ expense.amount|floatformat:2 }} €</div>
-                                            </div>
+                        {% if expense.status == 'pending' %}
+                            <div class="col-lg-6 mb-4">
+                                <div class="expense-card card shadow-sm">
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">{{ expense.description|truncatechars:30 }}</h6>
+                                            <span class="badge bg-warning text-dark">En attente</span>
                                         </div>
                                     </div>
-                                    
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="expense-details">
-                                                <div class="detail-label">Projet</div>
-                                                <div class="detail-value">{{ expense.project|default:"Non spécifié" }}</div>
-                                            </div>
+                                    <div class="card-body">
+                                        <div class="mb-2">
+                                            <strong>Montant:</strong> {{ expense.amount }}€
                                         </div>
-                                        <div class="col-md-6">
-                                            <div class="expense-details">
-                                                <div class="detail-label">Lieu</div>
-                                                <div class="detail-value">{{ expense.location|default:"Non spécifié" }}</div>
-                                            </div>
+                                        <div class="mb-2">
+                                            <strong>Date:</strong> {{ expense.date|date:"d/m/Y" }}
                                         </div>
-                                    </div>
-                                    
-                                    <div class="expense-actions">
-                                        <span class="created-date">Créée le {{ expense.created_at|date:"d/m/Y" }}</span>
-                                        <div>
-                                            <button type="button" class="btn btn-sm btn-outline-primary view-expense"
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#viewExpenseModal"
-                                                    data-id="{{ expense.id }}"
-                                                    data-description="{{ expense.description }}"
-                                                    data-amount="{{ expense.amount|floatformat:2 }}"
-                                                    data-date="{{ expense.date|date:'d/m/Y' }}"
-                                                    data-type="{{ expense.get_expense_type_display }}"
-                                                    data-vat="{{ expense.vat|default:'0' }}"
-                                                    data-project="{{ expense.project|default:'Non spécifié' }}"
-                                                    data-location="{{ expense.location|default:'Non spécifié' }}"
-                                                    data-status="{{ expense.get_status_display }}"
-                                                    data-status-code="{{ expense.status }}"
-                                                    data-refacturable="{{ expense.refacturable|yesno:'Oui,Non' }}"
-                                                    data-created-at="{{ expense.created_at|date:'d/m/Y H:i' }}"
-                                                    data-comment="{{ expense.comment|default:'' }}"
-                                                    data-has-receipt="{{ expense.receipt|yesno:'true,false' }}"
-                                                    data-has-attachment="{{ expense.attachment|yesno:'true,false' }}"
-                                                    {% if expense.receipt %}data-receipt-url="{{ expense.receipt.url }}"{% endif %}
-                                                    {% if expense.attachment %}data-attachment-url="{{ expense.attachment.url }}"{% endif %}>
-                                                <i class="fas fa-eye me-1"></i> Détails
-                                            </button>
-                                            
-                                            {% if expense.status == 'pending' %}
-                                                <a href="{% url 'cancel_expense' expense.id %}" class="btn btn-sm btn-outline-danger"
-                                                   onclick="return confirm('Êtes-vous sûr de vouloir annuler cette note de frais ?')">
-                                                    <i class="fas fa-times me-1"></i> Annuler
-                                                </a>
-                                            {% endif %}
+                                        {% if expense.project %}
+                                        <div class="mb-2">
+                                            <strong>Projet:</strong> {{ expense.project }}
                                         </div>
+                                        {% endif %}
+                                        <small class="text-muted">Soumis le {{ expense.created_at|date:"d/m/Y" }}</small>
                                     </div>
                                 </div>
                             </div>
+                        {% endif %}
+                    {% empty %}
+                        <div class="empty-state">
+                            <i class="fas fa-receipt empty-icon"></i>
+                            <h5>Aucune note de frais enregistrée</h5>
+                            <p class="mb-4 text-muted">Vous n'avez pas encore fait de demande de remboursement.</p>
+                            <a href="{% url 'submit_expense' %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-1"></i> Faire votre première demande
+                            </a>
                         </div>
                     {% endfor %}
                 </div>
+
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const pendingTab = document.getElementById('pending');
+                    const expenseCards = pendingTab.querySelectorAll('.expense-card');
+                    
+                    if (expenseCards.length === 0 && !pendingTab.querySelector('.empty-state')) {
+                        pendingTab.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-receipt empty-icon"></i>
+                                <h5>Aucune note de frais en attente</h5>
+                                <p class="mb-4 text-muted">Vous n'avez pas de notes de frais en attente de validation.</p>
+                                <a href="{% url 'submit_expense' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle me-1"></i> Soumettre une nouvelle note
+                                </a>
+                            </div>
+                        `;
+                    }
+                });
+                </script>
             {% else %}
-                <div class="empty-state fade-in">
-                    <div class="empty-icon">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                    </div>
-                    <h4 class="mb-3">Aucune note de frais</h4>
-                    <p class="text-muted mb-4">Vous n'avez pas encore soumis de note de frais.</p>
+                <div class="empty-state">
+                    <i class="fas fa-receipt empty-icon"></i>
+                    <h5>Aucune note de frais</h5>
+                    <p class="mb-4 text-muted">Vous n'avez pas encore soumis de note de frais.</p>
                     <a href="{% url 'submit_expense' %}" class="btn btn-primary">
                         <i class="fas fa-plus-circle me-1"></i> Créer ma première note
                     </a>
                 </div>
             {% endif %}
         </div>
-          <!-- Vue en tableau -->
-        <div class="tab-pane fade" id="table-view" role="tabpanel" aria-labelledby="table-view-tab">
+
+        <!-- Historique complet -->
+        <div class="tab-pane fade" id="historique" role="tabpanel" aria-labelledby="historique-tab">
             {% if expenses %}
-                <div class="card shadow table-expenses">
-                    <div class="card-header bg-white py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-                        <h6 class="m-0 mb-2 mb-md-0 font-weight-bold text-primary">
-                            <i class="fas fa-table mr-1"></i> Historique des notes de frais
+                <div class="card shadow">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-history mr-1"></i> Historique des notes de frais
                         </h6>
-                        <div class="d-flex">
-                            <div id="tableLoader" class="d-none">
-                                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
-                                    <span class="visually-hidden">Chargement...</span>
-                                </div>
-                                <span class="small text-muted">Chargement des données...</span>
-                            </div>
-                            
-                            <div class="export-buttons ms-3"></div>
-                        </div>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table mb-0 w-100" id="expensesTable">
+                            <table class="table table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Date</th>
                                         <th>Description</th>
-                                        <th>Type</th>
-                                        <th>Projet</th>
                                         <th>Montant</th>
+                                        <th>Date</th>
                                         <th>Statut</th>
-                                        <th class="no-sort text-end">Actions</th>
+                                        <th>Soumis le</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for expense in expenses %}
                                     <tr>
+                                        <td>{{ expense.description|truncatechars:40 }}</td>
+                                        <td><strong>{{ expense.amount }}€</strong></td>
                                         <td>{{ expense.date|date:"d/m/Y" }}</td>
-                                        <td>{{ expense.description }}</td>
                                         <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="expense-icon-small me-2
-                                                    {% if expense.expense_type == 'travel' %}bg-primary bg-opacity-10 text-primary
-                                                    {% elif expense.expense_type == 'meal' %}bg-success bg-opacity-10 text-success
-                                                    {% elif expense.expense_type == 'accommodation' %}bg-info bg-opacity-10 text-info
-                                                    {% elif expense.expense_type == 'equipment' %}bg-warning bg-opacity-10 text-warning
-                                                    {% else %}bg-secondary bg-opacity-10 text-secondary{% endif %}">
-                                                    <i class="fas 
-                                                        {% if expense.expense_type == 'travel' %}fa-plane
-                                                        {% elif expense.expense_type == 'meal' %}fa-utensils
-                                                        {% elif expense.expense_type == 'accommodation' %}fa-hotel
-                                                        {% elif expense.expense_type == 'equipment' %}fa-laptop
-                                                        {% else %}fa-receipt{% endif %} fa-sm"></i>
-                                                </div>
-                                                <span class="d-none d-md-inline">{{ expense.get_expense_type_display }}</span>
-                                            </div>
+                                            <span class="status-badge
+                                                {% if expense.status == 'pending' %}bg-warning text-dark
+                                                {% elif expense.status == 'approved' %}bg-success
+                                                {% elif expense.status == 'rejected' %}bg-danger
+                                                {% endif %}">{{ expense.get_status_display }}</span>
                                         </td>
-                                        <td>{{ expense.project|default:"Non spécifié" }}</td>
-                                        <td><span class="fw-medium">{{ expense.amount|floatformat:2 }} €</span></td>
-                                        <td>
-                                            <span class="badge status-{{ expense.status }} px-2 py-1">
-                                                {{ expense.get_status_display }}
-                                            </span>
-                                        </td>
-                                        <td class="text-end">
-                                            <button type="button" class="btn btn-sm btn-outline-primary view-expense"
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#viewExpenseModal"
-                                                    data-id="{{ expense.id }}"
-                                                    data-description="{{ expense.description }}"
-                                                    data-amount="{{ expense.amount|floatformat:2 }}"
-                                                    data-date="{{ expense.date|date:'d/m/Y' }}"
-                                                    data-type="{{ expense.get_expense_type_display }}"
-                                                    data-vat="{{ expense.vat|default:'0' }}"
-                                                    data-project="{{ expense.project|default:'Non spécifié' }}"
-                                                    data-location="{{ expense.location|default:'Non spécifié' }}"
-                                                    data-status="{{ expense.get_status_display }}"
-                                                    data-status-code="{{ expense.status }}"
-                                                    data-refacturable="{{ expense.refacturable|yesno:'Oui,Non' }}"
-                                                    data-created-at="{{ expense.created_at|date:'d/m/Y H:i' }}"
-                                                    data-comment="{{ expense.comment|default:'' }}"
-                                                    data-has-receipt="{{ expense.receipt|yesno:'true,false' }}"
-                                                    data-has-attachment="{{ expense.attachment|yesno:'true,false' }}"
-                                                    {% if expense.receipt %}data-receipt-url="{{ expense.receipt.url }}"{% endif %}
-                                                    {% if expense.attachment %}data-attachment-url="{{ expense.attachment.url }}"{% endif %}>
-                                                <i class="fas fa-eye"></i> <span class="d-none d-md-inline">Détails</span>
-                                            </button>
-                                            
-                                            {% if expense.status == 'pending' %}
-                                                <a href="{% url 'cancel_expense' expense.id %}" class="btn btn-sm btn-outline-danger"
-                                                   onclick="return confirm('Êtes-vous sûr de vouloir annuler cette note de frais ?')">
-                                                    <i class="fas fa-times"></i> <span class="d-none d-md-inline">Annuler</span>
-                                                </a>
-                                            {% endif %}
-                                        </td>
+                                        <td>{{ expense.created_at|date:"d/m/Y" }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -780,424 +282,40 @@
                     </div>
                 </div>
             {% else %}
-                <div class="empty-state fade-in">
-                    <div class="empty-icon">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                    </div>
-                    <h4 class="mb-3">Aucune note de frais</h4>
-                    <p class="text-muted mb-4">Vous n'avez pas encore soumis de note de frais.</p>
+                <div class="empty-state">
+                    <i class="fas fa-history empty-icon"></i>
+                    <h5>Aucun historique de note de frais</h5>
+                    <p class="mb-4 text-muted">Vous n'avez pas encore fait de demande de remboursement.</p>
                     <a href="{% url 'submit_expense' %}" class="btn btn-primary">
-                        <i class="fas fa-plus-circle me-1"></i> Créer ma première note
+                        <i class="fas fa-plus-circle me-1"></i> Faire votre première demande
                     </a>
                 </div>
             {% endif %}
         </div>
     </div>
 </div>
-
-<!-- Modal de détail des notes de frais -->
-<div class="modal fade" id="viewExpenseModal" tabindex="-1" aria-labelledby="viewExpenseModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="viewExpenseModalLabel">Détails de la note de frais</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Récapitulatif de la note de frais -->
-                <div class="row mb-4">
-                    <div class="col-md-12">
-                        <div class="expense-summary-card p-3" id="expense-summary-card">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0" id="modal-description"></h5>
-                                <span class="status-badge" id="modal-status-badge"></span>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-2">
-                                        <span class="text-muted">Date:</span>
-                                        <span class="fw-medium" id="modal-date"></span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <span class="text-muted">Type:</span>
-                                        <span class="fw-medium" id="modal-type"></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 text-md-end">
-                                    <div class="mb-2">
-                                        <span class="text-muted">Montant:</span>
-                                        <span class="fw-bold text-primary" id="modal-amount"></span>
-                                    </div>                                    <div class="mb-2">
-                                        <span class="text-muted">Taux de TVA:</span>
-                                        <span class="fw-medium" id="modal-vat"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <!-- Informations générales -->
-                    <div class="col-md-6">
-                        <div class="card shadow-sm mb-4">
-                            <div class="card-body">
-                                <h6 class="card-title text-primary mb-3"><i class="fas fa-info-circle me-2"></i>Informations générales</h6>
-                                <div class="mb-3">
-                                    <div class="text-muted small mb-1">Projet</div>
-                                    <div id="modal-project" class="fw-medium"></div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="text-muted small mb-1">Lieu</div>
-                                    <div id="modal-location" class="fw-medium"></div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="text-muted small mb-1">Refacturable</div>
-                                    <div id="modal-refacturable" class="fw-medium"></div>
-                                </div>
-                                <div class="mb-0">
-                                    <div class="text-muted small mb-1">Date de création</div>
-                                    <div id="modal-created-at" class="fw-medium"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Pièces justificatives -->
-                    <div class="col-md-6">
-                        <div class="card shadow-sm mb-4">
-                            <div class="card-body">
-                                <h6 class="card-title text-primary mb-3"><i class="fas fa-paperclip me-2"></i>Justificatifs</h6>
-                                <div class="mb-3" id="receipt-container">
-                                    <div class="text-muted small mb-2">Reçu principal</div>
-                                    <a href="#" id="modal-receipt-link" class="btn btn-sm btn-outline-primary w-100" target="_blank">
-                                        <i class="fas fa-receipt me-1"></i> Voir le reçu
-                                    </a>
-                                </div>
-                                <div id="attachment-container">
-                                    <div class="text-muted small mb-2">Document complémentaire</div>
-                                    <a href="#" id="modal-attachment-link" class="btn btn-sm btn-outline-primary w-100" target="_blank">
-                                        <i class="fas fa-file-alt me-1"></i> Voir le document
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Commentaires -->
-                <div class="card shadow-sm mb-0" id="comment-container">
-                    <div class="card-body">
-                        <h6 class="card-title text-primary mb-3"><i class="fas fa-comment-alt me-2"></i>Commentaires</h6>
-                        <div class="bg-light p-3 rounded">
-                            <p id="modal-comment" class="mb-0"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                <a href="#" id="modal-cancel-btn" class="btn btn-danger">
-                    <i class="fas fa-times me-1"></i> Annuler cette note
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
+{% endblock %}
 
 {% block extra_scripts %}
-<!-- Chargement optimisé de jQuery et DataTables avec defer -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js" defer></script>
-<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Chargement paresseux des ressources DataTables
-    function loadDataTables() {
-        const tableLoader = document.getElementById('tableLoader');
-        if (tableLoader) tableLoader.classList.remove('d-none');
-        
-        if (typeof $.fn.DataTable !== 'undefined' && document.getElementById('expensesTable')) {
-            // Détruire l'instance existante si elle existe
-            if ($.fn.dataTable.isDataTable('#expensesTable')) {
-                $('#expensesTable').DataTable().destroy();
-            }
-            
-            // Initialiser avec configurations optimisées
-            const table = $('#expensesTable').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json'
-                },
-                order: [[0, 'desc']], // Trier par date décroissante
-                pageLength: 10,
-                deferRender: true,
-                processing: true,
-                responsive: true,
-                columnDefs: [
-                    { targets: 'no-sort', orderable: false }
-                ],
-                dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
-                     "<'row'<'col-sm-12'tr>>" +
-                     "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-                initComplete: function() {
-                    if (tableLoader) tableLoader.classList.add('d-none');
-                    
-                    // Ajout des boutons d'exportation
-                    const exportButtons = document.querySelector('.export-buttons');
-                    if (exportButtons) {
-                        // Bouton d'impression
-                        const printButton = document.createElement('button');
-                        printButton.className = 'export-button';
-                        printButton.innerHTML = '<i class="fas fa-print"></i> Imprimer';
-                        printButton.addEventListener('click', function() {
-                            window.print();
-                        });
-                        exportButtons.appendChild(printButton);
-                        
-                        // Fonction pour exporter en CSV
-                        const csvButton = document.createElement('button');
-                        csvButton.className = 'export-button';
-                        csvButton.innerHTML = '<i class="fas fa-file-csv"></i> CSV';
-                        csvButton.addEventListener('click', function() {
-                            exportTableToCSV('mes_notes_frais.csv');
-                        });
-                        exportButtons.appendChild(csvButton);
-                    }
-                    
-                    // Cache les éléments de recherche si moins de 10 entrées
-                    const api = this.api();
-                    if (api.rows().count() < 10) {
-                        $('.dataTables_length').hide();
-                    }
-                }
-            });
-            
-            // Ajouter la classe de survol aux lignes pour l'effet de style
-            $('#expensesTable tbody').on('mouseenter', 'tr', function() {
-                $(this).addClass('hover-highlight');
-            }).on('mouseleave', 'tr', function() {
-                $(this).removeClass('hover-highlight');
-            });
-        }
-    }
-    
-    // Fonction pour exporter en CSV
-    window.exportTableToCSV = function(filename) {
-        let csv = [];
-        const rows = document.querySelectorAll('#expensesTable tr');
-        
-        for (let i = 0; i < rows.length; i++) {
-            const row = [], cols = rows[i].querySelectorAll('td, th');
-            
-            for (let j = 0; j < cols.length; j++) {
-                // Nettoyer le texte (sans les balises HTML)
-                let cellText = cols[j].innerText;
-                
-                // Éviter la colonne des actions (dernière colonne)
-                if (j === cols.length - 1 && i > 0) continue;
-                
-                // Format CSV: entourez de guillemets et échappez les guillemets internes
-                row.push('"' + cellText.replace(/"/g, '""') + '"');
-            }
-            
-            csv.push(row.join(','));
-        }
-        
-        // Télécharger le fichier CSV
-        const csvFile = new Blob([csv.join('\n')], {type: 'text/csv'});
-        const downloadLink = document.createElement('a');
-        downloadLink.download = filename;
-        downloadLink.href = window.URL.createObjectURL(csvFile);
-        downloadLink.style.display = 'none';
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-    }
-    
-    // Chargement conditionnel de DataTables - seulement si l'onglet tableau est actif
-    const tableViewTab = document.getElementById('table-view-tab');
-    if (tableViewTab) {
-        tableViewTab.addEventListener('shown.bs.tab', function() {
-            loadDataTables();
-        });
-        
-        // Si l'onglet tableau est actif au chargement, initialiser DataTables
-        if (localStorage.getItem('activeExpenseTab') === '#table-view-tab') {
-            setTimeout(loadDataTables, 100);
-        }
-    }
-    
-    // Conservation de l'onglet actif après rafraîchissement
-    const activeTab = localStorage.getItem('activeExpenseTab');
-    if (activeTab) {
-        const tab = document.querySelector(activeTab);
-        if (tab) {
-            const tabInstance = new bootstrap.Tab(tab);
-            tabInstance.show();
-        }
-    }
-    
-    // Enregistrer l'onglet actif lors du changement
-    document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
+    // Gestion des onglets
+    const tabs = document.querySelectorAll('a[data-bs-toggle="tab"]');
+    tabs.forEach(tab => {
         tab.addEventListener('shown.bs.tab', function(e) {
             localStorage.setItem('activeExpenseTab', '#' + e.target.id);
         });
     });
     
-    // Gestion optimisée du modal pour voir les détails d'une note de frais
-    function updateModal(data) {
-        // Mettre à jour le modal avec les données
-        document.getElementById('modal-description').textContent = data.description;
-        document.getElementById('modal-amount').textContent = data.totalAmount.toFixed(2) + " €";
-        document.getElementById('modal-date').textContent = data.date;
-        document.getElementById('modal-type').textContent = data.type;
-        document.getElementById('modal-vat').textContent = data.vat + "%";
-        document.getElementById('modal-project').textContent = data.project;
-        document.getElementById('modal-location').textContent = data.location;
-        document.getElementById('modal-refacturable').textContent = data.refacturable;
-        document.getElementById('modal-created-at').textContent = data.createdAt;
-        
-        // Style du statut
-        const statusBadge = document.getElementById('modal-status-badge');
-        statusBadge.textContent = data.status;
-        statusBadge.className = 'status-badge status-' + data.statusCode;
-        
-        // Style de la carte de résumé
-        const summaryCard = document.getElementById('expense-summary-card');
-        summaryCard.className = 'expense-summary-card p-3 ' + data.statusCode;
-        
-        // Afficher/cacher les justificatifs
-        const receiptContainer = document.getElementById('receipt-container');
-        const attachmentContainer = document.getElementById('attachment-container');
-        
-        if (data.hasReceipt) {
-            document.getElementById('modal-receipt-link').href = data.receiptUrl;
-            receiptContainer.style.display = 'block';
-        } else {
-            receiptContainer.style.display = 'none';
-        }
-        
-        if (data.hasAttachment) {
-            document.getElementById('modal-attachment-link').href = data.attachmentUrl;
-            attachmentContainer.style.display = 'block';
-        } else {
-            attachmentContainer.style.display = 'none';
-        }
-        
-        // Afficher/cacher les commentaires
-        const commentContainer = document.getElementById('comment-container');
-        if (data.comment && data.comment.trim() !== '') {
-            document.getElementById('modal-comment').textContent = data.comment;
-            commentContainer.style.display = 'block';
-        } else {
-            commentContainer.style.display = 'none';
-        }
-        
-        // Configurer le bouton d'annulation
-        const cancelBtn = document.getElementById('modal-cancel-btn');
-        if (data.statusCode === 'pending') {
-            cancelBtn.href = `/cancel-expense/${data.id}/`;
-            cancelBtn.style.display = 'block';
-        } else {
-            cancelBtn.style.display = 'none';
+    // Restaurer l'onglet actif
+    const activeTabId = localStorage.getItem('activeExpenseTab');
+    if (activeTabId) {
+        const tab = document.querySelector(activeTabId);
+        if (tab) {
+            const tabInstance = new bootstrap.Tab(tab);
+            tabInstance.show();
         }
     }
-    
-    // Délégation d'événements pour les boutons de détails
-    document.addEventListener('click', function(e) {
-        const button = e.target.closest('.view-expense');
-        if (button) {
-            // Récupérer les données
-            const id = button.getAttribute('data-id');
-            const description = button.getAttribute('data-description');
-            const amount = button.getAttribute('data-amount');
-            const date = button.getAttribute('data-date');
-            const type = button.getAttribute('data-type');
-            const vat = button.getAttribute('data-vat');
-            const project = button.getAttribute('data-project');
-            const location = button.getAttribute('data-location');
-            const status = button.getAttribute('data-status');
-            const statusCode = button.getAttribute('data-status-code');
-            const refacturable = button.getAttribute('data-refacturable');
-            const createdAt = button.getAttribute('data-created-at');
-            const comment = button.getAttribute('data-comment');
-            const hasReceipt = button.getAttribute('data-has-receipt') === 'true';
-            const hasAttachment = button.getAttribute('data-has-attachment') === 'true';
-            const receiptUrl = button.getAttribute('data-receipt-url');
-            const attachmentUrl = button.getAttribute('data-attachment-url');
-            
-            // Calculer le montant total avec TVA
-            const baseAmount = parseFloat(amount);
-            const vatRate = parseFloat(vat);
-            const totalAmount = baseAmount * (1 + (vatRate / 100));
-            
-            // Mettre à jour le modal
-            updateModal({
-                id, description, date, type, vat, project, location, status, statusCode,
-                refacturable, createdAt, comment, hasReceipt, hasAttachment,
-                receiptUrl, attachmentUrl, totalAmount
-            });
-        }
-    });
-    
-    // Animation au défilement optimisée avec IntersectionObserver
-    const animateOnScroll = (entries, observer) => {
-        requestAnimationFrame(() => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('fade-in');
-                    observer.unobserve(entry.target);
-                }
-            });
-        });
-    };
-    
-    const observer = new IntersectionObserver(animateOnScroll, { 
-        threshold: 0.1,
-        rootMargin: '50px'
-    });
-    
-    document.querySelectorAll('.expense-card, .stats-card, .empty-state').forEach(card => {
-        observer.observe(card);
-    });
-    
-    // Fermeture automatique des alertes après 5 secondes
-    const autoCloseAlerts = () => {
-        document.querySelectorAll('.alert').forEach(alert => {
-            setTimeout(() => {
-                const closeButton = alert.querySelector('.btn-close');
-                if (closeButton) {
-                    closeButton.click();
-                }
-            }, 5000);
-        });
-    };
-    
-    // Exécuter la fermeture automatique des alertes
-    autoCloseAlerts();
-    
-    // Préchargement des images pour améliorer les performances
-    function preloadImages() {
-        const imagePaths = [
-            '/static/img/icons/expense.svg',
-            '/static/img/icons/receipt.svg',
-            '/static/img/icons/approved.svg',
-            '/static/img/icons/pending.svg',
-            '/static/img/icons/rejected.svg'
-        ];
-        
-        imagePaths.forEach(path => {
-            const img = new Image();
-            img.src = path;
-        });
-    }
-    
-    // Précharger les images en arrière-plan après le chargement de la page
-    if ('requestIdleCallback' in window) {
-        requestIdleCallback(preloadImages);
-    } else {
-        setTimeout(preloadImages, 1000);    }
 });
 </script>
-{% endblock extra_scripts %}
-{% endblock content %}
+{% endblock %}

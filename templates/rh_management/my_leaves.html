@@ -369,9 +369,6 @@
             <a href="{% url 'leave_request' %}" class="btn btn-primary shadow-sm me-2">
                 <i class="fas fa-plus-circle fa-sm me-1"></i> Nouvelle demande
             </a>
-            <a href="{% url 'leave_history' %}" class="btn btn-info shadow-sm me-2">
-                <i class="fas fa-history fa-sm me-1"></i> Historique
-            </a>
             <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm">
                 <i class="fas fa-arrow-left fa-sm me-1"></i> Tableau de bord
             </a>
@@ -390,16 +387,7 @@
         {% endfor %}
     </div>
     {% endif %}
-      <!-- Boutons flottants pour mobile -->
-    <div class="d-flex flex-column gap-3">
-        <a href="{% url 'leave_request' %}" class="floating-action-button" style="bottom: 90px;">
-            <i class="fas fa-plus"></i>
-        </a>
-        <a href="{% url 'leave_history' %}" class="floating-action-button" style="background-color: #36b9cc;">
-            <i class="fas fa-history"></i>
-        </a>
-    </div>
-    
+
     <!-- Aperçu du solde -->
     <div class="row mb-4">
         <div class="col-lg-8 mb-4">
@@ -407,7 +395,7 @@
                 <div class="balance-header">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="m-0"><i class="fas fa-calendar-check me-2"></i>Mon solde de congés</h5>
-                        <span class="badge bg-white text-primary">Année {{ current_year }}</span>
+                        <span class="badge bg-white text-primary">Année {% now "Y" %}</span>
                     </div>
                 </div>
                 <div class="balance-body">
@@ -421,8 +409,9 @@
                                 </div>
                                 
                                 <div class="progress balance-progress">
+                                    {% widthratio leave_balance.available leave_balance.acquired 100 as available_percentage %}
                                     <div class="progress-bar {% if leave_balance.available > 5 %}bg-success{% elif leave_balance.available > 0 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar"
-                                        style="width: {{ leave_balance.available_percentage }}%" aria-valuenow="{{ leave_balance.available }}" aria-valuemin="0" aria-valuemax="{{ leave_balance.acquired }}"></div>
+                                        style="width: {{ available_percentage }}%" aria-valuenow="{{ leave_balance.available }}" aria-valuemin="0" aria-valuemax="{{ leave_balance.acquired }}"></div>
                                 </div>
                             </div>
                             
@@ -447,15 +436,15 @@
                                         <div class="bg-light p-3 rounded text-center">
                                             <div class="d-flex justify-content-around">
                                                 <div>
-                                                    <h4 class="mb-0 text-success">{{ stats.approved_count }}</h4>
+                                                    <h4 class="mb-0 text-success">{{ stats.approved_requests }}</h4>
                                                     <small class="text-muted">Approuvés</small>
                                                 </div>
                                                 <div>
-                                                    <h4 class="mb-0 text-warning">{{ stats.pending_count }}</h4>
+                                                    <h4 class="mb-0 text-warning">{{ stats.pending_requests }}</h4>
                                                     <small class="text-muted">En attente</small>
                                                 </div>
                                                 <div>
-                                                    <h4 class="mb-0 text-danger">{{ stats.rejected_count }}</h4>
+                                                    <h4 class="mb-0 text-danger">{{ stats.rejected_requests }}</h4>
                                                     <small class="text-muted">Refusés</small>
                                                 </div>
                                             </div>
@@ -484,12 +473,30 @@
                 </div>
                 <div class="balance-body">
                     <div class="leave-timeline">
-                        {% for leave in recent_leaves|slice:":3" %}
-                            <div class="timeline-item">
-                                <div class="timeline-point point-{{ leave.status }}"></div>
-                                <h6 class="mb-1">{{ leave.get_leave_type_display }} - {{ leave.days_requested }} jour(s)</h6>
-                                <div class="text-muted small mb-2">{{ leave.start_date|date:"d/m/Y" }} au {{ leave.end_date|date:"d/m/Y" }}</div>
-                                <span class="badge status-{{ leave.status }}">{{ leave.get_status_display }}</span>
+                        {% for leave in leaves|slice:":3" %}
+                            <div class="timeline-item mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="leave-type-icon me-3 
+                                        {% if leave.leave_type == 'annual' %}bg-primary
+                                        {% elif leave.leave_type == 'sick' %}bg-danger
+                                        {% elif leave.leave_type == 'personal' %}bg-info
+                                        {% else %}bg-secondary{% endif %} text-white">
+                                        <i class="fas 
+                                        {% if leave.leave_type == 'annual' %}fa-sun
+                                        {% elif leave.leave_type == 'sick' %}fa-user-injured
+                                        {% elif leave.leave_type == 'personal' %}fa-user
+                                        {% else %}fa-calendar{% endif %}"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ leave.get_leave_type_display }} - {{ leave.days_requested|default:"N/A" }} jour(s)</h6>
+                                        <div class="text-muted small mb-2">{{ leave.start_date|date:"d/m/Y" }} au {{ leave.end_date|date:"d/m/Y" }}</div>
+                                        <span class="badge 
+                                            {% if leave.status == 'pending' %}bg-warning text-dark
+                                            {% elif leave.status == 'approved' %}bg-success
+                                            {% elif leave.status == 'rejected' %}bg-danger
+                                            {% endif %}">{{ leave.get_status_display }}</span>
+                                    </div>
+                                </div>
                             </div>
                         {% empty %}
                             <div class="text-center text-muted py-3">
@@ -498,7 +505,7 @@
                             </div>
                         {% endfor %}
                         
-                        {% if recent_leaves|length > 0 %}
+                        {% if leaves|length > 3 %}
                             <div class="mt-3 text-center">
                                 <a href="#historique" class="btn btn-sm btn-outline-primary" data-bs-toggle="tab" data-bs-target="#historique-tab">
                                     Voir tout l'historique
@@ -516,14 +523,14 @@
         <li class="nav-item" role="presentation">
             <a class="nav-link active" id="planned-tab" data-bs-toggle="tab" href="#planned" role="tab" aria-selected="true">
                 <i class="fas fa-calendar-day me-1"></i> Congés à venir
-                {% if upcoming_leaves %}
-                <span class="badge bg-primary rounded-pill ms-2">{{ upcoming_leaves|length }}</span>
-                {% endif %}
             </a>
         </li>
         <li class="nav-item" role="presentation">
             <a class="nav-link" id="historique-tab" data-bs-toggle="tab" href="#historique" role="tab" aria-selected="false">
                 <i class="fas fa-history me-1"></i> Historique complet
+                {% if leaves %}
+                    <span class="badge bg-secondary rounded-pill ms-2">{{ leaves|length }}</span>
+                {% endif %}
             </a>
         </li>
     </ul>
@@ -531,58 +538,55 @@
     <div class="tab-content" id="leavesTabContent">
         <!-- Congés à venir -->
         <div class="tab-pane fade show active" id="planned" role="tabpanel" aria-labelledby="planned-tab">
-            {% if upcoming_leaves %}
+            {% if leaves %}
+                {% now "Y-m-d" as today %}
                 <div class="row">
-                    {% for leave in upcoming_leaves %}
-                        <div class="col-lg-6 mb-4">
-                            <div class="leave-card">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <div class="d-flex align-items-center">
-                                        <div class="type-icon 
-                                            {% if leave.leave_type == 'annual' %}bg-primary bg-opacity-10 text-primary
-                                            {% elif leave.leave_type == 'sick' %}bg-danger bg-opacity-10 text-danger
-                                            {% elif leave.leave_type == 'parental' %}bg-success bg-opacity-10 text-success
-                                            {% elif leave.leave_type == 'unpaid' %}bg-warning bg-opacity-10 text-warning
-                                            {% else %}bg-info bg-opacity-10 text-info{% endif %}">
-                                            <i class="fas 
-                                                {% if leave.leave_type == 'annual' %}fa-umbrella-beach
-                                                {% elif leave.leave_type == 'sick' %}fa-briefcase-medical
-                                                {% elif leave.leave_type == 'parental' %}fa-baby
-                                                {% elif leave.leave_type == 'unpaid' %}fa-hand-holding-usd
-                                                {% else %}fa-calendar-check{% endif %}"></i>
+                    {% for leave in leaves %}
+                        {% if leave.start_date|date:"Y-m-d" >= today and leave.status == 'approved' %}
+                            <div class="col-lg-6 mb-4">
+                                <div class="leave-card card shadow-sm">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <div class="leave-type-icon 
+                                                {% if leave.leave_type == 'annual' %}bg-primary
+                                                {% elif leave.leave_type == 'sick' %}bg-danger
+                                                {% elif leave.leave_type == 'personal' %}bg-info
+                                                {% else %}bg-secondary{% endif %} text-white me-3">
+                                                <i class="fas 
+                                                    {% if leave.leave_type == 'annual' %}fa-umbrella-beach
+                                                    {% elif leave.leave_type == 'sick' %}fa-briefcase-medical
+                                                    {% elif leave.leave_type == 'personal' %}fa-user
+                                                    {% else %}fa-calendar-check{% endif %}"></i>
+                                            </div>
+                                            <div>
+                                                <h5 class="mb-0">{{ leave.get_leave_type_display }}</h5>
+                                                <span class="text-muted">{{ leave.days_requested|default:"N/A" }} jour(s)</span>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h5 class="mb-0">{{ leave.get_leave_type_display }}</h5>
-                                            <span class="leave-date">{{ leave.days_requested }} jour(s)</span>
-                                        </div>
+                                        <span class="badge bg-success">Approuvé</span>
                                     </div>
-                                    <span class="leave-status status-{{ leave.status }}">
-                                        {{ leave.get_status_display }}
-                                    </span>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row mb-3">
-                                        <div class="col-6">
-                                            <p class="mb-1 text-muted small">Date de début</p>
-                                            <h6>{{ leave.start_date|date:"d/m/Y" }}</h6>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-6">
+                                                <p class="mb-1 text-muted small">Date de début</p>
+                                                <h6>{{ leave.start_date|date:"d/m/Y" }}</h6>
+                                            </div>
+                                            <div class="col-6">
+                                                <p class="mb-1 text-muted small">Date de fin</p>
+                                                <h6>{{ leave.end_date|date:"d/m/Y" }}</h6>
+                                            </div>
                                         </div>
-                                        <div class="col-6">
-                                            <p class="mb-1 text-muted small">Date de fin</p>
-                                            <h6>{{ leave.end_date|date:"d/m/Y" }}</h6>
-                                        </div>
-                                    </div>
-                                    
-                                    {% if leave.reason %}
-                                        <div class="mb-3">
-                                            <p class="mb-1 text-muted small">Motif</p>
-                                            <p class="small mb-0">{{ leave.reason|truncatechars:80 }}</p>
-                                        </div>
-                                    {% endif %}
-                                    
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-muted">Demandé le {{ leave.created_at|date:"d/m/Y" }}</small>
                                         
-                                        <div class="button-group">
+                                        {% if leave.description %}
+                                            <div class="mb-3">
+                                                <p class="mb-1 text-muted small">Motif</p>
+                                                <p class="small mb-0">{{ leave.description|truncatechars:80 }}</p>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">Demandé le {{ leave.created_at|date:"d/m/Y" }}</small>
+                                            
                                             <button type="button" class="btn btn-sm btn-outline-info view-leave"
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#viewLeaveModal"
@@ -590,31 +594,49 @@
                                                 data-leave-type="{{ leave.get_leave_type_display }}"
                                                 data-start-date="{{ leave.start_date|date:'d/m/Y' }}"
                                                 data-end-date="{{ leave.end_date|date:'d/m/Y' }}"
-                                                data-half-day="{{ leave.half_day|yesno:'Oui,Non' }}"
-                                                data-half-day-period="{{ leave.get_half_day_period_display }}"
-                                                data-days-requested="{{ leave.days_requested }}"
-                                                data-reason="{{ leave.reason|default:'' }}"
+                                                data-days-requested="{{ leave.days_requested|default:'N/A' }}"
+                                                data-reason="{{ leave.description|default:'' }}"
                                                 data-status="{{ leave.get_status_display }}"
-                                                data-created-at="{{ leave.created_at|date:'d/m/Y H:i' }}"
-                                                data-has-attachment="{{ leave.attachment|yesno:'true,false' }}"
-                                                {% if leave.attachment %}data-attachment-url="{{ leave.attachment.url }}"{% endif %}>
+                                                data-created-at="{{ leave.created_at|date:'d/m/Y H:i' }}">
                                                 <i class="fas fa-eye"></i> Détails
                                             </button>
-                                            
-                                            {% if leave.status == "pending" %}
-                                                <a href="{% url 'cancel_leave' leave.id %}" 
-                                                class="btn btn-sm btn-outline-danger"
-                                                onclick="return confirm('Êtes-vous sûr de vouloir annuler cette demande de congé ?')">
-                                                    <i class="fas fa-times"></i> Annuler
-                                                </a>
-                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        {% endif %}
+                    {% empty %}
+                        <div class="empty-state">
+                            <i class="fas fa-calendar empty-icon"></i>
+                            <h5>Aucun congé enregistré</h5>
+                            <p class="mb-4 text-muted">Vous n'avez pas encore fait de demande de congé.</p>
+                            <a href="{% url 'leave_request' %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-1"></i> Faire votre première demande
+                            </a>
                         </div>
                     {% endfor %}
                 </div>
+                
+                <!-- Afficher un message si aucun congé à venir n'a été trouvé -->
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const plannedTab = document.getElementById('planned');
+                    const leaveCards = plannedTab.querySelectorAll('.leave-card');
+                    
+                    if (leaveCards.length === 0 && !plannedTab.querySelector('.empty-state')) {
+                        plannedTab.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-calendar empty-icon"></i>
+                                <h5>Aucun congé à venir</h5>
+                                <p class="mb-4 text-muted">Vous n'avez pas de congés approuvés planifiés prochainement.</p>
+                                <a href="{% url 'leave_request' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle me-1"></i> Demander un congé
+                                </a>
+                            </div>
+                        `;
+                    }
+                });
+                </script>
             {% else %}
                 <div class="empty-state">
                     <i class="fas fa-calendar empty-icon"></i>
@@ -629,7 +651,7 @@
         
         <!-- Historique complet -->
         <div class="tab-pane fade" id="historique" role="tabpanel" aria-labelledby="historique-tab">
-            {% if leave_requests %}
+            {% if leaves %}
                 <div class="card shadow leave-table mb-4">
                     <div class="card-header bg-white py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
                         <h6 class="m-0 mb-2 mb-md-0 font-weight-bold text-primary">
@@ -660,21 +682,19 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for leave in leave_requests %}
+                                    {% for leave in leaves %}
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <div class="type-icon-small me-2
-                                                    {% if leave.leave_type == 'annual' %}bg-primary bg-opacity-10 text-primary
-                                                    {% elif leave.leave_type == 'sick' %}bg-danger bg-opacity-10 text-danger
-                                                    {% elif leave.leave_type == 'parental' %}bg-success bg-opacity-10 text-success
-                                                    {% elif leave.leave_type == 'unpaid' %}bg-warning bg-opacity-10 text-warning
-                                                    {% else %}bg-info bg-opacity-10 text-info{% endif %}">
+                                                <div class="leave-type-icon me-2
+                                                    {% if leave.leave_type == 'annual' %}bg-primary
+                                                    {% elif leave.leave_type == 'sick' %}bg-danger
+                                                    {% elif leave.leave_type == 'personal' %}bg-info
+                                                    {% else %}bg-secondary{% endif %} text-white" style="width: 30px; height: 30px; font-size: 0.8rem;">
                                                     <i class="fas 
                                                         {% if leave.leave_type == 'annual' %}fa-umbrella-beach
                                                         {% elif leave.leave_type == 'sick' %}fa-briefcase-medical
-                                                        {% elif leave.leave_type == 'parental' %}fa-baby
-                                                        {% elif leave.leave_type == 'unpaid' %}fa-hand-holding-usd
+                                                        {% elif leave.leave_type == 'personal' %}fa-user
                                                         {% else %}fa-calendar-check{% endif %} fa-sm"></i>
                                                 </div>
                                                 {{ leave.get_leave_type_display }}
@@ -685,9 +705,13 @@
                                             <span class="text-muted mx-1">au</span>
                                             <span class="fw-medium">{{ leave.end_date|date:"d/m/Y" }}</span>
                                         </td>
-                                        <td>{{ leave.days_requested }} jour(s)</td>
+                                        <td>{{ leave.days_requested|default:"N/A" }} jour(s)</td>
                                         <td>
-                                            <span class="badge status-{{ leave.status }}">{{ leave.get_status_display }}</span>
+                                            <span class="status-badge
+                                                {% if leave.status == 'pending' %}bg-warning text-dark
+                                                {% elif leave.status == 'approved' %}bg-success
+                                                {% elif leave.status == 'rejected' %}bg-danger
+                                                {% endif %}">{{ leave.get_status_display }}</span>
                                         </td>
                                         <td>{{ leave.created_at|date:"d/m/Y" }}</td>
                                         <td class="text-end">
@@ -698,14 +722,10 @@
                                                 data-leave-type="{{ leave.get_leave_type_display }}"
                                                 data-start-date="{{ leave.start_date|date:'d/m/Y' }}"
                                                 data-end-date="{{ leave.end_date|date:'d/m/Y' }}"
-                                                data-half-day="{{ leave.half_day|yesno:'Oui,Non' }}"
-                                                data-half-day-period="{{ leave.get_half_day_period_display }}"
-                                                data-days-requested="{{ leave.days_requested }}"
-                                                data-reason="{{ leave.reason|default:'' }}"
+                                                data-days-requested="{{ leave.days_requested|default:'N/A' }}"
+                                                data-reason="{{ leave.description|default:'' }}"
                                                 data-status="{{ leave.get_status_display }}"
-                                                data-created-at="{{ leave.created_at|date:'d/m/Y H:i' }}"
-                                                data-has-attachment="{{ leave.attachment|yesno:'true,false' }}"
-                                                {% if leave.attachment %}data-attachment-url="{{ leave.attachment.url }}"{% endif %}>
+                                                data-created-at="{{ leave.created_at|date:'d/m/Y H:i' }}">
                                                 <i class="fas fa-eye"></i> <span class="d-none d-md-inline">Détails</span>
                                             </button>
                                             
