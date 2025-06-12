@@ -139,5 +139,6 @@ from .notification_views import (
     delete_notification,
     delete_all_read,
     get_notifications_count, 
+    get_notifications_count_api,
     get_notifications_dropdown
 )

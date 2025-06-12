@@ -280,12 +280,12 @@ def approve_expense(request, expense_id):
     expense.status = 'approved'
     expense.save()
 
-   # send_mail(
-   #     subject="Votre note de frais a été approuvée",
-   #     message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été approuvée.",
-   #     from_email="no-reply@cyberun.info",
-   #     recipient_list= [expense.user.email]
-   #  )
+    # send_mail(
+    #     subject="Votre note de frais a été approuvée",
+    #     message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été approuvée.",
+    #     from_email="no-reply@cyberun.info",
+    #     recipient_list= [expense.user.email]
+    # )
 
     messages.success(request, "Note de frais approuvée.")
     return redirect('manage_expenses')
@@ -298,12 +298,12 @@ def reject_expense(request, expense_id):
     expense.status = 'rejected'
     expense.save()
 
-   # send_mail(
-   #     subject="Votre note de frais a été refusée",
-   #     message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été refusée.",
-   #     from_email="no-reply@cyberun.info",
-   #     recipient_list=[expense.user.email]
-   # )
+    # send_mail(
+    #     subject="Votre note de frais a été refusée",
+    #     message=f"Bonjour {expense.user.username},\n\nVotre note de frais '{expense.description}' a été refusée.",
+    #     from_email="no-reply@cyberun.info",
+    #     recipient_list=[expense.user.email]
+    # )
 
     messages.error(request, "Note de frais refusée.")
     return redirect('manage_expenses')

@@ -1,0 +1,78 @@
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Static files
+/staticfiles/
+/static/
+
+# Media files (optionnel - décommentez si vous ne voulez pas versionner les uploads)
+# /media/
+
+# Environment variables
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Python
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Scripts de debug temporaires
+debug_*.py
+test_*.py
+test_*.bat
+validate_*.py
+quick_test.py
+
+# Scripts de correction ponctuels
+scripts/add_*.py
+scripts/fix_*.py
+scripts/run_*.bat
+scripts/*.sql
+scripts/*.log
+
+# Fichiers de sauvegarde
+*.bak
+*.backup
+*.backup_*

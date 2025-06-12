@@ -163,8 +163,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB (si tu gères des fichiers vol
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = 'static/'
+# Configuration already defined at the top of the file
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

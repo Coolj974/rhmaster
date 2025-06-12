@@ -256,12 +256,12 @@ def approve_kilometric_expense(request, expense_id):
     expense.status = "approved"
     expense.save()
 
-   # send_mail(
-   #     subject="Votre frais kilométrique a été approuvé",
-   #     message=f"Bonjour {expense.user.username},\n\nVotre frais kilométrique de {expense.distance} km a été approuvé.",
-   #     from_email="no-reply@cyberun.info",
-   #     recipient_list=[expense.user.email]
-   # )
+    # send_mail(
+    #     subject="Votre frais kilométrique a été approuvé",
+    #     message=f"Bonjour {expense.user.username},\n\nVotre frais kilométrique de {expense.distance} km a été approuvé.",
+    #     from_email="no-reply@cyberun.info",
+    #     recipient_list=[expense.user.email]
+    # )
 
     return redirect("manage_kilometric_expenses")
 
@@ -273,12 +273,12 @@ def reject_kilometric_expense(request, expense_id):
     expense.status = "rejected"
     expense.save()
 
-   # send_mail(
-   #     subject="Votre frais kilométrique a été refusé",
-   #     message=f"Bonjour {expense.user.username},\n\nVotre frais kilométrique de {expense.distance} km a été refusé.",
-   #     from_email="enkai@outlook.fr",
-   #     recipient_list=[expense.user.email]
-   # )
+    # send_mail(
+    #     subject="Votre frais kilométrique a été refusé",
+    #     message=f"Bonjour {expense.user.username},\n\nVotre frais kilométrique de {expense.distance} km a été refusé.",
+    #     from_email="enkai@outlook.fr",
+    #     recipient_list=[expense.user.email]
+    # )
 
     return redirect("manage_kilometric_expenses")
 
